@@ -8,6 +8,8 @@ struct VolumeBrowserView: View {
     @State private var nav = BrowserNav()
     @State private var showChanges = false
 
+    private var modern: Bool { env.theme.skin == .modern }
+
     var body: some View {
         VStack(spacing: 0) {
             if summary.latestSnapshotId != nil {
@@ -49,6 +51,14 @@ struct VolumeBrowserView: View {
                                            systemImage: "externaldrive.badge.questionmark",
                                            description: Text("Connect this drive and scan it to browse its contents."))
                 }
+            }
+            if modern, summary.latestSnapshotId != nil {
+                HStack(spacing: 12) {
+                    ReclaimableTile(palette: env.theme.accent.palette)
+                    ActionPlanTile()
+                }
+                .frame(height: 132)
+                .padding([.horizontal, .bottom], 12)
             }
         }
         .onAppear { env.selectedVolumeKey = summary.uuid ?? summary.name }
@@ -163,6 +173,8 @@ struct FolderView: View {
     @State private var annotations: [String: Annotation] = [:]
     @State private var selection: Set<Int64> = []
 
+    private var modern: Bool { env.theme.skin == .modern }
+
     var body: some View {
         List(selection: $selection) {
             ForEach(children) { entry in
@@ -173,6 +185,7 @@ struct FolderView: View {
                 Text("Empty folder").foregroundStyle(.secondary)
             }
         }
+        .modernListChrome(modern)
         .contextMenu(forSelectionType: Int64.self) { ids in
             tagMenu(for: entries(for: ids))
         } primaryAction: { ids in
