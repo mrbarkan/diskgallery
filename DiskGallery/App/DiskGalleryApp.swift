@@ -44,6 +44,7 @@ struct DiskGalleryApp: App {
                 ContentView()
                     .environment(env)
                     .task {
+                        env.installKeyboardMonitor()
                         await env.refresh()
                         if env.selection == nil {
                             env.selection = env.volumeSummaries.first.map { SidebarItem.volume($0.id) }

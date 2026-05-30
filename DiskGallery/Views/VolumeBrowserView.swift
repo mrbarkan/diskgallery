@@ -12,12 +12,11 @@ struct VolumeBrowserView: View {
             if let snapshotId = summary.latestSnapshotId {
                 if let root = rootEntry {
                     NavigationStack(path: $nav.path) {
-                        FolderView(snapshotId: snapshotId, folder: root)
+                        FolderView(snapshotId: snapshotId, folder: root, nav: nav)
                             .navigationDestination(for: Entry.self) { child in
-                                FolderView(snapshotId: snapshotId, folder: child)
+                                FolderView(snapshotId: snapshotId, folder: child, nav: nav)
                             }
                     }
-                    .environment(nav)
                 } else {
                     ProgressView().task(id: snapshotId) {
                         rootEntry = try? await env.catalog.library.rootEntry(snapshotId: snapshotId)
@@ -34,68 +33,83 @@ struct VolumeBrowserView: View {
 }
 
 /// One level of the tree. Single-click selects (multi-select with ⌘/⇧); double-click
-/// opens a folder. Tagging shortcuts act on the current selection.
+/// (or Return) opens a folder via the List's primary action. Tagging shortcuts come
+/// from a window-level key monitor; right-click also tags.
 struct FolderView: View {
     @Environment(AppEnvironment.self) private var env
-    @Environment(BrowserNav.self) private var nav
     let snapshotId: Int64
     let folder: Entry
+    let nav: BrowserNav
 
     @State private var children: [Entry] = []
     @State private var annotations: [String: Annotation] = [:]
     @State private var selection: Set<Int64> = []
-    @FocusState private var focused: Bool
 
     var body: some View {
         List(selection: $selection) {
             ForEach(children) { entry in
                 EntryRow(entry: entry, annotation: annotations[entry.relPath])
                     .tag(entry.id)
-                    .contentShape(Rectangle())
-                    .simultaneousGesture(TapGesture(count: 2).onEnded {
-                        if entry.isDir { nav.open(entry) }
-                    })
             }
             if children.isEmpty {
                 Text("Empty folder").foregroundStyle(.secondary)
             }
         }
-        .focusable()
-        .focused($focused)
-        .focusEffectDisabled()
-        .onKeyPress { press in handleKey(press) }
+        .contextMenu(forSelectionType: Int64.self) { ids in
+            tagMenu(for: entries(for: ids))
+        } primaryAction: { ids in
+            if let entry = entries(for: ids).first(where: \.isDir) {
+                nav.open(entry)
+            }
+        }
         .navigationTitle(folder.name)
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Text(headerSummary).font(.callout).foregroundStyle(.secondary)
             }
         }
-        .task(id: folder.id) {
-            await load()
-            focused = true
-        }
+        .task(id: folder.id) { await load() }
         .onChange(of: env.dataVersion) { _, _ in Task { await load() } }
         .onChange(of: selection) { _, _ in updateSelection() }
         .onAppear { if selection.isEmpty { env.selectedEntries = [folder] } }
     }
 
     private var headerSummary: String {
-        let count = children.count
         if selection.count > 1 { return "\(selection.count) selected" }
+        let count = children.count
         return "\(count) item\(count == 1 ? "" : "s")"
     }
 
+    private func entries(for ids: Set<Int64>) -> [Entry] {
+        children.filter { ids.contains($0.id) }
+    }
+
     private func updateSelection() {
-        let selected = children.filter { selection.contains($0.id) }
+        let selected = entries(for: selection)
         env.selectedEntries = selected.isEmpty ? [folder] : selected
     }
 
-    private func handleKey(_ press: KeyPress) -> KeyPress.Result {
-        guard let action = env.shortcuts.action(forKey: press.characters) else { return .ignored }
-        let targets = env.selectedEntries
-        guard !targets.isEmpty else { return .ignored }
-        Task { await env.perform(action, on: targets) }
-        return .handled
+    @ViewBuilder
+    private func tagMenu(for targets: [Entry]) -> some View {
+        if !targets.isEmpty {
+            Button("Keep") { Task { await env.applyDecision(.keep, to: targets) } }
+            Button("Delete") { Task { await env.applyDecision(.delete, to: targets) } }
+            Button("Review") { Task { await env.applyDecision(.review, to: targets) } }
+            Divider()
+            Menu("Color") {
+                ForEach(FinderColor.keyOrder) { color in
+                    Button(color.tagName) { Task { await env.applyColor(color, to: targets) } }
+                }
+                Button("No Color") { Task { await env.applyColor(.none, to: targets) } }
+            }
+            Divider()
+            Button("Clear Tags") {
+                Task {
+                    await env.applyDecision(.none, to: targets)
+                    await env.applyColor(.none, to: targets)
+                }
+            }
+        }
     }
 
     private func load() async {

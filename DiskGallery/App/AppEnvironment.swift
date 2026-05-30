@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import AppKit
 import DiskGalleryCore
 
 /// What the sidebar selection points at.
@@ -38,10 +39,38 @@ final class AppEnvironment {
     var errorMessage: String?
 
     @ObservationIgnored private var scanTask: Task<Void, Never>?
+    @ObservationIgnored private var keyMonitor: Any?
 
     init() throws {
         catalog = try Catalog.makeDefault()
         volumes = VolumeService()
+    }
+
+    // MARK: Keyboard shortcuts (window-level, decoupled from List focus)
+
+    func installKeyboardMonitor() {
+        guard keyMonitor == nil else { return }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self else { return event }
+            // Let modifier chords (⌘C, etc.) pass through untouched.
+            if !event.modifierFlags.intersection([.command, .control, .option]).isEmpty { return event }
+            guard let characters = event.charactersIgnoringModifiers else { return event }
+            // Extract only Sendable data before hopping to the main actor.
+            let consumed = MainActor.assumeIsolated { self.handleShortcut(characters: characters) }
+            return consumed ? nil : event
+        }
+    }
+
+    /// Runs the tagging shortcut bound to `characters` on the current selection.
+    /// Returns true if the key was consumed.
+    private func handleShortcut(characters: String) -> Bool {
+        guard case .volume = selection else { return false }                    // only while browsing
+        if let responder = NSApp.keyWindow?.firstResponder, responder is NSText { return false }  // not while typing
+        guard let action = shortcuts.action(forKey: characters) else { return false }
+        let targets = selectedEntries
+        guard !targets.isEmpty else { return false }
+        Task { await perform(action, on: targets) }
+        return true
     }
 
     var isSelectedVolumeConnected: Bool {
