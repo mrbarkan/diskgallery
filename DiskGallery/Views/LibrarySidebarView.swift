@@ -5,34 +5,36 @@ import DiskGalleryCore
 struct LibrarySidebarView: View {
     @Environment(AppEnvironment.self) private var env
 
+    private var modern: Bool { env.theme.skin == .modern }
+
     var body: some View {
         @Bindable var env = env
         List(selection: $env.selection) {
-            Section("Library") {
+            Section {
                 Label("Duplicates", systemImage: "doc.on.doc")
                     .badge(env.totalReclaimable > 0 ? Text(Format.bytes(env.totalReclaimable)) : nil)
                     .tag(SidebarItem.duplicates)
                 Label("Search", systemImage: "magnifyingglass")
                     .tag(SidebarItem.search)
-            }
+            } header: { sectionHeader("Library") }
 
-            Section("Plan") {
+            Section {
                 Label("Action Plan", systemImage: "checklist")
                     .badge(plannedItemCount)
                     .tag(SidebarItem.plan)
                 Label("Transfer Planner", systemImage: "arrow.left.arrow.right")
                     .tag(SidebarItem.transfer)
-            }
+            } header: { sectionHeader("Plan") }
 
-            Section("Action Tags") {
+            Section {
                 ForEach(Tag.actionTags) { tag in
                     Label(tag.label, systemImage: icon(for: tag))
                         .badge(env.tagCounts[tag] ?? 0)
                         .tag(SidebarItem.tagged(tag))
                 }
-            }
+            } header: { sectionHeader("Action Tags") }
 
-            Section("Drives") {
+            Section {
                 if env.volumeSummaries.isEmpty {
                     Text("No drives cataloged yet")
                         .foregroundStyle(.secondary)
@@ -52,8 +54,9 @@ struct LibrarySidebarView: View {
                             }
                         }
                 }
-            }
+            } header: { sectionHeader("Drives") }
         }
+        .modernListChrome(modern)
         .navigationTitle("DiskGallery")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -76,6 +79,15 @@ struct LibrarySidebarView: View {
 
     private var plannedItemCount: Int {
         Tag.actionTags.reduce(0) { $0 + (env.tagCounts[$1] ?? 0) }
+    }
+
+    @ViewBuilder private func sectionHeader(_ title: String) -> some View {
+        if modern {
+            Text(title).font(.system(size: 9, weight: .semibold, design: .monospaced))
+                .tracking(1.5).textCase(.uppercase).foregroundStyle(.tertiary)
+        } else {
+            Text(title)
+        }
     }
 
     private func icon(for tag: Tag) -> String {
@@ -110,9 +122,11 @@ struct DriveRow: View {
     var body: some View {
         let key = summary.uuid ?? summary.name
         let connected = env.volumes.isConnected(key: key)
+        let modern = env.theme.skin == .modern
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "externaldrive.fill")
                 .foregroundStyle(connected ? Color.green : Color.secondary)
+                .shadow(color: connected && modern ? .green : .clear, radius: 4)
                 .help(connected ? "Connected" : "Disconnected")
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
