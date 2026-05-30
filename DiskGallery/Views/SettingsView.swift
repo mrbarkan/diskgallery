@@ -73,6 +73,13 @@ struct AppearanceSettings: View {
     var body: some View {
         @Bindable var theme = env.theme
         Form {
+            Section("Look") {
+                Picker("Skin", selection: $theme.skin) {
+                    ForEach(Skin.allCases) { Text($0.name).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
             Section("Mode") {
                 Picker("Appearance", selection: $theme.mode) {
                     ForEach(AppearanceMode.allCases) { Text($0.name).tag($0) }
@@ -80,15 +87,15 @@ struct AppearanceSettings: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
             }
-            Section("Theme") {
+            Section("Accent") {
                 LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(AppTheme.allCases) { option in
-                        Button { env.theme.theme = option } label: {
+                    ForEach(Accent.allCases) { option in
+                        Button { env.theme.accent = option } label: {
                             VStack(spacing: 6) {
                                 Circle()
-                                    .fill(option.accent)
+                                    .fill(option.palette.accent)
                                     .frame(width: 36, height: 36)
-                                    .overlay(Circle().strokeBorder(env.theme.theme == option ? Color.primary : .clear, lineWidth: 2.5))
+                                    .overlay(Circle().strokeBorder(env.theme.accent == option ? Color.primary : .clear, lineWidth: 2.5))
                                 Text(option.name).font(.caption)
                             }
                         }
@@ -97,9 +104,22 @@ struct AppearanceSettings: View {
                 }
                 .padding(.vertical, 4)
             }
+            Section {
+                Picker("Layout", selection: $theme.oledLayout) {
+                    ForEach(OLEDLayout.allCases) { Text($0.name).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .disabled(theme.skin == .classic)
+            } header: {
+                Text("OLED Display")
+            } footer: {
+                Text("The OLED drive display appears in the Modern look.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
-        .tint(env.theme.theme.accent)
+        .tint(env.theme.accent.palette.accent)
     }
 }
 

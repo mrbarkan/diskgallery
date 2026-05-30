@@ -101,7 +101,7 @@ struct ContentView: View {
         } message: {
             Text(env.errorMessage ?? "")
         }
-        .tint(env.theme.theme.accent)
+        .tint(env.theme.accent.palette.accent)
         .preferredColorScheme(env.theme.mode.colorScheme)
     }
 }
