@@ -69,6 +69,7 @@
 		E2136432120E82AE171C2623 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDDE0C869FC4D5E82CC433DA /* Components.swift */; };
 		E5FD991C44554B7098DABEDE /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8A5C5983831D1A837A4B865 /* Support.swift */; };
 		EC4C7FA3AD65474DAE88882D /* DiskGalleryCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F33C2DBD411AD01139F80987 /* StatTiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9C040BBD8951A53231F2AC7 /* StatTiles.swift */; };
 		F4798D76A8EBE58BB98FC812 /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */; };
 		F59567BB049A3F13DB80FB2A /* OLEDDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FAB06D51560916D60F1560F /* OLEDDisplayView.swift */; };
 /* End PBXBuildFile section */
@@ -186,6 +187,7 @@
 		ECBA2AE40DDF4B70537C8F4F /* ThemeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeStore.swift; sourceTree = "<group>"; };
 		F46FB69746E1A1F87B2D46BA /* TransferPlannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferPlannerView.swift; sourceTree = "<group>"; };
 		F7564DDC8279F5702EE38072 /* DuplicateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateTests.swift; sourceTree = "<group>"; };
+		F9C040BBD8951A53231F2AC7 /* StatTiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatTiles.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -294,6 +296,7 @@
 			children = (
 				8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */,
 				239E19F08DFE1282FEAB493B /* ModernGlass.swift */,
+				F9C040BBD8951A53231F2AC7 /* StatTiles.swift */,
 			);
 			path = Modern;
 			sourceTree = "<group>";
@@ -648,6 +651,7 @@
 				B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */,
 				C723B2681D13ADAD6B82B080 /* SettingsView.swift in Sources */,
 				C5A6E538914E1290442AEC7A /* ShortcutStore.swift in Sources */,
+				F33C2DBD411AD01139F80987 /* StatTiles.swift in Sources */,
 				A6F8081BD8E0E7CE48D5F3ED /* TaggedListView.swift in Sources */,
 				95871C43166ACC0954915B1D /* ThemeStore.swift in Sources */,
 				8E21B24409BF7A7A1D5FE6E2 /* TransferPlannerView.swift in Sources */,
