@@ -64,13 +64,29 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
 
+  # UI tests that drive the real app (select/open folders, etc.).
+  DiskGalleryUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources: [DiskGalleryUITests]
+    dependencies:
+      - target: DiskGallery
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   DiskGallery:
     build:
       targets:
         DiskGallery: all
+        DiskGalleryUITests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - DiskGalleryUITests
   DiskGalleryCore:
     build:
       targets:

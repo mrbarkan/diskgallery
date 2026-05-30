@@ -45,6 +45,7 @@
 		C5A6E538914E1290442AEC7A /* ShortcutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */; };
 		C723B2681D13ADAD6B82B080 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E79766C18BB7460C63E09866 /* SettingsView.swift */; };
 		D1EDEFB64606629727F60C28 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32BBDA2EB412284EC0D8DC4B /* AppEnvironment.swift */; };
+		DC8EBD9FB93DA3FBB970C0D3 /* BrowserUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFDC239DC0408625DC178B36 /* BrowserUITests.swift */; };
 		E5FD991C44554B7098DABEDE /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8A5C5983831D1A837A4B865 /* Support.swift */; };
 		EC4C7FA3AD65474DAE88882D /* DiskGalleryCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F4798D76A8EBE58BB98FC812 /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */; };
@@ -64,6 +65,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = B8F8CC00E0947E484F9C7169;
 			remoteInfo = DiskGalleryCore;
+		};
+		E3699D9507735E131B70CC4B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B2AFA75971C27CAB53B74C15 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C4D9CCA90D302D7192F74F5F;
+			remoteInfo = DiskGallery;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -100,6 +108,7 @@
 		1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTagWriter.swift; sourceTree = "<group>"; };
 		2C7B796F9140FFB75649FBEA /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
 		32BBDA2EB412284EC0D8DC4B /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		369012288A55FF3177C489B1 /* DiskGalleryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiskGalleryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		395CB1FD1B89F2B19088F80B /* ScanProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProgress.swift; sourceTree = "<group>"; };
 		3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutStore.swift; sourceTree = "<group>"; };
 		4105C0CC1F9C0469C2052248 /* FinderTagTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTagTests.swift; sourceTree = "<group>"; };
@@ -128,6 +137,7 @@
 		C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicatesView.swift; sourceTree = "<group>"; };
 		D8A5C5983831D1A837A4B865 /* Support.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Support.swift; sourceTree = "<group>"; };
 		DDDB8CF07C09E98A6414D28D /* DiskGallery.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DiskGallery.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFDC239DC0408625DC178B36 /* BrowserUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserUITests.swift; sourceTree = "<group>"; };
 		E0860DD76D728A4E486E6CD1 /* VolumeMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeMetadata.swift; sourceTree = "<group>"; };
 		E79766C18BB7460C63E09866 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		ECBA2AE40DDF4B70537C8F4F /* ThemeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeStore.swift; sourceTree = "<group>"; };
@@ -279,8 +289,17 @@
 				DDDB8CF07C09E98A6414D28D /* DiskGallery.app */,
 				B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */,
 				413E51629AFD434627D3871C /* DiskGalleryCoreTests.xctest */,
+				369012288A55FF3177C489B1 /* DiskGalleryUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CBA146940F6BECEEF4802A4A /* DiskGalleryUITests */ = {
+			isa = PBXGroup;
+			children = (
+				DFDC239DC0408625DC178B36 /* BrowserUITests.swift */,
+			);
+			path = DiskGalleryUITests;
 			sourceTree = "<group>";
 		};
 		D22E82DBE1245BFAA3EEB9D1 /* Duplicates */ = {
@@ -308,6 +327,7 @@
 				38C0F9C72157D6767BE2E6C4 /* DiskGallery */,
 				E6BE9F33D43B1065CBBAE1A0 /* DiskGalleryCore */,
 				57685C50102D09D20EB4E403 /* DiskGalleryCoreTests */,
+				CBA146940F6BECEEF4802A4A /* DiskGalleryUITests */,
 				B4950E3848C10EBB6175D8B9 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -389,6 +409,24 @@
 			productReference = DDDB8CF07C09E98A6414D28D /* DiskGallery.app */;
 			productType = "com.apple.product-type.application";
 		};
+		C8003FE8A68731C1A6EA0FD8 /* DiskGalleryUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 776E8886CAC4905E89422F06 /* Build configuration list for PBXNativeTarget "DiskGalleryUITests" */;
+			buildPhases = (
+				A839CAC0E3AB241B72B6CE0A /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C02AF30C7EA91B9E979E311A /* PBXTargetDependency */,
+			);
+			name = DiskGalleryUITests;
+			packageProductDependencies = (
+			);
+			productName = DiskGalleryUITests;
+			productReference = 369012288A55FF3177C489B1 /* DiskGalleryUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -409,6 +447,11 @@
 					C4D9CCA90D302D7192F74F5F = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
+					};
+					C8003FE8A68731C1A6EA0FD8 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+						TestTargetID = C4D9CCA90D302D7192F74F5F;
 					};
 				};
 			};
@@ -432,6 +475,7 @@
 				C4D9CCA90D302D7192F74F5F /* DiskGallery */,
 				B8F8CC00E0947E484F9C7169 /* DiskGalleryCore */,
 				783F9D45A4ACFDF557E59671 /* DiskGalleryCoreTests */,
+				C8003FE8A68731C1A6EA0FD8 /* DiskGalleryUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -448,6 +492,14 @@
 				0574CA08E81E2428FF8892AC /* ScannerTests.swift in Sources */,
 				096A6E03CB7478C7202DE409 /* SearchTests.swift in Sources */,
 				E5FD991C44554B7098DABEDE /* Support.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A839CAC0E3AB241B72B6CE0A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DC8EBD9FB93DA3FBB970C0D3 /* BrowserUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -501,6 +553,11 @@
 			isa = PBXTargetDependency;
 			target = B8F8CC00E0947E484F9C7169 /* DiskGalleryCore */;
 			targetProxy = 440594F7D36DA097053AD1EC /* PBXContainerItemProxy */;
+		};
+		C02AF30C7EA91B9E979E311A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C4D9CCA90D302D7192F74F5F /* DiskGallery */;
+			targetProxy = E3699D9507735E131B70CC4B /* PBXContainerItemProxy */;
 		};
 		E745272A51AF490273715DE9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -557,6 +614,23 @@
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		1DBDF121B3335199D50D7E6B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dbarkan.DiskGalleryUITests;
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = DiskGallery;
 			};
 			name = Release;
 		};
@@ -691,6 +765,23 @@
 			};
 			name = Release;
 		};
+		7F24F4A683EBDFA0B6CFE386 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dbarkan.DiskGalleryUITests;
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = DiskGallery;
+			};
+			name = Debug;
+		};
 		EB56DE7FCD83B6F33AEE1E9F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -792,6 +883,15 @@
 			buildConfigurations = (
 				0458CE3D80B4166B8F849178 /* Debug */,
 				1468E3ECC39CA92370027412 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		776E8886CAC4905E89422F06 /* Build configuration list for PBXNativeTarget "DiskGalleryUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7F24F4A683EBDFA0B6CFE386 /* Debug */,
+				1DBDF121B3335199D50D7E6B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
