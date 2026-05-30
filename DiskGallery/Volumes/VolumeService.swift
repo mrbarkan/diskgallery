@@ -4,6 +4,10 @@ import DiskGalleryCore
 
 /// Tracks currently-mounted volumes so the UI can show connected badges and the
 /// duplicate verifier can resolve a stored drive to its live mount point.
+///
+/// All volume probing (`statfs` / resource values) runs OFF the main thread — those
+/// calls can block for seconds on a slow or spinning-up drive, which would freeze
+/// the UI (notably right when you plug a backup drive in).
 @MainActor
 @Observable
 final class VolumeService {
@@ -14,27 +18,44 @@ final class VolumeService {
         var key: String { info.uuid ?? info.name }
     }
 
-    /// External (removable/ejectable/non-internal) drives, for the scan picker.
     private(set) var external: [Mounted] = []
-    /// Every mounted volume keyed by its stable key, for badge + hash resolution.
     private var urlByKey: [String: URL] = [:]
 
     init() {
-        refresh()
-        let center = NSWorkspace.shared.notificationCenter
-        for name in [NSWorkspace.didMountNotification,
-                     NSWorkspace.didUnmountNotification,
-                     NSWorkspace.didRenameVolumeNotification] {
-            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.refresh() }
-            }
-        }
+        startObserving()
+        Task { await refresh() }
     }
 
     func isConnected(key: String) -> Bool { urlByKey[key] != nil }
     func mountURL(forKey key: String) -> URL? { urlByKey[key] }
 
-    func refresh() {
+    /// Probes volumes on a background task, then publishes results on the main actor.
+    func refresh() async {
+        let snapshot = await Task.detached(priority: .utility) {
+            Self.enumerateVolumes()
+        }.value
+        external = snapshot.mounted
+        urlByKey = snapshot.byKey
+    }
+
+    private func startObserving() {
+        let center = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.didMountNotification,
+                     NSWorkspace.didUnmountNotification,
+                     NSWorkspace.didRenameVolumeNotification] {
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                Task { await self?.refresh() }
+            }
+        }
+    }
+
+    private struct Snapshot: Sendable {
+        var mounted: [Mounted]
+        var byKey: [String: URL]
+    }
+
+    /// Blocking work — must run off the main thread.
+    nonisolated private static func enumerateVolumes() -> Snapshot {
         let keys: [URLResourceKey] = [
             .volumeIsRemovableKey, .volumeIsEjectableKey, .volumeIsInternalKey, .volumeNameKey,
         ]
@@ -42,11 +63,11 @@ final class VolumeService {
             includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]) ?? []
 
         var mounted: [Mounted] = []
-        var map: [String: URL] = [:]
+        var byKey: [String: URL] = [:]
         for url in urls {
             let values = try? url.resourceValues(forKeys: Set(keys))
             let info = VolumeMetadata.read(url)
-            map[info.uuid ?? info.name] = url
+            byKey[info.uuid ?? info.name] = url
 
             let removable = (values?.volumeIsRemovable ?? false) || (values?.volumeIsEjectable ?? false)
             let isInternal = values?.volumeIsInternal ?? true
@@ -54,9 +75,7 @@ final class VolumeService {
                 mounted.append(Mounted(url: url, info: info))
             }
         }
-        external = mounted.sorted {
-            $0.info.name.localizedCaseInsensitiveCompare($1.info.name) == .orderedAscending
-        }
-        urlByKey = map
+        mounted.sort { $0.info.name.localizedCaseInsensitiveCompare($1.info.name) == .orderedAscending }
+        return Snapshot(mounted: mounted, byKey: byKey)
     }
 }
