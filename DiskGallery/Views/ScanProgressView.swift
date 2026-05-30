@@ -6,12 +6,7 @@ struct ScanProgressView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            if env.isStoppingScan {
-                VStack(spacing: 14) {
-                    ProgressView().controlSize(.large)
-                    Text("Finishing up…").font(.headline)
-                }
-            } else if env.stopRequested {
+            if env.stopRequested {
                 stopOptions
             } else {
                 progress

@@ -17,8 +17,6 @@ struct ScanState {
     var isResume: Bool
 }
 
-enum ScanStop { case none, pause, discard }
-
 /// Holds the catalog + live UI state. The single source of truth injected into the
 /// view tree. GRDB never appears here — everything goes through `Catalog`.
 @MainActor
@@ -38,14 +36,13 @@ final class AppEnvironment {
     var selectedVolumeKey: String?
 
     var activeScan: ScanState?
-    var stopRequested = false        // drives the Stop confirmation prompt
-    var isStoppingScan = false       // pause/discard chosen, winding down
+    var stopRequested = false        // Stop pressed; scan halted; showing the prompt
     var dataVersion = 0          // bumped on any mutation, so views reload
     var errorMessage: String?
 
     @ObservationIgnored private var scanTask: Task<Void, Never>?
-    @ObservationIgnored private var scanStop: ScanStop = .none
     @ObservationIgnored private var currentScanSnapshotId: Int64?
+    @ObservationIgnored private var currentScanURL: URL?
     @ObservationIgnored private var keyMonitor: Any?
 
     init() throws {
@@ -114,22 +111,49 @@ final class AppEnvironment {
 
     private func beginScan(url: URL, resumeSnapshotId: Int64?, isResume: Bool) {
         scanTask?.cancel()
-        scanStop = .none
         stopRequested = false
+        currentScanURL = url
         currentScanSnapshotId = resumeSnapshotId
-        scanTask = Task { await runScan(url: url, resumeSnapshotId: resumeSnapshotId, isResume: isResume) }
-    }
-
-    // Stop prompt actions
-    func requestStop() { stopRequested = true }
-    func continueScan() { stopRequested = false }
-    func pauseScan() { stopRequested = false; isStoppingScan = true; scanStop = .pause }
-    func discardScan() { stopRequested = false; isStoppingScan = true; scanStop = .discard }
-
-    private func runScan(url: URL, resumeSnapshotId: Int64?, isResume: Bool) async {
         let name = VolumeMetadata.read(url).name
         activeScan = ScanState(volumeName: name, progress: ScanProgress(currentPath: name), isResume: isResume)
+        scanTask = Task { await runScan(url: url, resumeSnapshotId: resumeSnapshotId) }
+    }
 
+    // MARK: Stop prompt
+
+    /// Halts the scan immediately (it becomes a resumable pause) and shows the prompt,
+    /// so the scan can't finish while the user decides.
+    func requestStop() {
+        stopRequested = true
+        scanTask?.cancel()
+    }
+
+    /// Keep Going — resume the just-halted scan.
+    func continueScan() {
+        guard let url = currentScanURL else { stopRequested = false; activeScan = nil; return }
+        let wasResume = activeScan?.isResume ?? false
+        beginScan(url: url, resumeSnapshotId: currentScanSnapshotId, isResume: wasResume)
+    }
+
+    /// Pause — leave the partial snapshot for later; just close the sheet.
+    func pauseScan() {
+        stopRequested = false
+        activeScan = nil
+        Task { await refresh() }
+    }
+
+    /// Discard — delete the partial snapshot.
+    func discardScan() {
+        stopRequested = false
+        let snapshotId = currentScanSnapshotId
+        activeScan = nil
+        Task {
+            if let snapshotId { try? await catalog.library.deleteSnapshot(id: snapshotId) }
+            await refresh()
+        }
+    }
+
+    private func runScan(url: URL, resumeSnapshotId: Int64?) async {
         let stream = resumeSnapshotId.map { catalog.scanner.resume(snapshotId: $0, volumeURL: url) }
             ?? catalog.scanner.scan(volumeURL: url)
 
@@ -138,29 +162,27 @@ final class AppEnvironment {
             for try await progress in stream {
                 if let sid = progress.snapshotId { currentScanSnapshotId = sid }
                 activeScan?.progress = progress
-                if progress.isComplete { completed = true }
-                if scanStop != .none { break }      // user chose Pause or Discard
+                if progress.isComplete { completed = true; break }
             }
         } catch is CancellationError {
-            // superseded by a new scan
+            return   // halted by Stop, or superseded — leave the UI to the prompt / new task
         } catch {
             errorMessage = error.localizedDescription
         }
 
-        let mode = scanStop
-        let snapshotId = currentScanSnapshotId
-        scanStop = .none
-        activeScan = nil
-        isStoppingScan = false
-
-        if mode == .discard, let sid = snapshotId {
-            try? await catalog.library.deleteSnapshot(id: sid)
+        if completed {
+            let snapshotId = currentScanSnapshotId
+            stopRequested = false
+            activeScan = nil
+            await refresh()
+            if let snapshotId, let summary = volumeSummaries.first(where: { $0.latestSnapshotId == snapshotId }) {
+                selection = .volume(summary.id)
+            }
+            return
         }
+        if stopRequested { return }   // halted for the prompt — keep the sheet up
+        activeScan = nil              // ended unexpectedly
         await refresh()
-        if completed, let sid = snapshotId,
-           let summary = volumeSummaries.first(where: { $0.latestSnapshotId == sid }) {
-            selection = .volume(summary.id)
-        }
     }
 
     // MARK: Tagging
