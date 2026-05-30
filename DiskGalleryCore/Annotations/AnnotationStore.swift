@@ -9,6 +9,7 @@ public struct TaggedEntry: Codable, Sendable, Identifiable, FetchableRecord {
     public var volumeName: String?
     public var relPath: String
     public var tag: Tag
+    public var color: FinderColor
     public var note: String?
     public var name: String?
     public var isDir: Bool?
@@ -22,9 +23,9 @@ public struct TaggedEntry: Codable, Sendable, Identifiable, FetchableRecord {
     public var displaySize: Int64? { (isDir == true) ? subtreeLogicalSize : logicalSize }
 }
 
-/// Reads and writes Keep/Delete/Review annotations. Keyed by `(volumeKey, relPath)`
-/// where `volumeKey` is the volume UUID, or its name when no UUID exists — so an
-/// annotation survives re-scanning the same drive.
+/// Reads and writes Keep/Delete/Review decisions and Finder colors. Keyed by
+/// `(volumeKey, relPath)` where `volumeKey` is the volume UUID, or its name when no
+/// UUID exists — so an annotation survives re-scanning the same drive.
 public struct AnnotationStore: Sendable {
     let db: AppDatabase
 
@@ -41,31 +42,71 @@ public struct AnnotationStore: Sendable {
         }
     }
 
-    /// Upserts an annotation. Clearing it (tag `.none` + empty note) deletes the row.
-    public func set(tag: Tag, note: String?, volumeKey: String, relPath: String) async throws {
-        let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let cleanNote = (trimmed?.isEmpty ?? true) ? nil : trimmed
-        try await db.writer.write { db in
-            if tag == .none && cleanNote == nil {
-                try db.execute(sql: "DELETE FROM annotation WHERE volumeUuid = ? AND relPath = ?",
-                               arguments: [volumeKey, relPath])
-                return
-            }
-            if var existing = try Annotation
-                .filter(Column("volumeUuid") == volumeKey && Column("relPath") == relPath)
-                .fetchOne(db)
-            {
-                existing.tag = tag
-                existing.note = cleanNote
-                existing.updatedAt = Date()
-                try existing.update(db)
-            } else {
-                var created = Annotation(volumeUuid: volumeKey, relPath: relPath,
-                                         tag: tag, note: cleanNote, updatedAt: Date())
-                try created.insert(db)
-            }
+    /// Annotations for many paths on one drive, for decorating browser rows.
+    public func annotations(volumeKey: String, relPaths: [String]) async throws -> [String: Annotation] {
+        guard !relPaths.isEmpty else { return [:] }
+        return try await db.writer.read { db in
+            let rows = try Annotation
+                .filter(Column("volumeUuid") == volumeKey && relPaths.contains(Column("relPath")))
+                .fetchAll(db)
+            return Dictionary(rows.map { ($0.relPath, $0) }, uniquingKeysWith: { first, _ in first })
         }
     }
+
+    // MARK: Granular setters (each preserves the other dimensions)
+
+    @discardableResult
+    public func setDecision(_ tag: Tag, volumeKey: String, relPath: String) async throws -> Annotation? {
+        try await upsert(volumeKey: volumeKey, relPath: relPath) { $0.tag = tag }
+    }
+
+    @discardableResult
+    public func setColor(_ color: FinderColor, volumeKey: String, relPath: String) async throws -> Annotation? {
+        try await upsert(volumeKey: volumeKey, relPath: relPath) { $0.color = color }
+    }
+
+    @discardableResult
+    public func setNote(_ note: String?, volumeKey: String, relPath: String) async throws -> Annotation? {
+        let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let clean = (trimmed?.isEmpty ?? true) ? nil : trimmed
+        return try await upsert(volumeKey: volumeKey, relPath: relPath) { $0.note = clean }
+    }
+
+    /// Sets all dimensions at once (used by the detail editor's Save).
+    @discardableResult
+    public func set(tag: Tag, color: FinderColor, note: String?,
+                    volumeKey: String, relPath: String) async throws -> Annotation? {
+        let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let clean = (trimmed?.isEmpty ?? true) ? nil : trimmed
+        return try await upsert(volumeKey: volumeKey, relPath: relPath) {
+            $0.tag = tag; $0.color = color; $0.note = clean
+        }
+    }
+
+    /// Read-modify-write in one transaction. Deletes the row when it ends up empty;
+    /// returns the saved annotation, or nil if it was cleared.
+    private func upsert(volumeKey: String, relPath: String,
+                        _ mutate: @Sendable @escaping (inout Annotation) -> Void) async throws -> Annotation? {
+        try await db.writer.write { db in
+            var annotation = try Annotation
+                .filter(Column("volumeUuid") == volumeKey && Column("relPath") == relPath)
+                .fetchOne(db)
+                ?? Annotation(volumeUuid: volumeKey, relPath: relPath, tag: .none, color: .none,
+                              note: nil, updatedAt: Date())
+            mutate(&annotation)
+            annotation.updatedAt = Date()
+
+            let isEmpty = annotation.tag == .none && annotation.color == .none && (annotation.note?.isEmpty ?? true)
+            if isEmpty {
+                if let id = annotation.id { _ = try Annotation.deleteOne(db, key: id) }
+                return nil
+            }
+            try annotation.save(db)
+            return annotation
+        }
+    }
+
+    // MARK: Lists & counts
 
     public func taggedEntries(_ tag: Tag) async throws -> [TaggedEntry] {
         try await db.writer.read { db in
@@ -78,7 +119,7 @@ public struct AnnotationStore: Sendable {
                     )
                 )
                 SELECT a.id AS annotationId, a.volumeUuid AS volumeUuid, v.name AS volumeName,
-                       a.relPath AS relPath, a.tag AS tag, a.note AS note,
+                       a.relPath AS relPath, a.tag AS tag, a.color AS color, a.note AS note,
                        e.name AS name, e.isDir AS isDir, e.logicalSize AS logicalSize,
                        e.subtreeLogicalSize AS subtreeLogicalSize,
                        e.id AS entryId, e.snapshotId AS snapshotId
@@ -93,21 +134,10 @@ public struct AnnotationStore: Sendable {
         }
     }
 
-    /// Tags for a set of paths on one drive, for decorating browser rows in one query.
-    public func tags(volumeKey: String, relPaths: [String]) async throws -> [String: Tag] {
-        guard !relPaths.isEmpty else { return [:] }
-        return try await db.writer.read { db in
-            let rows = try Annotation
-                .filter(Column("volumeUuid") == volumeKey && relPaths.contains(Column("relPath")))
-                .fetchAll(db)
-            return Dictionary(rows.map { ($0.relPath, $0.tag) }, uniquingKeysWith: { first, _ in first })
-        }
-    }
-
-    /// Counts per tag, for sidebar badges. Returns a map keyed by tag.
+    /// Counts per decision tag, for sidebar badges.
     public func counts() async throws -> [Tag: Int] {
         try await db.writer.read { db in
-            let rows = try Row.fetchAll(db, sql: "SELECT tag, COUNT(*) AS c FROM annotation GROUP BY tag")
+            let rows = try Row.fetchAll(db, sql: "SELECT tag, COUNT(*) AS c FROM annotation WHERE tag != 0 GROUP BY tag")
             var result: [Tag: Int] = [:]
             for row in rows {
                 if let tag = Tag(rawValue: row["tag"]) { result[tag] = row["c"] }

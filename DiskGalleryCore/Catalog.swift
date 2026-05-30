@@ -13,6 +13,7 @@ public final class Catalog: Sendable {
     public let annotations: AnnotationStore
     public let search: SearchService
     public let hasher: HashVerifier
+    public let finderTags: FinderTagWriter
 
     public init(databaseURL: URL) throws {
         let pool = try AppDatabase.makePool(at: databaseURL)
@@ -24,6 +25,7 @@ public final class Catalog: Sendable {
         self.annotations = AnnotationStore(db: db)
         self.search = SearchService(db: db)
         self.hasher = HashVerifier()
+        self.finderTags = FinderTagWriter()
     }
 
     /// Opens (creating if needed) the catalog at the default Application Support path.

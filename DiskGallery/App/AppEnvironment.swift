@@ -22,13 +22,15 @@ struct ScanState {
 final class AppEnvironment {
     let catalog: Catalog
     let volumes: VolumeService
+    let shortcuts = ShortcutStore()
+    let theme = ThemeStore()
 
     var volumeSummaries: [VolumeSummary] = []
     var tagCounts: [Tag: Int] = [:]
     var totalReclaimable: Int64 = 0
 
     var selection: SidebarItem?
-    var selectedEntry: Entry?
+    var selectedEntries: [Entry] = []
     var selectedVolumeKey: String?
 
     var activeScan: ScanState?
@@ -40,6 +42,11 @@ final class AppEnvironment {
     init() throws {
         catalog = try Catalog.makeDefault()
         volumes = VolumeService()
+    }
+
+    var isSelectedVolumeConnected: Bool {
+        guard let key = selectedVolumeKey else { return false }
+        return volumes.isConnected(key: key)
     }
 
     func refresh() async {
@@ -87,11 +94,72 @@ final class AppEnvironment {
         }
     }
 
-    // MARK: Annotations
+    // MARK: Tagging
 
-    func setTag(_ tag: Tag, note: String?, volumeKey: String, relPath: String) async {
+    /// Dispatches a keyboard shortcut to its tagging action.
+    func perform(_ action: ShortcutAction, on entries: [Entry]) async {
+        if let decision = action.decision {
+            await applyDecision(decision, to: entries)
+        } else if let color = action.color {
+            await applyColor(color, to: entries)
+        }
+    }
+
+    func applyDecision(_ tag: Tag, to entries: [Entry]) async {
+        await apply(to: entries) { store, key, relPath in
+            try await store.setDecision(tag, volumeKey: key, relPath: relPath)
+        }
+    }
+
+    func applyColor(_ color: FinderColor, to entries: [Entry]) async {
+        await apply(to: entries) { store, key, relPath in
+            try await store.setColor(color, volumeKey: key, relPath: relPath)
+        }
+    }
+
+    func applyNote(_ note: String?, to entry: Entry) async {
+        guard let key = selectedVolumeKey else { return }
+        _ = try? await catalog.annotations.setNote(note, volumeKey: key, relPath: entry.relPath)
+        dataVersion += 1
+        await refresh()
+    }
+
+    /// Updates the catalog for each entry, then writes the resulting Finder tags to
+    /// the connected drive (catalog-only when the drive is disconnected).
+    private func apply(to entries: [Entry],
+                       _ mutate: (AnnotationStore, String, String) async throws -> Annotation?) async {
+        guard let key = selectedVolumeKey, !entries.isEmpty else { return }
+        let mount = volumes.mountURL(forKey: key)
+        var writes: [(url: URL, decision: Tag, color: FinderColor)] = []
+        for entry in entries {
+            let annotation = (try? await mutate(catalog.annotations, key, entry.relPath)) ?? nil
+            if let mount {
+                writes.append((mount.appendingPathComponent(entry.relPath),
+                               annotation?.tag ?? .none,
+                               annotation?.color ?? .none))
+            }
+        }
+        await writeFinderTags(writes)
+        dataVersion += 1
+        await refresh()
+    }
+
+    private func writeFinderTags(_ writes: [(url: URL, decision: Tag, color: FinderColor)]) async {
+        guard !writes.isEmpty else { return }
+        let writer = catalog.finderTags
+        await Task.detached(priority: .utility) {
+            for write in writes {
+                try? writer.apply(decision: write.decision, color: write.color, to: write.url)
+            }
+        }.value
+    }
+
+    // MARK: Catalog management
+
+    func deleteVolume(id: Int64) async {
         do {
-            try await catalog.annotations.set(tag: tag, note: note, volumeKey: volumeKey, relPath: relPath)
+            try await catalog.library.deleteVolume(id: id)
+            if case .volume(id) = selection { selection = nil }
             dataVersion += 1
             await refresh()
         } catch {
@@ -99,10 +167,6 @@ final class AppEnvironment {
         }
     }
 
-    // MARK: Duplicate hash verification
-
-    /// Hashes the connected members of a duplicate set (off the main thread) and
-    /// caches the digests. Disconnected members are skipped.
     func verify(set: DuplicateSet) async {
         do {
             let members = try await catalog.duplicates.members(name: set.name, logicalSize: set.logicalSize)
@@ -127,19 +191,6 @@ final class AppEnvironment {
                 try await catalog.duplicates.recordHash(entryId: entryId, hash: hash)
             }
             dataVersion += 1
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
-    // MARK: Catalog management
-
-    func deleteVolume(id: Int64) async {
-        do {
-            try await catalog.library.deleteVolume(id: id)
-            if case .volume(id) = selection { selection = nil }
-            dataVersion += 1
-            await refresh()
         } catch {
             errorMessage = error.localizedDescription
         }

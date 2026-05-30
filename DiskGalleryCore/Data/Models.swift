@@ -18,6 +18,48 @@ public enum Tag: Int, Codable, Sendable, CaseIterable, Identifiable {
         case .review: return "Review"
         }
     }
+
+    /// Finder color code used when this decision is written as a Finder tag.
+    public var finderColorCode: Int {
+        switch self {
+        case .none: return 0
+        case .keep: return FinderColor.green.rawValue
+        case .delete: return FinderColor.red.rawValue
+        case .review: return FinderColor.yellow.rawValue
+        }
+    }
+}
+
+/// A macOS Finder color. Raw values are Finder's internal color codes (the number
+/// after the newline in `_kMDItemUserTags`).
+public enum FinderColor: Int, Codable, Sendable, CaseIterable, Identifiable {
+    case none = 0
+    case gray = 1
+    case green = 2
+    case purple = 3
+    case blue = 4
+    case yellow = 5
+    case red = 6
+    case orange = 7
+
+    public var id: Int { rawValue }
+
+    /// The standard Finder tag name for this color.
+    public var tagName: String {
+        switch self {
+        case .none: return ""
+        case .gray: return "Gray"
+        case .green: return "Green"
+        case .purple: return "Purple"
+        case .blue: return "Blue"
+        case .yellow: return "Yellow"
+        case .red: return "Red"
+        case .orange: return "Orange"
+        }
+    }
+
+    /// Finder's visible top-to-bottom order — what number keys 1…7 map to.
+    public static let keyOrder: [FinderColor] = [.red, .orange, .yellow, .green, .blue, .purple, .gray]
 }
 
 /// A physical drive, identified by volume UUID (falling back to name when the
@@ -131,14 +173,17 @@ public struct Annotation: Codable, Sendable, Identifiable, FetchableRecord, Muta
     public var volumeUuid: String        // falls back to volume name when no UUID
     public var relPath: String
     public var tag: Tag
+    public var color: FinderColor
     public var note: String?
     public var updatedAt: Date
 
-    public init(id: Int64? = nil, volumeUuid: String, relPath: String, tag: Tag, note: String?, updatedAt: Date) {
+    public init(id: Int64? = nil, volumeUuid: String, relPath: String, tag: Tag,
+                color: FinderColor = .none, note: String?, updatedAt: Date) {
         self.id = id
         self.volumeUuid = volumeUuid
         self.relPath = relPath
         self.tag = tag
+        self.color = color
         self.note = note
         self.updatedAt = updatedAt
     }

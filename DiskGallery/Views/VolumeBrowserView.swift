@@ -5,19 +5,23 @@ struct VolumeBrowserView: View {
     @Environment(AppEnvironment.self) private var env
     let summary: VolumeSummary
     @State private var rootEntry: Entry?
+    @State private var nav = BrowserNav()
 
     var body: some View {
         Group {
             if let snapshotId = summary.latestSnapshotId {
                 if let root = rootEntry {
-                    NavigationStack {
+                    NavigationStack(path: $nav.path) {
                         FolderView(snapshotId: snapshotId, folder: root)
+                            .navigationDestination(for: Entry.self) { child in
+                                FolderView(snapshotId: snapshotId, folder: child)
+                            }
                     }
+                    .environment(nav)
                 } else {
-                    ProgressView()
-                        .task(id: snapshotId) {
-                            rootEntry = try? await env.catalog.library.rootEntry(snapshotId: snapshotId)
-                        }
+                    ProgressView().task(id: snapshotId) {
+                        rootEntry = try? await env.catalog.library.rootEntry(snapshotId: snapshotId)
+                    }
                 }
             } else {
                 ContentUnavailableView("Not scanned yet",
@@ -29,61 +33,83 @@ struct VolumeBrowserView: View {
     }
 }
 
-/// One level of the tree. Folders push a deeper level; tapping any row shows it in
-/// the detail inspector (so files and folders alike can be tagged).
+/// One level of the tree. Single-click selects (multi-select with ⌘/⇧); double-click
+/// opens a folder. Tagging shortcuts act on the current selection.
 struct FolderView: View {
     @Environment(AppEnvironment.self) private var env
+    @Environment(BrowserNav.self) private var nav
     let snapshotId: Int64
     let folder: Entry
 
     @State private var children: [Entry] = []
-    @State private var tags: [String: Tag] = [:]
+    @State private var annotations: [String: Annotation] = [:]
+    @State private var selection: Set<Int64> = []
+    @FocusState private var focused: Bool
 
     var body: some View {
-        List {
+        List(selection: $selection) {
             ForEach(children) { entry in
-                row(for: entry)
+                EntryRow(entry: entry, annotation: annotations[entry.relPath])
+                    .tag(entry.id)
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(TapGesture(count: 2).onEnded {
+                        if entry.isDir { nav.open(entry) }
+                    })
             }
             if children.isEmpty {
                 Text("Empty folder").foregroundStyle(.secondary)
             }
         }
+        .focusable()
+        .focused($focused)
+        .focusEffectDisabled()
+        .onKeyPress { press in handleKey(press) }
         .navigationTitle(folder.name)
-        .navigationDestination(for: Entry.self) { child in
-            FolderView(snapshotId: snapshotId, folder: child)
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Text(headerSummary).font(.callout).foregroundStyle(.secondary)
+            }
         }
-        .task(id: folder.id) { await load() }
+        .task(id: folder.id) {
+            await load()
+            focused = true
+        }
         .onChange(of: env.dataVersion) { _, _ in Task { await load() } }
-        .onAppear { env.selectedEntry = folder }
+        .onChange(of: selection) { _, _ in updateSelection() }
+        .onAppear { if selection.isEmpty { env.selectedEntries = [folder] } }
     }
 
-    @ViewBuilder
-    private func row(for entry: Entry) -> some View {
-        if entry.isDir {
-            NavigationLink(value: entry) {
-                EntryRow(entry: entry, tag: tags[entry.relPath])
-            }
-        } else {
-            Button {
-                env.selectedEntry = entry
-            } label: {
-                EntryRow(entry: entry, tag: tags[entry.relPath])
-            }
-            .buttonStyle(.plain)
-        }
+    private var headerSummary: String {
+        let count = children.count
+        if selection.count > 1 { return "\(selection.count) selected" }
+        return "\(count) item\(count == 1 ? "" : "s")"
+    }
+
+    private func updateSelection() {
+        let selected = children.filter { selection.contains($0.id) }
+        env.selectedEntries = selected.isEmpty ? [folder] : selected
+    }
+
+    private func handleKey(_ press: KeyPress) -> KeyPress.Result {
+        guard let action = env.shortcuts.action(forKey: press.characters) else { return .ignored }
+        let targets = env.selectedEntries
+        guard !targets.isEmpty else { return .ignored }
+        Task { await env.perform(action, on: targets) }
+        return .handled
     }
 
     private func load() async {
         children = (try? await env.catalog.library.children(parentId: folder.id, snapshotId: snapshotId)) ?? []
         if let key = env.selectedVolumeKey {
-            tags = (try? await env.catalog.annotations.tags(volumeKey: key, relPaths: children.map(\.relPath))) ?? [:]
+            annotations = (try? await env.catalog.annotations.annotations(
+                volumeKey: key, relPaths: children.map(\.relPath))) ?? [:]
         }
     }
 }
 
 struct EntryRow: View {
     let entry: Entry
-    let tag: Tag?
+    let annotation: Annotation?
 
     var body: some View {
         HStack(spacing: 8) {
@@ -92,7 +118,12 @@ struct EntryRow: View {
                 .frame(width: 18)
             Text(entry.name).lineLimit(1)
             Spacer(minLength: 8)
-            if let tag, tag != .none { TagChip(tag: tag) }
+            if let color = annotation?.color, color != .none {
+                Circle().fill(color.swiftUIColor).frame(width: 10, height: 10)
+            }
+            if let tag = annotation?.tag, tag != .none {
+                TagChip(tag: tag)
+            }
             Text(Format.bytes(entry.displaySize))
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -109,16 +140,7 @@ struct TagChip: View {
             .font(.caption2.weight(.medium))
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
-            .background(color.opacity(0.18), in: Capsule())
-            .foregroundStyle(color)
-    }
-
-    private var color: Color {
-        switch tag {
-        case .delete: return .red
-        case .keep: return .green
-        case .review: return .orange
-        case .none: return .gray
-        }
+            .background(tag.swiftUIColor.opacity(0.18), in: Capsule())
+            .foregroundStyle(tag.swiftUIColor)
     }
 }

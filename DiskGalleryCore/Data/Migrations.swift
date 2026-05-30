@@ -73,6 +73,14 @@ enum Migrations {
             }
         }
 
+        // Adds a Finder color dimension alongside the keep/delete/review decision.
+        migrator.registerMigration("v2") { db in
+            try db.alter(table: "annotation") { t in
+                t.add(column: "color", .integer).notNull().defaults(to: 0)
+            }
+            try db.create(index: "idx_annotation_color", on: "annotation", columns: ["color"])
+        }
+
         return migrator
     }
 }

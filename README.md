@@ -6,21 +6,28 @@ drive, scan it once, and DiskGallery records every file and folder with its size
 Keep all your drives mapped in one place to compare them, find duplicate copies
 across backups, and mark what to keep vs delete.
 
-**DiskGallery never writes to or deletes anything on a scanned drive.** The only
-thing it writes is its own local catalog database. This is enforced in code and by
-a unit test (`MutationGuardTests`).
+**Cataloging is strictly read-only** — scanning and hashing never modify your
+drives (enforced by `MutationGuardTests`). The *only* thing DiskGallery writes to a
+drive is the **Finder tags you explicitly apply**; everything else lives in its own
+local catalog database.
 
 ## Features
 
 - **Library of drives** — each identified by volume UUID, with live connected /
   disconnected badges.
 - **Instant offline browsing** — Finder-like tree with folder sizes pre-computed
-  and stored, so it's fast even with the drive unplugged.
+  and stored, so it's fast even with the drive unplugged. Single-click selects
+  (⌘/⇧ for multi-select); double-click opens a folder.
 - **Duplicate finder** — groups files by name + size across all drives (works
   offline), with an optional on-demand SHA-256 "verify by content" when a drive is
   connected, plus reclaimable-space totals.
-- **Keep / Delete / Review tags + notes** — keyed so your decisions survive
-  re-scanning a drive; filter the whole library by tag.
+- **Two tag dimensions** — a Keep / Delete / Review decision *and* a Finder color
+  (the 7 standard colors). Decisions survive re-scans; both are written to the
+  file as real **macOS Finder tags** when the drive is connected, so they show up
+  in Finder too.
+- **Keyboard tagging** — Q/W/E for Keep/Delete/Review, 1–7 for colors, all
+  rebindable in Settings. Acts on the whole multi-selection at once.
+- **Themes** — six accent themes with light / dark / system mode, in Settings.
 - **Full-text name search** across every cataloged drive.
 
 ## Requirements

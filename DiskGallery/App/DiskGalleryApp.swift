@@ -56,6 +56,14 @@ struct DiskGalleryApp: App {
             }
         }
         .windowToolbarStyle(.unified)
+
+        Settings {
+            if let env {
+                SettingsView()
+                    .environment(env)
+                    .preferredColorScheme(env.theme.mode.colorScheme)
+            }
+        }
     }
 }
 
@@ -63,7 +71,6 @@ struct ContentView: View {
     @Environment(AppEnvironment.self) private var env
 
     var body: some View {
-        @Bindable var env = env
         NavigationSplitView {
             LibrarySidebarView()
                 .navigationSplitViewColumnWidth(min: 220, ideal: 250)
@@ -85,6 +92,8 @@ struct ContentView: View {
         } message: {
             Text(env.errorMessage ?? "")
         }
+        .tint(env.theme.theme.accent)
+        .preferredColorScheme(env.theme.mode.colorScheme)
     }
 }
 
@@ -96,7 +105,7 @@ struct ContentColumn: View {
         switch env.selection {
         case .volume(let id):
             if let summary = env.volumeSummaries.first(where: { $0.id == id }) {
-                VolumeBrowserView(summary: summary)
+                VolumeBrowserView(summary: summary).id(summary.id)
             } else {
                 ContentUnavailableView("Drive not found", systemImage: "externaldrive")
             }
