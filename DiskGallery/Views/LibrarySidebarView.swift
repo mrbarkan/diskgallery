@@ -34,6 +34,11 @@ struct LibrarySidebarView: View {
                     DriveRow(summary: summary)
                         .tag(SidebarItem.volume(summary.id))
                         .contextMenu {
+                            if summary.latestSnapshotComplete == false {
+                                Button("Resume Scan") { env.resumeScan(volume: summary) }
+                                    .disabled(!env.volumes.isConnected(key: summary.uuid ?? summary.name))
+                                Divider()
+                            }
                             Button("Remove from Library", role: .destructive) {
                                 Task { await env.deleteVolume(id: summary.id) }
                             }
@@ -90,10 +95,19 @@ struct DriveRow: View {
                 Text(summary.name).lineLimit(1)
                 Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
+            if summary.latestSnapshotComplete == false {
+                Spacer(minLength: 4)
+                Image(systemName: "pause.circle.fill")
+                    .foregroundStyle(.orange)
+                    .help("Scan incomplete — right-click to resume")
+            }
         }
     }
 
     private var subtitle: String {
+        if summary.latestSnapshotComplete == false {
+            return "Incomplete — resume to finish"
+        }
         if let total = summary.totalLogical, let files = summary.fileCount {
             return "\(Format.bytes(total)) · \(Format.count(files)) files"
         }

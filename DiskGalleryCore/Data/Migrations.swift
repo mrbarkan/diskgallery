@@ -81,6 +81,21 @@ enum Migrations {
             try db.create(index: "idx_annotation_color", on: "annotation", columns: ["color"])
         }
 
+        // Resumable scans: a completion flag + a queue of directories still to expand.
+        migrator.registerMigration("v3") { db in
+            try db.alter(table: "snapshot") { t in
+                t.add(column: "isComplete", .boolean).notNull().defaults(to: true)
+            }
+            try db.create(table: "pendingDir") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("snapshotId", .integer).notNull()
+                    .references("snapshot", onDelete: .cascade)
+                t.column("entryId", .integer).notNull()
+                t.column("relPath", .text).notNull()
+            }
+            try db.create(index: "idx_pendingDir_snapshot", on: "pendingDir", columns: ["snapshotId"])
+        }
+
         return migrator
     }
 }

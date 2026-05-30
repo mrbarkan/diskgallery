@@ -82,8 +82,7 @@ struct ContentView: View {
             EntryDetailView()
                 .navigationSplitViewColumnWidth(min: 280, ideal: 320)
         }
-        .sheet(isPresented: Binding(get: { env.activeScan != nil },
-                                    set: { if !$0 { env.cancelScan() } })) {
+        .sheet(isPresented: Binding(get: { env.activeScan != nil }, set: { _ in })) {
             ScanProgressView()
         }
         .alert("Something went wrong",

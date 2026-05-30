@@ -2,33 +2,54 @@ import Foundation
 import GRDB
 
 public enum ScanError: Error, Sendable {
-    case cannotEnumerate
     case notADirectory
 }
 
-/// Walks a mounted volume read-only and records a snapshot of every file and
-/// folder into the catalog. Folder sizes are rolled up and stored so the tree
-/// browses instantly when the drive is later disconnected.
+/// Walks a mounted volume read-only and records a snapshot of every file and folder.
 ///
-/// READ-ONLY: this type only ever *reads* the filesystem (resource values via the
-/// enumerator). It contains no file-mutating API. The only writes are to the
-/// catalog database. `MutationGuardTests` enforces this.
+/// The traversal is an explicit **directory work-queue** (`pendingDir`), so a scan
+/// can be paused and resumed later — even across launches. Folder sizes are rolled
+/// up from the database once the queue drains.
+///
+/// READ-ONLY: only ever reads the filesystem (`contentsOfDirectory`, resource
+/// values). No file-mutating API. `MutationGuardTests` enforces this.
 public struct Scanner: Sendable {
     let db: AppDatabase
 
     init(db: AppDatabase) { self.db = db }
 
-    /// Default rows per insert transaction. Large batches amortise transaction cost.
     public static let defaultBatchSize = 8_000
 
+    /// Starts a fresh scan of `volumeURL`.
     public func scan(volumeURL: URL, batchSize: Int = Scanner.defaultBatchSize)
+        -> AsyncThrowingStream<ScanProgress, Error>
+    {
+        run(volumeURL: volumeURL, resumeSnapshotId: nil, batchSize: batchSize, maxBatches: nil)
+    }
+
+    /// Continues a previously-paused (incomplete) scan. `volumeURL` is the drive's
+    /// current mount point.
+    public func resume(snapshotId: Int64, volumeURL: URL, batchSize: Int = Scanner.defaultBatchSize)
+        -> AsyncThrowingStream<ScanProgress, Error>
+    {
+        run(volumeURL: volumeURL, resumeSnapshotId: snapshotId, batchSize: batchSize, maxBatches: nil)
+    }
+
+    // MARK: - Implementation
+
+    /// `maxBatches` stops after N batches without finalizing (used by tests to create
+    /// a deterministic paused state).
+    func run(volumeURL: URL, resumeSnapshotId: Int64?, batchSize: Int, maxBatches: Int?)
         -> AsyncThrowingStream<ScanProgress, Error>
     {
         AsyncThrowingStream { continuation in
             let task = Task.detached(priority: .utility) {
                 do {
-                    try await runScan(volumeURL: volumeURL, batchSize: batchSize, continuation: continuation)
+                    try await execute(volumeURL: volumeURL, resumeSnapshotId: resumeSnapshotId,
+                                      batchSize: batchSize, maxBatches: maxBatches, continuation: continuation)
                     continuation.finish()
+                } catch is CancellationError {
+                    continuation.finish()   // paused — snapshot kept, resumable
                 } catch {
                     continuation.finish(throwing: error)
                 }
@@ -37,195 +58,195 @@ public struct Scanner: Sendable {
         }
     }
 
-    // MARK: - Implementation
-
-    private struct RollupNode {
-        let id: Int64
-        let parentId: Int64        // 0 == no parent (root)
-        let isDir: Bool
-        let log: Int64
-        let alloc: Int64
-    }
-
-    private final class ErrorCounter: @unchecked Sendable { var count = 0 }
-
-    private func runScan(volumeURL: URL,
+    private func execute(volumeURL: URL,
+                         resumeSnapshotId: Int64?,
                          batchSize: Int,
+                         maxBatches: Int?,
                          continuation: AsyncThrowingStream<ScanProgress, Error>.Continuation) async throws
     {
-        // Validate up front (read-only stat) so a bad path never creates a row.
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: volumeURL.path, isDirectory: &isDirectory),
               isDirectory.boolValue else {
             throw ScanError.notADirectory
         }
-
-        let info = VolumeMetadata.read(volumeURL)
+        let scanRoot = volumeURL.resolvingSymlinksInPath()
         let now = Date()
 
-        // Create the volume (or reuse it) + a fresh snapshot + the root entry.
-        let (snapshotId, rootId, startId) = try await db.writer.write { db -> (Int64, Int64, Int64) in
-            let volumeId = try Scanner.findOrCreateVolume(db, info: info, now: now)
-            var snapshot = Snapshot(volumeId: volumeId, scannedAt: now,
-                                    totalCapacity: info.totalCapacity,
-                                    freeCapacity: info.freeCapacity,
-                                    fsType: info.fsType)
-            try snapshot.insert(db)
-            let sid = snapshot.id!
-            let maxId = try Int64.fetchOne(db, sql: "SELECT IFNULL(MAX(id), 0) FROM entry") ?? 0
-            let rootId = maxId + 1
-            let root = Entry(id: rootId, snapshotId: sid, parentId: nil, name: info.name,
-                             relPath: "", isDir: true, logicalSize: 0, allocSize: 0)
-            try root.insert(db)
-            return (sid, rootId, rootId + 1)
-        }
-
-        do {
-            try await enumerateAndInsert(volumeURL: volumeURL, batchSize: batchSize,
-                                         snapshotId: snapshotId, rootId: rootId, startId: startId,
-                                         volumeName: info.name, continuation: continuation)
-        } catch {
-            // Roll back the whole partial snapshot (cascade deletes its entries).
-            try? await db.writer.write { db in
-                _ = try Snapshot.deleteOne(db, key: snapshotId)
+        // Create (or locate, when resuming) the snapshot + its root + initial queue.
+        let snapshotId: Int64
+        if let resumeId = resumeSnapshotId {
+            snapshotId = resumeId
+        } else {
+            let info = VolumeMetadata.read(scanRoot)
+            snapshotId = try await db.writer.write { db -> Int64 in
+                let volumeId = try Scanner.findOrCreateVolume(db, info: info, now: now)
+                var snapshot = Snapshot(volumeId: volumeId, scannedAt: now,
+                                        totalCapacity: info.totalCapacity, freeCapacity: info.freeCapacity,
+                                        fsType: info.fsType, isComplete: false)
+                try snapshot.insert(db)
+                let sid = snapshot.id!
+                let maxId = try Int64.fetchOne(db, sql: "SELECT IFNULL(MAX(id), 0) FROM entry") ?? 0
+                let rootId = maxId + 1
+                let root = Entry(id: rootId, snapshotId: sid, parentId: nil, name: info.name,
+                                 relPath: "", isDir: true, logicalSize: 0, allocSize: 0)
+                try root.insert(db)
+                try db.execute(sql: "UPDATE snapshot SET rootEntryId = ? WHERE id = ?", arguments: [rootId, sid])
+                var pending = PendingDir(snapshotId: sid, entryId: rootId, relPath: "")
+                try pending.insert(db)
+                return sid
             }
-            throw error
         }
-    }
 
-    private func enumerateAndInsert(volumeURL: URL,
-                                    batchSize: Int,
-                                    snapshotId: Int64,
-                                    rootId: Int64,
-                                    startId: Int64,
-                                    volumeName: String,
-                                    continuation: AsyncThrowingStream<ScanProgress, Error>.Continuation) async throws
-    {
-        let keys: [URLResourceKey] = [
-            .isDirectoryKey, .nameKey, .fileSizeKey, .totalFileAllocatedSizeKey,
-            .contentModificationDateKey, .isSymbolicLinkKey, .isPackageKey,
-        ]
+        // Restore running counters (resume-safe).
+        let restored = try await db.writer.read { db -> (Int, Int64, Int64) in
+            let files = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM entry WHERE snapshotId = ? AND isDir = 0", arguments: [snapshotId]) ?? 0
+            let bytes = try Int64.fetchOne(db, sql: "SELECT IFNULL(SUM(logicalSize), 0) FROM entry WHERE snapshotId = ? AND isDir = 0", arguments: [snapshotId]) ?? 0
+            let nextId = (try Int64.fetchOne(db, sql: "SELECT IFNULL(MAX(id), 0) FROM entry") ?? 0) + 1
+            return (files, bytes, nextId)
+        }
+        var filesSeen = restored.0
+        var bytesSeen = restored.1
+        var nextId = restored.2
+        var unreadable = 0
+
+        let keys: [URLResourceKey] = [.isDirectoryKey, .nameKey, .fileSizeKey, .totalFileAllocatedSizeKey,
+                                      .contentModificationDateKey, .isPackageKey, .isSymbolicLinkKey]
         let keySet = Set(keys)
-        let errors = ErrorCounter()
-
         let fm = FileManager.default
-        // Resolve symlinks on the root so its prefix matches the paths the
-        // enumerator yields (macOS reports e.g. /private/var, not /var).
-        let scanRoot = volumeURL.resolvingSymlinksInPath()
-        guard let enumerator = fm.enumerator(at: scanRoot,
-                                             includingPropertiesForKeys: keys,
-                                             options: [.skipsPackageDescendants],
-                                             errorHandler: { _, _ in errors.count += 1; return true })
-        else { throw ScanError.cannotEnumerate }
 
-        // macOS reports the same location as both /var/… and /private/var/…; the
-        // root and the enumerated children can disagree. Normalize both sides.
-        let rootPath = Scanner.normalizePrivate(scanRoot.path)
-        let prefix = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
+        continuation.yield(ScanProgress(filesSeen: filesSeen, bytesSeen: bytesSeen, snapshotId: snapshotId))
 
-        var dirIds: [String: Int64] = ["": rootId]
-        var nodes: [RollupNode] = [RollupNode(id: rootId, parentId: 0, isDir: true, log: 0, alloc: 0)]
-        var buffer: [Entry] = []
-        buffer.reserveCapacity(batchSize)
-        var nextId = startId
-        var filesSeen = 0
-        var bytesSeen: Int64 = 0
-
-        continuation.yield(ScanProgress(currentPath: volumeName))
-
-        // `nextObject()` rather than for-in: the Sequence iterator is unavailable
-        // from async contexts.
-        while let object = enumerator.nextObject() {
+        var batchCount = 0
+        while true {
             try Task.checkCancellation()
-            guard let url = object as? URL else { continue }
+            if let maxBatches, batchCount >= maxBatches { return }   // paused, snapshot left incomplete
 
-            let values = try? url.resourceValues(forKeys: keySet)
-            let isDir = values?.isDirectory ?? false
-            let name = values?.name ?? url.lastPathComponent
-            let logical = Int64(values?.fileSize ?? 0)
-            let alloc = Int64(values?.totalFileAllocatedSize ?? 0)
-            let path = Scanner.normalizePrivate(url.path)
-            let rel = path.hasPrefix(prefix)
-                ? String(path.dropFirst(prefix.count))
-                : (path as NSString).lastPathComponent
-            let parentRel = (rel as NSString).deletingLastPathComponent
-            let parentId = dirIds[parentRel] ?? rootId
-            let id = nextId
-            nextId += 1
-            let ext = url.pathExtension.lowercased()
-
-            buffer.append(Entry(id: id, snapshotId: snapshotId, parentId: parentId, name: name,
-                                relPath: rel, isDir: isDir, logicalSize: logical, allocSize: alloc,
-                                modifiedAt: values?.contentModificationDate,
-                                ext: ext.isEmpty ? nil : ext))
-            nodes.append(RollupNode(id: id, parentId: parentId, isDir: isDir, log: logical, alloc: alloc))
-            if isDir { dirIds[rel] = id }
-            else { filesSeen += 1; bytesSeen += logical }
-
-            if buffer.count >= batchSize {
-                try await insert(buffer)
-                buffer.removeAll(keepingCapacity: true)
-                continuation.yield(ScanProgress(filesSeen: filesSeen, bytesSeen: bytesSeen,
-                                                currentPath: rel, unreadableCount: errors.count))
+            let pendingBatch = try await db.writer.read { db in
+                try PendingDir.fetchAll(db, sql: "SELECT * FROM pendingDir WHERE snapshotId = ? ORDER BY id LIMIT 128",
+                                        arguments: [snapshotId])
             }
-        }
-        if !buffer.isEmpty { try await insert(buffer) }
+            if pendingBatch.isEmpty { break }
 
-        // Bottom-up folder rollup in O(n): a pre-order walk reversed visits every
-        // descendant before its ancestor, so each node's subtree total is complete
-        // by the time we reach it.
-        var subLog: [Int64: Int64] = [:]
-        var subAlloc: [Int64: Int64] = [:]
-        var dirRollups: [(id: Int64, log: Int64, alloc: Int64)] = []
-        var rootLog: Int64 = 0
-        for node in nodes.reversed() {
-            let l = (subLog.removeValue(forKey: node.id) ?? 0) + node.log
-            let a = (subAlloc.removeValue(forKey: node.id) ?? 0) + node.alloc
-            if node.isDir { dirRollups.append((node.id, l, a)) }
-            if node.id == rootId { rootLog = l }
-            if node.parentId != 0 {
-                subLog[node.parentId, default: 0] += l
-                subAlloc[node.parentId, default: 0] += a
+            var toInsert: [Entry] = []
+            var toEnqueue: [(entryId: Int64, relPath: String)] = []
+            var processed: [Int64] = []
+            var lastPath = ""
+
+            for pdir in pendingBatch {
+                let dirURL = pdir.relPath.isEmpty ? scanRoot : scanRoot.appendingPathComponent(pdir.relPath)
+                lastPath = pdir.relPath
+                let children: [URL]
+                do {
+                    children = try fm.contentsOfDirectory(at: dirURL, includingPropertiesForKeys: keys, options: [])
+                } catch {
+                    unreadable += 1
+                    processed.append(pdir.id!)
+                    continue
+                }
+                for child in children {
+                    let values = try? child.resourceValues(forKeys: keySet)
+                    let isDir = values?.isDirectory ?? false
+                    let name = values?.name ?? child.lastPathComponent
+                    let logical = Int64(values?.fileSize ?? 0)
+                    let alloc = Int64(values?.totalFileAllocatedSize ?? 0)
+                    let rel = pdir.relPath.isEmpty ? name : pdir.relPath + "/" + name
+                    let id = nextId
+                    nextId += 1
+                    let ext = child.pathExtension.lowercased()
+                    toInsert.append(Entry(id: id, snapshotId: snapshotId, parentId: pdir.entryId, name: name,
+                                          relPath: rel, isDir: isDir, logicalSize: logical, allocSize: alloc,
+                                          modifiedAt: values?.contentModificationDate, ext: ext.isEmpty ? nil : ext))
+                    let isPackage = values?.isPackage ?? false
+                    let isSymlink = values?.isSymbolicLink ?? false
+                    if isDir && !isPackage && !isSymlink {
+                        toEnqueue.append((id, rel))      // descend later; packages/symlinks stay leaves
+                    }
+                    if !isDir { filesSeen += 1; bytesSeen += logical }
+                }
+                processed.append(pdir.id!)
+                if toInsert.count >= batchSize { break }
             }
+
+            // One atomic step: insert entries, enqueue child dirs, drop processed dirs.
+            let entriesToInsert = toInsert
+            let dirsToEnqueue = toEnqueue
+            let processedIds = processed
+            try await db.writer.write { db in
+                for entry in entriesToInsert { try entry.insert(db) }
+                for item in dirsToEnqueue {
+                    var pd = PendingDir(snapshotId: snapshotId, entryId: item.entryId, relPath: item.relPath)
+                    try pd.insert(db)
+                }
+                for pid in processedIds {
+                    try db.execute(sql: "DELETE FROM pendingDir WHERE id = ?", arguments: [pid])
+                }
+            }
+            batchCount += 1
+            continuation.yield(ScanProgress(filesSeen: filesSeen, bytesSeen: bytesSeen, currentPath: lastPath,
+                                            unreadableCount: unreadable, snapshotId: snapshotId))
         }
 
-        try await writeDirRollups(dirRollups)
-
-        let finalFileCount = filesSeen
-        let finalRootLog = rootLog
+        // Queue drained -> roll up folder sizes and mark complete.
+        let rootLog = try await computeRollup(snapshotId: snapshotId)
+        let finalFiles = filesSeen
         try await db.writer.write { db in
-            try db.execute(sql: "UPDATE snapshot SET rootEntryId = ?, fileCount = ?, totalLogical = ? WHERE id = ?",
-                           arguments: [rootId, finalFileCount, finalRootLog, snapshotId])
+            try db.execute(sql: "UPDATE snapshot SET isComplete = 1, fileCount = ?, totalLogical = ? WHERE id = ?",
+                           arguments: [finalFiles, rootLog, snapshotId])
         }
-
-        continuation.yield(ScanProgress(filesSeen: filesSeen, bytesSeen: bytesSeen,
-                                        unreadableCount: errors.count, isComplete: true, snapshotId: snapshotId))
+        continuation.yield(ScanProgress(filesSeen: filesSeen, bytesSeen: bytesSeen, unreadableCount: unreadable,
+                                        isComplete: true, snapshotId: snapshotId))
     }
 
-    private func insert(_ batch: [Entry]) async throws {
-        try await db.writer.write { db in
-            for entry in batch { try entry.insert(db) }
+    /// Computes each directory's subtree size from the stored tree in O(n) and
+    /// returns the root's total. Children always have a higher id than their parent
+    /// (ids are assigned in insertion order, parents before children), so descending
+    /// id order visits every descendant before its ancestor.
+    private func computeRollup(snapshotId: Int64) async throws -> Int64 {
+        struct SizeRow: Decodable, FetchableRecord {
+            var id: Int64
+            var parentId: Int64?
+            var isDir: Bool
+            var logicalSize: Int64
+            var allocSize: Int64
         }
-    }
 
-    private func writeDirRollups(_ rollups: [(id: Int64, log: Int64, alloc: Int64)]) async throws {
+        let dirSizes: [(id: Int64, log: Int64, alloc: Int64)] = try await db.writer.read { db in
+            var subLog: [Int64: Int64] = [:]
+            var subAlloc: [Int64: Int64] = [:]
+            var dirs: [(id: Int64, log: Int64, alloc: Int64)] = []
+            let cursor = try SizeRow.fetchCursor(db, sql: """
+                SELECT id, parentId, isDir, logicalSize, allocSize FROM entry
+                WHERE snapshotId = ? ORDER BY id DESC
+                """, arguments: [snapshotId])
+            while let row = try cursor.next() {
+                let l = (subLog.removeValue(forKey: row.id) ?? 0) + row.logicalSize
+                let a = (subAlloc.removeValue(forKey: row.id) ?? 0) + row.allocSize
+                if row.isDir { dirs.append((row.id, l, a)) }
+                if let parent = row.parentId {
+                    subLog[parent, default: 0] += l
+                    subAlloc[parent, default: 0] += a
+                }
+            }
+            return dirs
+        }
+
         let chunk = 5_000
         var i = 0
-        while i < rollups.count {
-            let slice = Array(rollups[i ..< min(i + chunk, rollups.count)])
+        while i < dirSizes.count {
+            let slice = Array(dirSizes[i ..< min(i + chunk, dirSizes.count)])
             try await db.writer.write { db in
-                for r in slice {
+                for d in slice {
                     try db.execute(sql: "UPDATE entry SET subtreeLogicalSize = ?, subtreeAllocSize = ? WHERE id = ?",
-                                   arguments: [r.log, r.alloc, r.id])
+                                   arguments: [d.log, d.alloc, d.id])
                 }
             }
             i += chunk
         }
-    }
 
-    /// Collapses a leading `/private` so /var and /private/var paths compare equal.
-    static func normalizePrivate(_ path: String) -> String {
-        path.hasPrefix("/private/") ? String(path.dropFirst(8)) : path
+        return try await db.writer.read { db in
+            try Int64.fetchOne(db, sql: "SELECT IFNULL(subtreeLogicalSize, 0) FROM entry WHERE snapshotId = ? AND parentId IS NULL",
+                               arguments: [snapshotId]) ?? 0
+        }
     }
 
     static func findOrCreateVolume(_ db: Database, info: VolumeInfo, now: Date) throws -> Int64 {

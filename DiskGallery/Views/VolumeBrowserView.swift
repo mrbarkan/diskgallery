@@ -8,27 +8,55 @@ struct VolumeBrowserView: View {
     @State private var nav = BrowserNav()
 
     var body: some View {
-        Group {
-            if let snapshotId = summary.latestSnapshotId {
-                if let root = rootEntry {
-                    NavigationStack(path: $nav.path) {
-                        FolderView(snapshotId: snapshotId, folder: root, nav: nav)
-                            .navigationDestination(for: Entry.self) { child in
-                                FolderView(snapshotId: snapshotId, folder: child, nav: nav)
-                            }
+        VStack(spacing: 0) {
+            if summary.latestSnapshotComplete == false {
+                IncompleteBanner(summary: summary)
+            }
+            Group {
+                if let snapshotId = summary.latestSnapshotId {
+                    if let root = rootEntry {
+                        NavigationStack(path: $nav.path) {
+                            FolderView(snapshotId: snapshotId, folder: root, nav: nav)
+                                .navigationDestination(for: Entry.self) { child in
+                                    FolderView(snapshotId: snapshotId, folder: child, nav: nav)
+                                }
+                        }
+                    } else {
+                        ProgressView().task(id: snapshotId) {
+                            rootEntry = try? await env.catalog.library.rootEntry(snapshotId: snapshotId)
+                        }
                     }
                 } else {
-                    ProgressView().task(id: snapshotId) {
-                        rootEntry = try? await env.catalog.library.rootEntry(snapshotId: snapshotId)
-                    }
+                    ContentUnavailableView("Not scanned yet",
+                                           systemImage: "externaldrive.badge.questionmark",
+                                           description: Text("Connect this drive and scan it to browse its contents."))
                 }
-            } else {
-                ContentUnavailableView("Not scanned yet",
-                                       systemImage: "externaldrive.badge.questionmark",
-                                       description: Text("Connect this drive and scan it to browse its contents."))
             }
         }
         .onAppear { env.selectedVolumeKey = summary.uuid ?? summary.name }
+    }
+}
+
+struct IncompleteBanner: View {
+    @Environment(AppEnvironment.self) private var env
+    let summary: VolumeSummary
+
+    var body: some View {
+        let connected = env.volumes.isConnected(key: summary.uuid ?? summary.name)
+        HStack(spacing: 10) {
+            Image(systemName: "pause.circle.fill").foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("This scan is incomplete").font(.callout.weight(.medium))
+                Text("Folder sizes finish calculating once you resume.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Resume") { env.resumeScan(volume: summary) }
+                .disabled(!connected)
+                .help(connected ? "Continue where it left off" : "Connect the drive to resume")
+        }
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(.orange.opacity(0.12))
     }
 }
 

@@ -99,10 +99,12 @@ public struct Snapshot: Codable, Sendable, Identifiable, FetchableRecord, Mutabl
     public var rootEntryId: Int64?
     public var fileCount: Int64?
     public var totalLogical: Int64?
+    public var isComplete: Bool          // false while a scan is in progress / paused
 
     public init(id: Int64? = nil, volumeId: Int64, scannedAt: Date,
                 totalCapacity: Int64? = nil, freeCapacity: Int64? = nil, fsType: String? = nil,
-                rootEntryId: Int64? = nil, fileCount: Int64? = nil, totalLogical: Int64? = nil) {
+                rootEntryId: Int64? = nil, fileCount: Int64? = nil, totalLogical: Int64? = nil,
+                isComplete: Bool = true) {
         self.id = id
         self.volumeId = volumeId
         self.scannedAt = scannedAt
@@ -112,11 +114,24 @@ public struct Snapshot: Codable, Sendable, Identifiable, FetchableRecord, Mutabl
         self.rootEntryId = rootEntryId
         self.fileCount = fileCount
         self.totalLogical = totalLogical
+        self.isComplete = isComplete
     }
 
     public mutating func didInsert(_ inserted: InsertionSuccess) {
         id = inserted.rowID
     }
+}
+
+/// A directory still waiting to be expanded during a (possibly paused) scan. The
+/// presence of rows for a snapshot means that scan is resumable.
+struct PendingDir: Codable, FetchableRecord, MutablePersistableRecord {
+    static let databaseTableName = "pendingDir"
+    var id: Int64?
+    var snapshotId: Int64
+    var entryId: Int64
+    var relPath: String
+
+    mutating func didInsert(_ inserted: InsertionSuccess) { id = inserted.rowID }
 }
 
 /// A single file or folder within a snapshot. Folder sizes are pre-computed and

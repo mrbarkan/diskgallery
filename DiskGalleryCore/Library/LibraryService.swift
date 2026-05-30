@@ -14,6 +14,7 @@ public struct VolumeSummary: Codable, Sendable, Identifiable, FetchableRecord {
     public var fileCount: Int64?
     public var totalLogical: Int64?
     public var rootEntryId: Int64?
+    public var latestSnapshotComplete: Bool?
 }
 
 /// Read queries that power the library sidebar and the tree browser.
@@ -25,7 +26,7 @@ public struct LibraryService: Sendable {
                s.id AS latestSnapshotId, s.scannedAt AS scannedAt,
                s.totalCapacity AS totalCapacity, s.freeCapacity AS freeCapacity,
                s.fsType AS fsType, s.fileCount AS fileCount, s.totalLogical AS totalLogical,
-               s.rootEntryId AS rootEntryId
+               s.rootEntryId AS rootEntryId, s.isComplete AS latestSnapshotComplete
         FROM volume v
         LEFT JOIN snapshot s ON s.id = (
             SELECT id FROM snapshot s2 WHERE s2.volumeId = v.id

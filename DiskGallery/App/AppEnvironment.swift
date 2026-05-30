@@ -14,7 +14,10 @@ enum SidebarItem: Hashable {
 struct ScanState {
     var volumeName: String
     var progress: ScanProgress
+    var isResume: Bool
 }
+
+enum ScanStop { case none, pause, discard }
 
 /// Holds the catalog + live UI state. The single source of truth injected into the
 /// view tree. GRDB never appears here — everything goes through `Catalog`.
@@ -35,10 +38,13 @@ final class AppEnvironment {
     var selectedVolumeKey: String?
 
     var activeScan: ScanState?
+    var stopRequested = false        // drives the Stop confirmation prompt
     var dataVersion = 0          // bumped on any mutation, so views reload
     var errorMessage: String?
 
     @ObservationIgnored private var scanTask: Task<Void, Never>?
+    @ObservationIgnored private var scanStop: ScanStop = .none
+    @ObservationIgnored private var currentScanSnapshotId: Int64?
     @ObservationIgnored private var keyMonitor: Any?
 
     init() throws {
@@ -91,35 +97,67 @@ final class AppEnvironment {
     // MARK: Scanning
 
     func startScan(url: URL) {
-        scanTask?.cancel()
-        scanTask = Task { await runScan(url) }
+        beginScan(url: url, resumeSnapshotId: nil, isResume: false)
     }
 
-    func cancelScan() {
-        scanTask?.cancel()
-        activeScan = nil
+    /// Continues a drive's paused (incomplete) scan. The drive must be connected.
+    func resumeScan(volume: VolumeSummary) {
+        guard let snapshotId = volume.latestSnapshotId else { return }
+        let key = volume.uuid ?? volume.name
+        guard let mountURL = volumes.mountURL(forKey: key) else {
+            errorMessage = "Connect “\(volume.name)” to resume its scan."
+            return
+        }
+        beginScan(url: mountURL, resumeSnapshotId: snapshotId, isResume: true)
     }
 
-    private func runScan(_ url: URL) async {
+    private func beginScan(url: URL, resumeSnapshotId: Int64?, isResume: Bool) {
+        scanTask?.cancel()
+        scanStop = .none
+        stopRequested = false
+        currentScanSnapshotId = resumeSnapshotId
+        scanTask = Task { await runScan(url: url, resumeSnapshotId: resumeSnapshotId, isResume: isResume) }
+    }
+
+    // Stop prompt actions
+    func requestStop() { stopRequested = true }
+    func continueScan() { stopRequested = false }
+    func pauseScan() { stopRequested = false; scanStop = .pause }
+    func discardScan() { stopRequested = false; scanStop = .discard }
+
+    private func runScan(url: URL, resumeSnapshotId: Int64?, isResume: Bool) async {
         let name = VolumeMetadata.read(url).name
-        activeScan = ScanState(volumeName: name, progress: ScanProgress(currentPath: name))
+        activeScan = ScanState(volumeName: name, progress: ScanProgress(currentPath: name), isResume: isResume)
+
+        let stream = resumeSnapshotId.map { catalog.scanner.resume(snapshotId: $0, volumeURL: url) }
+            ?? catalog.scanner.scan(volumeURL: url)
+
+        var completed = false
         do {
-            for try await progress in catalog.scanner.scan(volumeURL: url) {
+            for try await progress in stream {
+                if let sid = progress.snapshotId { currentScanSnapshotId = sid }
                 activeScan?.progress = progress
-                if progress.isComplete {
-                    activeScan = nil
-                    await refresh()
-                    if let sid = progress.snapshotId,
-                       let summary = volumeSummaries.first(where: { $0.latestSnapshotId == sid }) {
-                        selection = .volume(summary.id)
-                    }
-                }
+                if progress.isComplete { completed = true }
+                if scanStop != .none { break }      // user chose Pause or Discard
             }
         } catch is CancellationError {
-            activeScan = nil
+            // superseded by a new scan
         } catch {
-            activeScan = nil
             errorMessage = error.localizedDescription
+        }
+
+        let mode = scanStop
+        let snapshotId = currentScanSnapshotId
+        scanStop = .none
+        activeScan = nil
+
+        if mode == .discard, let sid = snapshotId {
+            try? await catalog.library.deleteSnapshot(id: sid)
+        }
+        await refresh()
+        if completed, let sid = snapshotId,
+           let summary = volumeSummaries.first(where: { $0.latestSnapshotId == sid }) {
+            selection = .volume(summary.id)
         }
     }
 

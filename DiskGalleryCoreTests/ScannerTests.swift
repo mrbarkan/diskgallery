@@ -94,4 +94,44 @@ final class ScannerTests: XCTestCase {
             // expected
         }
     }
+
+    func testPauseAndResumeProducesSameCatalog() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let root = try Fixture.makeTree()
+
+        // Partial scan: stop after one batch, leaving directories queued.
+        var snapshotId: Int64?
+        for try await progress in catalog.scanner.run(volumeURL: root, resumeSnapshotId: nil,
+                                                      batchSize: 2, maxBatches: 1) {
+            snapshotId = progress.snapshotId
+        }
+        let sid = try XCTUnwrap(snapshotId)
+
+        let paused = try await catalog.database.writer.read { db -> (complete: Bool, pending: Int, entries: Int) in
+            let complete = try Bool.fetchOne(db, sql: "SELECT isComplete FROM snapshot WHERE id = ?", arguments: [sid]) ?? true
+            let pending = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM pendingDir WHERE snapshotId = ?", arguments: [sid]) ?? 0
+            let entries = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM entry WHERE snapshotId = ?", arguments: [sid]) ?? 0
+            return (complete, pending, entries)
+        }
+        XCTAssertFalse(paused.complete, "Paused scan should be incomplete")
+        XCTAssertGreaterThan(paused.pending, 0, "Paused scan should leave directories queued")
+        XCTAssertLessThan(paused.entries, 7, "Paused scan should be partial")
+
+        // Resume to completion.
+        for try await _ in catalog.scanner.resume(snapshotId: sid, volumeURL: root) {}
+
+        let done = try await catalog.database.writer.read { db -> (entries: Int, complete: Bool, pending: Int, rootSize: Int64?, subSize: Int64?) in
+            let entries = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM entry WHERE snapshotId = ?", arguments: [sid]) ?? 0
+            let complete = try Bool.fetchOne(db, sql: "SELECT isComplete FROM snapshot WHERE id = ?", arguments: [sid]) ?? false
+            let pending = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM pendingDir WHERE snapshotId = ?", arguments: [sid]) ?? 0
+            let rootSize = try Int64.fetchOne(db, sql: "SELECT subtreeLogicalSize FROM entry WHERE snapshotId = ? AND parentId IS NULL", arguments: [sid])
+            let subSize = try Int64.fetchOne(db, sql: "SELECT subtreeLogicalSize FROM entry WHERE snapshotId = ? AND relPath = 'sub'", arguments: [sid])
+            return (entries, complete, pending, rootSize, subSize)
+        }
+        XCTAssertEqual(done.entries, 7, "Resumed scan should hold the whole tree")
+        XCTAssertTrue(done.complete, "Resumed scan should be complete")
+        XCTAssertEqual(done.pending, 0, "Queue should be drained")
+        XCTAssertEqual(done.rootSize, 450, "Root rollup correct after resume")
+        XCTAssertEqual(done.subSize, 150, "Folder rollup correct after resume")
+    }
 }
