@@ -39,6 +39,7 @@ final class AppEnvironment {
 
     var activeScan: ScanState?
     var stopRequested = false        // drives the Stop confirmation prompt
+    var isStoppingScan = false       // pause/discard chosen, winding down
     var dataVersion = 0          // bumped on any mutation, so views reload
     var errorMessage: String?
 
@@ -122,8 +123,8 @@ final class AppEnvironment {
     // Stop prompt actions
     func requestStop() { stopRequested = true }
     func continueScan() { stopRequested = false }
-    func pauseScan() { stopRequested = false; scanStop = .pause }
-    func discardScan() { stopRequested = false; scanStop = .discard }
+    func pauseScan() { stopRequested = false; isStoppingScan = true; scanStop = .pause }
+    func discardScan() { stopRequested = false; isStoppingScan = true; scanStop = .discard }
 
     private func runScan(url: URL, resumeSnapshotId: Int64?, isResume: Bool) async {
         let name = VolumeMetadata.read(url).name
@@ -150,6 +151,7 @@ final class AppEnvironment {
         let snapshotId = currentScanSnapshotId
         scanStop = .none
         activeScan = nil
+        isStoppingScan = false
 
         if mode == .discard, let sid = snapshotId {
             try? await catalog.library.deleteSnapshot(id: sid)
