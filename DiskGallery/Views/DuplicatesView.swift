@@ -7,6 +7,7 @@ struct DuplicatesView: View {
     @State private var selectedSetID: DuplicateSet.ID?
     @State private var members: [DuplicateMember] = []
     @State private var verifying = false
+    @State private var crossDriveOnly = false
 
     var body: some View {
         VSplitView {
@@ -14,16 +15,23 @@ struct DuplicatesView: View {
             membersPanel
         }
         .navigationTitle("Duplicates")
-        .task(id: env.dataVersion) { await loadSets() }
+        .task(id: reloadKey) { await loadSets() }
     }
+
+    private var reloadKey: String { "\(env.dataVersion)-\(crossDriveOnly)" }
 
     private var setsList: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("Files with the same name and size").font(.headline)
-                Spacer()
-                Text("Reclaimable: \(Format.bytes(env.totalReclaimable))")
-                    .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Files with the same name and size").font(.headline)
+                    Spacer()
+                    Text("Reclaimable: \(Format.bytes(env.totalReclaimable))")
+                        .foregroundStyle(.orange)
+                }
+                Toggle("Only copies that span different drives", isOn: $crossDriveOnly)
+                    .toggleStyle(.checkbox).font(.callout)
+                    .help("Find files backed up on more than one drive — useful for planning which drives are redundant")
             }
             .padding(8)
 
@@ -34,11 +42,15 @@ struct DuplicatesView: View {
             } else {
                 List(sets, selection: $selectedSetID) { set in
                     HStack {
-                        Image(systemName: "doc.on.doc")
-                        VStack(alignment: .leading) {
+                        Image(systemName: set.spansDrives ? "externaldrive.badge.checkmark" : "doc.on.doc")
+                            .foregroundStyle(set.spansDrives ? Color.accentColor : .secondary)
+                        VStack(alignment: .leading, spacing: 1) {
                             Text(set.name).lineLimit(1)
                             Text("\(set.copies) copies · \(Format.bytes(set.logicalSize)) each")
                                 .font(.caption).foregroundStyle(.secondary)
+                            Text(set.spansDrives ? "on \(set.driveCount) drives: \(set.driveList.joined(separator: ", "))"
+                                                 : "on one drive: \(set.driveList.joined(separator: ", "))")
+                                .font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                         }
                         Spacer()
                         Text(Format.bytes(set.reclaimable)).foregroundStyle(.orange).monospacedDigit()
@@ -124,8 +136,8 @@ struct DuplicatesView: View {
     }
 
     private func loadSets() async {
-        sets = (try? await env.catalog.duplicates.duplicateSets()) ?? []
-        if selectedSetID == nil { selectedSetID = sets.first?.id }
+        sets = (try? await env.catalog.duplicates.duplicateSets(crossDriveOnly: crossDriveOnly)) ?? []
+        if !sets.contains(where: { $0.id == selectedSetID }) { selectedSetID = sets.first?.id }
         await loadMembers()
     }
 

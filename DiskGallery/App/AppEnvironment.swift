@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import AppKit
+import UniformTypeIdentifiers
 import DiskGalleryCore
 
 /// What the sidebar selection points at.
@@ -9,6 +10,8 @@ enum SidebarItem: Hashable {
     case duplicates
     case tagged(Tag)
     case search
+    case plan          // Action plan: everything tagged, grouped by drive
+    case transfer      // Transfer planner: will it fit?
 }
 
 struct ScanState {
@@ -184,6 +187,92 @@ final class AppEnvironment {
         if stopRequested { return }   // halted for the prompt — keep the sheet up
         activeScan = nil              // ended unexpectedly
         await refresh()
+    }
+
+    /// Re-scans an already-known drive (a fresh snapshot), so its changes can be
+    /// compared against the previous scan. The drive must be connected.
+    func rescan(volume: VolumeSummary) {
+        let key = volume.uuid ?? volume.name
+        guard let mountURL = volumes.mountURL(forKey: key) else {
+            errorMessage = "Connect “\(volume.name)” to re-scan it."
+            return
+        }
+        startScan(url: mountURL)
+    }
+
+    // MARK: Backup / restore
+
+    func exportLibrary() {
+        let panel = NSSavePanel()
+        panel.title = "Export Library"
+        panel.message = "Save a portable copy of your whole catalog — every drive, tag, and note."
+        panel.nameFieldStringValue = "DiskGallery Library.\(BackupService.fileExtension)"
+        panel.canCreateDirectories = true
+        if let type = UTType(filenameExtension: BackupService.fileExtension) {
+            panel.allowedContentTypes = [type]
+        }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let backup = catalog.backup
+        Task {
+            do {
+                try await Task.detached(priority: .userInitiated) { try backup.export(to: url) }.value
+            } catch {
+                errorMessage = "Couldn’t export the library: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    func importLibrary() {
+        guard activeScan == nil else {
+            errorMessage = "Finish or pause the current scan before importing a library."
+            return
+        }
+        let panel = NSOpenPanel()
+        panel.title = "Import Library"
+        panel.message = "Choose a DiskGallery backup to load."
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        if let type = UTType(filenameExtension: BackupService.fileExtension) {
+            panel.allowedContentTypes = [type]
+        }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Replace your current library?"
+        alert.informativeText = "Importing replaces everything currently in DiskGallery with this backup. A safety copy of your current library is saved first."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Import")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        let backup = catalog.backup
+        let safety = Self.safetyBackupURL()
+        Task {
+            do {
+                try await Task.detached(priority: .userInitiated) {
+                    try? backup.export(to: safety)      // best-effort safety copy
+                    try backup.restore(from: url)
+                }.value
+                selection = nil
+                selectedEntries = []
+                dataVersion += 1
+                await volumes.refresh()
+                await refresh()
+                selection = volumeSummaries.first.map { SidebarItem.volume($0.id) }
+            } catch {
+                errorMessage = "Couldn’t import the library: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private static func safetyBackupURL() -> URL {
+        let base = (try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                                 appropriateFor: nil, create: true))
+            ?? FileManager.default.temporaryDirectory
+        let dir = base.appendingPathComponent("DiskGallery", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("Pre-Import Backup.\(BackupService.fileExtension)")
     }
 
     // MARK: Tagging

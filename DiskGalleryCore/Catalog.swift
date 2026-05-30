@@ -14,6 +14,9 @@ public final class Catalog: Sendable {
     public let search: SearchService
     public let hasher: HashVerifier
     public let finderTags: FinderTagWriter
+    public let planning: PlanningService
+    public let changes: ChangeService
+    public let backup: BackupService
 
     public init(databaseURL: URL) throws {
         let pool = try AppDatabase.makePool(at: databaseURL)
@@ -26,6 +29,9 @@ public final class Catalog: Sendable {
         self.search = SearchService(db: db)
         self.hasher = HashVerifier()
         self.finderTags = FinderTagWriter()
+        self.planning = PlanningService(db: db)
+        self.changes = ChangeService(db: db)
+        self.backup = BackupService(db: db)
     }
 
     /// Opens (creating if needed) the catalog at the default Application Support path.

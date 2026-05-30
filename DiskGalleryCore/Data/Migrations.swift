@@ -96,6 +96,12 @@ enum Migrations {
             try db.create(index: "idx_pendingDir_snapshot", on: "pendingDir", columns: ["snapshotId"])
         }
 
+        // Speeds path lookups within a snapshot: snapshot diffing (added/removed/resized
+        // matched by relPath) and resolving an annotation's size in the latest snapshot.
+        migrator.registerMigration("v4") { db in
+            try db.create(index: "idx_entry_snapshot_relpath", on: "entry", columns: ["snapshotId", "relPath"])
+        }
+
         return migrator
     }
 }

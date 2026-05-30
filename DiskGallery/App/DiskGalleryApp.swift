@@ -57,6 +57,15 @@ struct DiskGalleryApp: App {
             }
         }
         .windowToolbarStyle(.unified)
+        .commands {
+            CommandGroup(after: .newItem) {
+                Divider()
+                Button("Export Library…") { env?.exportLibrary() }
+                    .keyboardShortcut("e", modifiers: [.command, .shift])
+                Button("Import Library…") { env?.importLibrary() }
+                    .keyboardShortcut("i", modifiers: [.command, .shift])
+            }
+        }
 
         Settings {
             if let env {
@@ -115,6 +124,10 @@ struct ContentColumn: View {
             TaggedListView(tag: tag)
         case .search:
             SearchResultsView()
+        case .plan:
+            ActionPlanView()
+        case .transfer:
+            TransferPlannerView()
         case nil:
             ContentUnavailableView("Select a drive",
                                    systemImage: "sidebar.left",

@@ -7,8 +7,17 @@ public struct DuplicateSet: Codable, Sendable, Identifiable, FetchableRecord {
     public var logicalSize: Int64
     public var copies: Int
     public var reclaimable: Int64
+    public var driveCount: Int           // how many distinct drives hold a copy
+    public var driveNames: String        // comma-separated drive names
 
     public var id: String { "\(name)\u{1}\(logicalSize)" }
+
+    /// True when copies live on two or more different drives (the useful signal for
+    /// backup planning — a file that exists on several drives).
+    public var spansDrives: Bool { driveCount >= 2 }
+    public var driveList: [String] {
+        driveNames.split(separator: ",").map { String($0) }.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
 }
 
 /// One member file of a duplicate set, with enough info to locate and verify it.
@@ -42,17 +51,22 @@ public struct DuplicateEngine: Sendable {
         )
         """
 
-    public func duplicateSets(minCopies: Int = 2, limit: Int = 500) async throws -> [DuplicateSet] {
+    public func duplicateSets(minCopies: Int = 2, limit: Int = 500,
+                              crossDriveOnly: Bool = false) async throws -> [DuplicateSet] {
         try await db.writer.read { db in
             try DuplicateSet.fetchAll(db, sql: """
                 \(Self.latestCTE)
-                SELECT name AS name, logicalSize AS logicalSize, COUNT(*) AS copies,
-                       (COUNT(*) - 1) * logicalSize AS reclaimable
-                FROM entry
-                WHERE isDir = 0 AND logicalSize > 0 AND snapshotId IN (SELECT id FROM latest)
-                GROUP BY name, logicalSize
-                HAVING COUNT(*) >= ?
-                ORDER BY reclaimable DESC, name COLLATE NOCASE
+                SELECT e.name AS name, e.logicalSize AS logicalSize, COUNT(*) AS copies,
+                       (COUNT(*) - 1) * e.logicalSize AS reclaimable,
+                       COUNT(DISTINCT s.volumeId) AS driveCount,
+                       GROUP_CONCAT(DISTINCT v.name) AS driveNames
+                FROM entry e
+                JOIN snapshot s ON s.id = e.snapshotId
+                JOIN volume v ON v.id = s.volumeId
+                WHERE e.isDir = 0 AND e.logicalSize > 0 AND e.snapshotId IN (SELECT id FROM latest)
+                GROUP BY e.name, e.logicalSize
+                HAVING COUNT(*) >= ? \(crossDriveOnly ? "AND COUNT(DISTINCT s.volumeId) >= 2" : "")
+                ORDER BY reclaimable DESC, e.name COLLATE NOCASE
                 LIMIT ?
                 """, arguments: [minCopies, limit])
         }

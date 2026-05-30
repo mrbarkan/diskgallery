@@ -16,6 +16,14 @@ struct LibrarySidebarView: View {
                     .tag(SidebarItem.search)
             }
 
+            Section("Plan") {
+                Label("Action Plan", systemImage: "checklist")
+                    .badge(plannedItemCount)
+                    .tag(SidebarItem.plan)
+                Label("Transfer Planner", systemImage: "arrow.left.arrow.right")
+                    .tag(SidebarItem.transfer)
+            }
+
             Section("Action Tags") {
                 ForEach([Tag.delete, Tag.keep, Tag.review]) { tag in
                     Label(tag.label, systemImage: icon(for: tag))
@@ -54,7 +62,20 @@ struct LibrarySidebarView: View {
                 }
                 .help("Catalog a drive or folder (read-only)")
             }
+            ToolbarItem(placement: .automatic) {
+                Menu {
+                    Button("Export Library…") { env.exportLibrary() }
+                    Button("Import Library…") { env.importLibrary() }
+                } label: {
+                    Label("Library", systemImage: "ellipsis.circle")
+                }
+                .help("Back up or restore your whole catalog")
+            }
         }
+    }
+
+    private var plannedItemCount: Int {
+        [Tag.delete, .keep, .review].reduce(0) { $0 + (env.tagCounts[$1] ?? 0) }
     }
 
     private func icon(for tag: Tag) -> String {
@@ -87,21 +108,30 @@ struct DriveRow: View {
     var body: some View {
         let key = summary.uuid ?? summary.name
         let connected = env.volumes.isConnected(key: key)
-        HStack(spacing: 8) {
+        HStack(alignment: .top, spacing: 8) {
             Image(systemName: "externaldrive.fill")
                 .foregroundStyle(connected ? Color.green : Color.secondary)
                 .help(connected ? "Connected" : "Disconnected")
-            VStack(alignment: .leading, spacing: 1) {
-                Text(summary.name).lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Text(summary.name).lineLimit(1)
+                    if summary.latestSnapshotComplete == false {
+                        Image(systemName: "pause.circle.fill").foregroundStyle(.orange)
+                            .help("Scan incomplete — right-click to resume")
+                    }
+                }
                 Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-            }
-            if summary.latestSnapshotComplete == false {
-                Spacer(minLength: 4)
-                Image(systemName: "pause.circle.fill")
-                    .foregroundStyle(.orange)
-                    .help("Scan incomplete — right-click to resume")
+                if summary.latestSnapshotComplete != false, summary.scannedAt != nil {
+                    Text("scanned \(Format.relativeDate(summary.scannedAt))")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+                if summary.latestSnapshotComplete != false, summary.totalCapacity != nil {
+                    CapacityBar(total: summary.totalCapacity, free: summary.freeCapacity, height: 4)
+                        .frame(maxWidth: 190)
+                }
             }
         }
+        .padding(.vertical, 2)
     }
 
     private var subtitle: String {
@@ -110,9 +140,6 @@ struct DriveRow: View {
         }
         if let total = summary.totalLogical, let files = summary.fileCount {
             return "\(Format.bytes(total)) · \(Format.count(files)) files"
-        }
-        if let scannedAt = summary.scannedAt {
-            return "Scanned \(Format.date(scannedAt))"
         }
         return "Not scanned"
     }
