@@ -6,6 +6,8 @@ struct SearchResultsView: View {
     @State private var query = ""
     @State private var results: [SearchResult] = []
 
+    private var modern: Bool { env.theme.skin == .modern }
+
     var body: some View {
         List(results) { result in
             HStack(spacing: 8) {
@@ -21,6 +23,7 @@ struct SearchResultsView: View {
                 Text(Format.bytes(result.displaySize)).foregroundStyle(.secondary).monospacedDigit()
             }
         }
+        .modernListChrome(modern)
         .navigationTitle("Search")
         .searchable(text: $query, placement: .toolbar, prompt: "Search file and folder names")
         .overlay {

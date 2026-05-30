@@ -6,6 +6,8 @@ struct TaggedListView: View {
     let tag: Tag
     @State private var entries: [TaggedEntry] = []
 
+    private var modern: Bool { env.theme.skin == .modern }
+
     var body: some View {
         List(entries) { entry in
             HStack(spacing: 8) {
@@ -26,6 +28,7 @@ struct TaggedListView: View {
                 }
             }
         }
+        .modernListChrome(modern)
         .navigationTitle("Marked \(tag.label)")
         .overlay {
             if entries.isEmpty {
