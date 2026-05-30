@@ -12,7 +12,7 @@ struct SettingsView: View {
             LicenseSettings()
                 .tabItem { Label("License", systemImage: "checkmark.seal") }
         }
-        .frame(width: 480, height: 420)
+        .frame(width: 480, height: 520)
     }
 }
 
@@ -90,12 +90,12 @@ struct AppearanceSettings: View {
             Section("Accent") {
                 LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(Accent.allCases) { option in
-                        Button { env.theme.accent = option } label: {
+                        Button { theme.accent = option } label: {
                             VStack(spacing: 6) {
                                 Circle()
                                     .fill(option.palette.accent)
                                     .frame(width: 36, height: 36)
-                                    .overlay(Circle().strokeBorder(env.theme.accent == option ? Color.primary : .clear, lineWidth: 2.5))
+                                    .overlay(Circle().strokeBorder(theme.accent == option ? Color.primary : .clear, lineWidth: 2.5))
                                 Text(option.name).font(.caption)
                             }
                         }
