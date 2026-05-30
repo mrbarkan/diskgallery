@@ -15,6 +15,7 @@
 		0C776729B8CC44319F10FF53 /* BrowserNav.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97084FB885F63B7AB7363CAB /* BrowserNav.swift */; };
 		10C1AC576EACE8AE9E799385 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9E8F92833EFD609815E1633 /* Colors.swift */; };
 		163787F6E82DDAE41147E42E /* HashVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */; };
+		181E3433E8EF0D7AFA7419B4 /* ThemeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B60F525D3DE6BD4E0A73D7F /* ThemeModel.swift */; };
 		1BBC250BE23923DBA37ABCB0 /* BackupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82987EC891FA8B2F0A51F0F /* BackupTests.swift */; };
 		1C9272BC8B0BC1C338147B3E /* LicenseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5473AB3A7C7A7143F2118E2E /* LicenseStore.swift */; };
 		26E03B7CB351BBB67A92F649 /* DiskGalleryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 149B608FC593D130B299F9C8 /* DiskGalleryApp.swift */; };
@@ -43,6 +44,7 @@
 		8E2F47EDF2184A0D97425283 /* VolumeBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC4B9FE3D85994F49AE8AC8 /* VolumeBrowserView.swift */; };
 		8EE496A6509DBA0A133C547A /* DiskGalleryCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; };
 		907624D036768D1FF01C7D85 /* LicenseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29447DD438A0EDA49CD6D07 /* LicenseTests.swift */; };
+		946DB94A095C8E5D2A6BCF46 /* ThemeModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A970B4165B27B059F6CE72E4 /* ThemeModelTests.swift */; };
 		95871C43166ACC0954915B1D /* ThemeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECBA2AE40DDF4B70537C8F4F /* ThemeStore.swift */; };
 		9B55650018A0FDFABB64DCFB /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 970327FB4C59803D34408AB0 /* BackupService.swift */; };
 		9BDCC4825CCA0392F74A7774 /* DiskGalleryCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; };
@@ -119,6 +121,7 @@
 		146D1C1E98B588853D9D5BB8 /* SearchResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResultsView.swift; sourceTree = "<group>"; };
 		149B608FC593D130B299F9C8 /* DiskGalleryApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskGalleryApp.swift; sourceTree = "<group>"; };
 		1AFFB1E76AE447035048FF76 /* Catalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalog.swift; sourceTree = "<group>"; };
+		1B60F525D3DE6BD4E0A73D7F /* ThemeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeModel.swift; sourceTree = "<group>"; };
 		1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTagWriter.swift; sourceTree = "<group>"; };
 		2303765E6DD32995AC1EC81B /* ChangeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeService.swift; sourceTree = "<group>"; };
 		2C7B796F9140FFB75649FBEA /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
@@ -151,6 +154,7 @@
 		9FC4B9FE3D85994F49AE8AC8 /* VolumeBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeBrowserView.swift; sourceTree = "<group>"; };
 		A29447DD438A0EDA49CD6D07 /* LicenseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseTests.swift; sourceTree = "<group>"; };
 		A55AD4B91FA397B9471B601E /* Formatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatters.swift; sourceTree = "<group>"; };
+		A970B4165B27B059F6CE72E4 /* ThemeModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeModelTests.swift; sourceTree = "<group>"; };
 		A9E8F92833EFD609815E1633 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		AE29FBDED974E93FA9BFC427 /* SearchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchTests.swift; sourceTree = "<group>"; };
 		B474506196335AB972ACF0B4 /* LibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryService.swift; sourceTree = "<group>"; };
@@ -214,6 +218,14 @@
 				2303765E6DD32995AC1EC81B /* ChangeService.swift */,
 			);
 			path = Changes;
+			sourceTree = "<group>";
+		};
+		12B9569D83AC2F82A20E3C28 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				1B60F525D3DE6BD4E0A73D7F /* ThemeModel.swift */,
+			);
+			path = Theme;
 			sourceTree = "<group>";
 		};
 		348DD25B395404EA8B8BCA50 /* Views */ = {
@@ -296,6 +308,7 @@
 				5062F5EE1D34820031723CE7 /* ScannerTests.swift */,
 				AE29FBDED974E93FA9BFC427 /* SearchTests.swift */,
 				D8A5C5983831D1A837A4B865 /* Support.swift */,
+				A970B4165B27B059F6CE72E4 /* ThemeModelTests.swift */,
 			);
 			path = DiskGalleryCoreTests;
 			sourceTree = "<group>";
@@ -408,6 +421,7 @@
 				9093CE4B4BFCADF7CB04DEFE /* Planning */,
 				D2FC6CDF6578A9C200AC0063 /* Scanning */,
 				732D8E2C3BA9931D5A9E3AAC /* Search */,
+				12B9569D83AC2F82A20E3C28 /* Theme */,
 				1AFFB1E76AE447035048FF76 /* Catalog.swift */,
 			);
 			path = DiskGalleryCore;
@@ -571,6 +585,7 @@
 				0574CA08E81E2428FF8892AC /* ScannerTests.swift in Sources */,
 				096A6E03CB7478C7202DE409 /* SearchTests.swift in Sources */,
 				E5FD991C44554B7098DABEDE /* Support.swift in Sources */,
+				946DB94A095C8E5D2A6BCF46 /* ThemeModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -630,6 +645,7 @@
 				739E488DA632B6F0175589E1 /* ScanProgress.swift in Sources */,
 				5571B1DB44FDD3A6AA8BDC0F /* Scanner.swift in Sources */,
 				2D0E118FD878620BF21C52E1 /* SearchService.swift in Sources */,
+				181E3433E8EF0D7AFA7419B4 /* ThemeModel.swift in Sources */,
 				6205D1CDDC40C2DF2A953BE7 /* VolumeMetadata.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
