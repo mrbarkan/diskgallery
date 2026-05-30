@@ -60,6 +60,7 @@ struct OLEDDisplayView: View {
         }
         .blendMode(.screen)
         .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     private var vignette: some View {
@@ -67,6 +68,7 @@ struct OLEDDisplayView: View {
             .fill(RadialGradient(colors: [.clear, .black.opacity(0.5)], center: .center, startRadius: 70, endRadius: 340))
             .blendMode(.multiply)
             .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 
     // MARK: Layout A — Telemetry
@@ -82,7 +84,7 @@ struct OLEDDisplayView: View {
                 HStack(spacing: 8) {
                     OLEDPill(text: connected ? "Connected" : "Disconnected", live: connected)
                     if let fs = summary.fsType, !fs.isEmpty { OLEDPill(text: fs.uppercased()) }
-                    if summary.scannedAt != nil { OLEDPill(text: "Scanned \(Format.relativeDate(summary.scannedAt))") }
+                    if let scanned = summary.scannedAt { OLEDPill(text: "Scanned \(Format.relativeDate(scanned))") }
                 }
             }
             HStack(alignment: .top, spacing: 0) {
@@ -109,10 +111,12 @@ struct OLEDDisplayView: View {
         HStack(spacing: 28) {
             ZStack {
                 Circle().stroke(OLEDColor.ink.opacity(0.10), lineWidth: 13)
-                Circle().trim(from: 0, to: fraction)
-                    .stroke(over ? OLEDColor.bad : palette.accent, style: StrokeStyle(lineWidth: 13, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .shadow(color: palette.glow, radius: 10)
+                if fraction > 0 {
+                    Circle().trim(from: 0, to: fraction)
+                        .stroke(over ? OLEDColor.bad : palette.accent, style: StrokeStyle(lineWidth: 13, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .shadow(color: palette.glow, radius: 10)
+                }
                 VStack(spacing: 2) {
                     HStack(alignment: .firstTextBaseline, spacing: 1) {
                         Text("\(percent)").font(.system(size: 38, weight: .bold, design: .monospaced)).foregroundStyle(OLEDColor.ink)
@@ -280,6 +284,11 @@ private extension VolumeSummary {
                       fsType: "APFS", fileCount: 248_193, totalLogical: 3_160_000_000_000,
                       rootEntryId: 1, latestSnapshotComplete: true)
     }
+    static var previewEmpty: VolumeSummary {
+        VolumeSummary(id: 2, uuid: nil, name: "Scratch NVMe", latestSnapshotId: nil, scannedAt: nil,
+                      totalCapacity: nil, freeCapacity: nil, fsType: nil, fileCount: nil,
+                      totalLogical: nil, rootEntryId: nil, latestSnapshotComplete: nil)
+    }
 }
 
 #Preview("Telemetry · Violet") {
@@ -293,6 +302,10 @@ private extension VolumeSummary {
 }
 #Preview("Minimal · Green") {
     OLEDDisplayView(summary: .preview, connected: false, layout: .minimal, palette: Accent.green.palette)
+        .padding(24).frame(width: 860).background(.black)
+}
+#Preview("Gauge · Unscanned/empty") {
+    OLEDDisplayView(summary: .previewEmpty, connected: false, layout: .gauge, palette: Accent.amber.palette)
         .padding(24).frame(width: 860).background(.black)
 }
 #endif
