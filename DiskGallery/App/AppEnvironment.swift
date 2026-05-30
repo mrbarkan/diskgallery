@@ -174,6 +174,7 @@ final class AppEnvironment {
             let snapshotId = currentScanSnapshotId
             stopRequested = false
             activeScan = nil
+            dataVersion += 1          // force the browser to reload now-rolled-up folder sizes
             await refresh()
             if let snapshotId, let summary = volumeSummaries.first(where: { $0.latestSnapshotId == snapshotId }) {
                 selection = .volume(summary.id)
