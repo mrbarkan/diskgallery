@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import DiskGalleryCore
 
 struct SettingsView: View {
@@ -8,8 +9,59 @@ struct SettingsView: View {
                 .tabItem { Label("Appearance", systemImage: "paintpalette") }
             ShortcutSettings()
                 .tabItem { Label("Shortcuts", systemImage: "keyboard") }
+            LicenseSettings()
+                .tabItem { Label("License", systemImage: "checkmark.seal") }
         }
         .frame(width: 480, height: 420)
+    }
+}
+
+struct LicenseSettings: View {
+    @Environment(AppEnvironment.self) private var env
+    @State private var key = ""
+    @State private var error: String?
+
+    var body: some View {
+        Form {
+            Section("Status") { statusRow }
+            Section("Activate a License Key") {
+                TextField("Paste your license key", text: $key, axis: .vertical)
+                    .lineLimit(2...4)
+                    .font(.system(.body, design: .monospaced))
+                HStack {
+                    Button("Activate") {
+                        error = env.license.activate(key)
+                        if error == nil { key = "" }
+                    }
+                    .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    if env.license.licenseEmail != nil {
+                        Button("Deactivate", role: .destructive) { env.license.deactivate() }
+                    }
+                }
+                if let error { Text(error).font(.caption).foregroundStyle(.red) }
+            }
+            Section {
+                Button("Buy DiskGallery…") { NSWorkspace.shared.open(LicenseConfig.buyURL) }
+            } footer: {
+                Text("DiskGallery will be available on the Mac App Store and direct from \(LicenseConfig.buyURL.host ?? "our site"). License keys are verified on your Mac — no internet required.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    @ViewBuilder private var statusRow: some View {
+        switch env.license.status {
+        case .unconfigured:
+            Label("Licensing not configured — all features unlocked", systemImage: "lock.open")
+                .foregroundStyle(.secondary)
+        case .trial(let daysLeft):
+            Label("Free trial — \(daysLeft) day\(daysLeft == 1 ? "" : "s") left", systemImage: "clock")
+        case .trialExpired:
+            Label("Trial expired", systemImage: "lock").foregroundStyle(.red)
+        case .licensed(let email):
+            Label("Licensed to \(email)", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
+        }
     }
 }
 

@@ -29,6 +29,7 @@ final class AppEnvironment {
     let volumes: VolumeService
     let shortcuts = ShortcutStore()
     let theme = ThemeStore()
+    let license = LicenseStore()
 
     var volumeSummaries: [VolumeSummary] = []
     var tagCounts: [Tag: Int] = [:]
