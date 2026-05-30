@@ -15,6 +15,24 @@ public struct VolumeSummary: Codable, Sendable, Identifiable, FetchableRecord {
     public var totalLogical: Int64?
     public var rootEntryId: Int64?
     public var latestSnapshotComplete: Bool?
+
+    public init(id: Int64, uuid: String?, name: String, latestSnapshotId: Int64?,
+                scannedAt: Date?, totalCapacity: Int64?, freeCapacity: Int64?,
+                fsType: String?, fileCount: Int64?, totalLogical: Int64?,
+                rootEntryId: Int64?, latestSnapshotComplete: Bool?) {
+        self.id = id
+        self.uuid = uuid
+        self.name = name
+        self.latestSnapshotId = latestSnapshotId
+        self.scannedAt = scannedAt
+        self.totalCapacity = totalCapacity
+        self.freeCapacity = freeCapacity
+        self.fsType = fsType
+        self.fileCount = fileCount
+        self.totalLogical = totalLogical
+        self.rootEntryId = rootEntryId
+        self.latestSnapshotComplete = latestSnapshotComplete
+    }
 }
 
 /// Read queries that power the library sidebar and the tree browser.

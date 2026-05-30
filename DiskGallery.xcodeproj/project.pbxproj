@@ -68,6 +68,7 @@
 		E5FD991C44554B7098DABEDE /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8A5C5983831D1A837A4B865 /* Support.swift */; };
 		EC4C7FA3AD65474DAE88882D /* DiskGalleryCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F4798D76A8EBE58BB98FC812 /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */; };
+		F59567BB049A3F13DB80FB2A /* OLEDDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FAB06D51560916D60F1560F /* OLEDDisplayView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -127,6 +128,7 @@
 		1AFFB1E76AE447035048FF76 /* Catalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalog.swift; sourceTree = "<group>"; };
 		1B60F525D3DE6BD4E0A73D7F /* ThemeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeModel.swift; sourceTree = "<group>"; };
 		1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTagWriter.swift; sourceTree = "<group>"; };
+		1FAB06D51560916D60F1560F /* OLEDDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OLEDDisplayView.swift; sourceTree = "<group>"; };
 		2303765E6DD32995AC1EC81B /* ChangeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeService.swift; sourceTree = "<group>"; };
 		2C7B796F9140FFB75649FBEA /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
 		2DF8B6014428D118FD2C366E /* ChangeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeTests.swift; sourceTree = "<group>"; };
@@ -244,6 +246,7 @@
 				C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */,
 				2C7B796F9140FFB75649FBEA /* EntryDetailView.swift */,
 				5844EC9B6BCF8A8733084C2E /* LibrarySidebarView.swift */,
+				1FAB06D51560916D60F1560F /* OLEDDisplayView.swift */,
 				4758EFE5A2559FC7E68D053C /* ScanProgressView.swift */,
 				146D1C1E98B588853D9D5BB8 /* SearchResultsView.swift */,
 				E79766C18BB7460C63E09866 /* SettingsView.swift */,
@@ -624,6 +627,7 @@
 				8D42FF94DD3DB0E8C7B7F256 /* Formatters.swift in Sources */,
 				9C5E0BBD9E34E1611BED70ED /* LibrarySidebarView.swift in Sources */,
 				1C9272BC8B0BC1C338147B3E /* LicenseStore.swift in Sources */,
+				F59567BB049A3F13DB80FB2A /* OLEDDisplayView.swift in Sources */,
 				087128B95EFB93784C4FCD5E /* ScanProgressView.swift in Sources */,
 				B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */,
 				C723B2681D13ADAD6B82B080 /* SettingsView.swift in Sources */,
