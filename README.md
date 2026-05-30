@@ -27,7 +27,9 @@ local catalog database.
   in Finder too.
 - **Keyboard tagging** — Q/W/E for Keep/Delete/Review, 1–7 for colors, all
   rebindable in Settings. Acts on the whole multi-selection at once.
-- **Themes** — six accent themes with light / dark / system mode, in Settings.
+- **Themes** — a **Classic** or **Modern** look (the Modern look adds a CrateDigger-style
+  **OLED drive display** with Telemetry / Gauge / Minimal layouts), six accent colors, and
+  light / dark / system mode — all in Settings.
 - **Full-text name search** across every cataloged drive.
 
 ## Requirements
