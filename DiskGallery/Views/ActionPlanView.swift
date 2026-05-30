@@ -7,6 +7,8 @@ struct ActionPlanView: View {
     @Environment(AppEnvironment.self) private var env
     @State private var stats: [DriveStats] = []
 
+    private var modern: Bool { env.theme.skin == .modern }
+
     /// Drives with pending decisions, most-to-do first.
     private var planned: [DriveStats] {
         stats.filter(\.hasPending).sorted { lhs, rhs in
@@ -36,6 +38,7 @@ struct ActionPlanView: View {
                         }
                     }
                 }
+                .modernListChrome(modern)
             }
         }
         .navigationTitle("Action Plan")
