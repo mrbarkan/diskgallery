@@ -41,7 +41,7 @@ struct EntryInspector: View {
                 LabeledContent("Path", value: entry.relPath.isEmpty ? "/" : entry.relPath)
             }
 
-            Section("Tag") {
+            Section("Tags") {
                 TagControls(targets: [entry], current: annotation)
                 FinderSyncNote()
             }
@@ -94,51 +94,49 @@ struct TagControls: View {
     let current: Annotation?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
-                ForEach([Tag.none, .keep, .delete, .review]) { tag in
-                    DecisionButton(tag: tag,
-                                   active: current?.tag == tag,
-                                   key: env.shortcuts.key(for: shortcut(for: tag))) {
-                        Task { await env.applyDecision(tag, to: targets) }
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Action Tag").font(.caption).foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    ForEach([Tag.none, .keep, .delete, .review]) { tag in
+                        DecisionButton(tag: tag,
+                                       active: current?.tag == tag,
+                                       key: ShortcutAction.forDecision(tag).map { env.shortcuts.key(for: $0) }) {
+                            Task { await env.applyDecision(tag, to: targets) }
+                        }
                     }
                 }
             }
-            HStack(spacing: 6) {
-                ColorSwatch(color: .none, active: current?.color == FinderColor.none) {
-                    Task { await env.applyColor(.none, to: targets) }
-                }
-                ForEach(FinderColor.keyOrder) { color in
-                    ColorSwatch(color: color, active: current?.color == color) {
-                        Task { await env.applyColor(color, to: targets) }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Finder Color").font(.caption).foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    ColorSwatch(color: .none, active: current?.color == FinderColor.none, key: nil) {
+                        Task { await env.applyColor(.none, to: targets) }
+                    }
+                    ForEach(Array(FinderColor.keyOrder.enumerated()), id: \.offset) { index, color in
+                        ColorSwatch(color: color, active: current?.color == color,
+                                    key: env.shortcuts.key(for: ShortcutAction.colorActions[index])) {
+                            Task { await env.applyColor(color, to: targets) }
+                        }
                     }
                 }
             }
         }
         .padding(.vertical, 2)
     }
-
-    private func shortcut(for tag: Tag) -> ShortcutAction {
-        switch tag {
-        case .keep: return .keep
-        case .delete: return .delete
-        case .review: return .review
-        case .none: return .clearDecision
-        }
-    }
 }
 
 struct DecisionButton: View {
     let tag: Tag
     let active: Bool
-    let key: String
+    let key: String?
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             VStack(spacing: 2) {
                 Label(tag.label, systemImage: tag.symbol).labelStyle(.titleAndIcon).font(.callout)
-                Text(key.uppercased()).font(.caption2).foregroundStyle(.secondary)
+                Text((key ?? " ").uppercased()).font(.caption2).foregroundStyle(.secondary)
             }
             .padding(.vertical, 5).padding(.horizontal, 8)
             .frame(maxWidth: .infinity)
@@ -153,19 +151,23 @@ struct DecisionButton: View {
 struct ColorSwatch: View {
     let color: FinderColor
     let active: Bool
+    let key: String?
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            ZStack {
-                if color == .none {
-                    Image(systemName: "slash.circle").foregroundStyle(.secondary)
-                } else {
-                    Circle().fill(color.swiftUIColor)
+            VStack(spacing: 2) {
+                ZStack {
+                    if color == .none {
+                        Image(systemName: "slash.circle").foregroundStyle(.secondary)
+                    } else {
+                        Circle().fill(color.swiftUIColor)
+                    }
                 }
+                .frame(width: 22, height: 22)
+                .overlay(Circle().strokeBorder(active ? Color.primary : .clear, lineWidth: 2))
+                Text(key ?? " ").font(.caption2).foregroundStyle(.secondary)
             }
-            .frame(width: 22, height: 22)
-            .overlay(Circle().strokeBorder(active ? Color.primary : .clear, lineWidth: 2))
         }
         .buttonStyle(.plain)
         .help(color == .none ? "No color" : color.tagName)

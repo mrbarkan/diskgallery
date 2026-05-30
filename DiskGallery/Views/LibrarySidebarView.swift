@@ -16,7 +16,7 @@ struct LibrarySidebarView: View {
                     .tag(SidebarItem.search)
             }
 
-            Section("Decisions") {
+            Section("Action Tags") {
                 ForEach([Tag.delete, Tag.keep, Tag.review]) { tag in
                     Label(tag.label, systemImage: icon(for: tag))
                         .badge(env.tagCounts[tag] ?? 0)

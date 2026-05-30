@@ -125,12 +125,33 @@ final class AppEnvironment {
 
     // MARK: Tagging
 
-    /// Dispatches a keyboard shortcut to its tagging action.
+    /// Dispatches a keyboard shortcut. Keys toggle: pressing a tag/color that the
+    /// whole selection already has clears it.
     func perform(_ action: ShortcutAction, on entries: [Entry]) async {
         if let decision = action.decision {
-            await applyDecision(decision, to: entries)
+            await toggleDecision(decision, on: entries)
         } else if let color = action.color {
-            await applyColor(color, to: entries)
+            await toggleColor(color, on: entries)
+        }
+    }
+
+    func toggleDecision(_ tag: Tag, on entries: [Entry]) async {
+        let allHave = await allEntries(entries, satisfy: { $0.tag == tag })
+        await applyDecision(allHave ? .none : tag, to: entries)
+    }
+
+    func toggleColor(_ color: FinderColor, on entries: [Entry]) async {
+        let allHave = await allEntries(entries, satisfy: { $0.color == color })
+        await applyColor(allHave ? .none : color, to: entries)
+    }
+
+    private func allEntries(_ entries: [Entry], satisfy predicate: (Annotation) -> Bool) async -> Bool {
+        guard let key = selectedVolumeKey, !entries.isEmpty else { return false }
+        let map = (try? await catalog.annotations.annotations(
+            volumeKey: key, relPaths: entries.map(\.relPath))) ?? [:]
+        return entries.allSatisfy { entry in
+            if let annotation = map[entry.relPath] { return predicate(annotation) }
+            return false
         }
     }
 

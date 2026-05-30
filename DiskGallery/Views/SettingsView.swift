@@ -56,10 +56,15 @@ struct ShortcutSettings: View {
 
     var body: some View {
         Form {
-            Section("Decisions") {
+            Section {
                 ForEach(ShortcutAction.decisionActions) { ShortcutRow(action: $0) }
+            } header: {
+                Text("Action Tags")
+            } footer: {
+                Text("Press a key again on an already-tagged selection to clear it.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
-            Section("Finder colors") {
+            Section("Finder Colors") {
                 ForEach(ShortcutAction.colorActions) { ShortcutRow(action: $0) }
             }
             Section {

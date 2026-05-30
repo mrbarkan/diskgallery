@@ -2,10 +2,11 @@ import Foundation
 import Observation
 import DiskGalleryCore
 
-/// A user-bindable tagging action.
+/// A user-bindable tagging action. Pressing an action's key applies it; pressing it
+/// again on an already-tagged selection clears it (toggle).
 enum ShortcutAction: String, CaseIterable, Identifiable {
-    case keep, delete, review, clearDecision
-    case color1, color2, color3, color4, color5, color6, color7, clearColor
+    case keep, delete, review
+    case color1, color2, color3, color4, color5, color6, color7
 
     var id: String { rawValue }
 
@@ -14,8 +15,6 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .keep: return "Keep"
         case .delete: return "Delete"
         case .review: return "Review"
-        case .clearDecision: return "Clear decision"
-        case .clearColor: return "Clear color"
         default: return color?.tagName ?? rawValue
         }
     }
@@ -25,7 +24,6 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .keep: return "q"
         case .delete: return "w"
         case .review: return "e"
-        case .clearDecision: return "`"
         case .color1: return "1"
         case .color2: return "2"
         case .color3: return "3"
@@ -33,7 +31,6 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .color5: return "5"
         case .color6: return "6"
         case .color7: return "7"
-        case .clearColor: return "0"
         }
     }
 
@@ -42,7 +39,6 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .keep: return .keep
         case .delete: return .delete
         case .review: return .review
-        case .clearDecision: return Tag.none
         default: return nil
         }
     }
@@ -56,13 +52,22 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .color5: return FinderColor.keyOrder[4]
         case .color6: return FinderColor.keyOrder[5]
         case .color7: return FinderColor.keyOrder[6]
-        case .clearColor: return FinderColor.none
         default: return nil
         }
     }
 
-    static let decisionActions: [ShortcutAction] = [.keep, .delete, .review, .clearDecision]
-    static let colorActions: [ShortcutAction] = [.color1, .color2, .color3, .color4, .color5, .color6, .color7, .clearColor]
+    /// The shortcut action that toggles a given action tag, for showing its key.
+    static func forDecision(_ tag: Tag) -> ShortcutAction? {
+        switch tag {
+        case .keep: return .keep
+        case .delete: return .delete
+        case .review: return .review
+        case .none: return nil
+        }
+    }
+
+    static let decisionActions: [ShortcutAction] = [.keep, .delete, .review]
+    static let colorActions: [ShortcutAction] = [.color1, .color2, .color3, .color4, .color5, .color6, .color7]
 }
 
 /// Persists the user's key bindings for tagging actions.
