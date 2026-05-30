@@ -8,25 +8,25 @@ struct TransferPlannerView: View {
     @State private var stats: [DriveStats] = []
     @State private var sourceId: Int64?
     @State private var destId: Int64?
-    @State private var choice: SourceChoice = .keep
+    @State private var choice: SourceChoice = .move
     @State private var items: [PlannedItem] = []
 
     enum SourceChoice: String, CaseIterable, Identifiable {
-        case keep, review, delete, entire
+        case move, backup, keep, entire
         var id: String { rawValue }
         var label: String {
             switch self {
+            case .move: return "Tagged Move"
+            case .backup: return "Tagged Backup"
             case .keep: return "Tagged Keep"
-            case .review: return "Tagged Review"
-            case .delete: return "Tagged Delete"
             case .entire: return "Entire drive"
             }
         }
         var tag: Tag? {
             switch self {
+            case .move: return .move
+            case .backup: return .backup
             case .keep: return .keep
-            case .review: return .review
-            case .delete: return .delete
             case .entire: return nil
             }
         }

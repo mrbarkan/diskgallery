@@ -97,8 +97,8 @@ struct TagControls: View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Action Tag").font(.caption).foregroundStyle(.secondary)
-                HStack(spacing: 6) {
-                    ForEach([Tag.none, .keep, .delete, .review]) { tag in
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 82), spacing: 6)], spacing: 6) {
+                    ForEach([Tag.none] + Tag.actionTags) { tag in
                         DecisionButton(tag: tag,
                                        active: current?.tag == tag,
                                        key: ShortcutAction.forDecision(tag).map { env.shortcuts.key(for: $0) }) {

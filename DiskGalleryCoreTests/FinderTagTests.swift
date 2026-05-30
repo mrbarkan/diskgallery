@@ -37,6 +37,21 @@ final class FinderTagTests: XCTestCase {
         XCTAssertTrue(names.contains("Blue"))
     }
 
+    func testMoveAndBackupTagsRoundTrip() throws {
+        let root = try Fixture.makeTree()
+        let file = root.appendingPathComponent("a.txt")
+        let writer = FinderTagWriter()
+
+        try writer.apply(decision: .move, color: .none, to: file)
+        XCTAssertTrue(writer.read(file).contains(FinderTag(name: "Move", colorCode: 4)))   // Move -> blue(4)
+
+        // Swapping to Backup replaces the managed decision (purple), not other tags.
+        try writer.apply(decision: .backup, color: .none, to: file)
+        let names = Set(writer.read(file).map(\.name))
+        XCTAssertTrue(writer.read(file).contains(FinderTag(name: "Backup", colorCode: 3))) // Backup -> purple(3)
+        XCTAssertFalse(names.contains("Move"))
+    }
+
     func testClearRemovesManagedTags() throws {
         let root = try Fixture.makeTree()
         let file = root.appendingPathComponent("a.txt")

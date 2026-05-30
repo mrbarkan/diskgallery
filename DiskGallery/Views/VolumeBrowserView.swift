@@ -171,9 +171,9 @@ struct FolderView: View {
     @ViewBuilder
     private func tagMenu(for targets: [Entry]) -> some View {
         if !targets.isEmpty {
-            Button("Keep") { Task { await env.applyDecision(.keep, to: targets) } }
-            Button("Delete") { Task { await env.applyDecision(.delete, to: targets) } }
-            Button("Review") { Task { await env.applyDecision(.review, to: targets) } }
+            ForEach(Tag.actionTags) { tag in
+                Button(tag.label) { Task { await env.applyDecision(tag, to: targets) } }
+            }
             Divider()
             Menu("Color") {
                 ForEach(FinderColor.keyOrder) { color in

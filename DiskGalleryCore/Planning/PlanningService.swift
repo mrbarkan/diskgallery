@@ -20,12 +20,16 @@ public struct DriveStats: Sendable, Identifiable {
     public var keepBytes: Int64 = 0
     public var deleteBytes: Int64 = 0
     public var reviewBytes: Int64 = 0
+    public var moveBytes: Int64 = 0
+    public var backupBytes: Int64 = 0
     public var keepCount: Int = 0
     public var deleteCount: Int = 0
     public var reviewCount: Int = 0
+    public var moveCount: Int = 0
+    public var backupCount: Int = 0
 
     public var volumeKey: String { uuid ?? name }
-    public var pendingCount: Int { keepCount + deleteCount + reviewCount }
+    public var pendingCount: Int { Tag.actionTags.reduce(0) { $0 + count(for: $1) } }
     public var hasPending: Bool { pendingCount > 0 }
 
     public func bytes(for tag: Tag) -> Int64 {
@@ -33,6 +37,8 @@ public struct DriveStats: Sendable, Identifiable {
         case .keep: return keepBytes
         case .delete: return deleteBytes
         case .review: return reviewBytes
+        case .move: return moveBytes
+        case .backup: return backupBytes
         case .none: return 0
         }
     }
@@ -42,6 +48,8 @@ public struct DriveStats: Sendable, Identifiable {
         case .keep: return keepCount
         case .delete: return deleteCount
         case .review: return reviewCount
+        case .move: return moveCount
+        case .backup: return backupCount
         case .none: return 0
         }
     }
@@ -146,6 +154,8 @@ public struct PlanningService: Sendable {
                 case .keep:   stats.keepBytes = bytes;   stats.keepCount = top.count
                 case .delete: stats.deleteBytes = bytes; stats.deleteCount = top.count
                 case .review: stats.reviewBytes = bytes; stats.reviewCount = top.count
+                case .move:   stats.moveBytes = bytes;   stats.moveCount = top.count
+                case .backup: stats.backupBytes = bytes; stats.backupCount = top.count
                 case .none:   break
                 }
             }

@@ -24,6 +24,8 @@ extension Tag {
         case .keep:   return .green
         case .delete: return .red
         case .review: return .yellow
+        case .move:   return .blue
+        case .backup: return .purple
         }
     }
 
@@ -33,6 +35,8 @@ extension Tag {
         case .keep:   return "checkmark.seal.fill"
         case .delete: return "trash.fill"
         case .review: return "questionmark.circle.fill"
+        case .move:   return "arrow.right.circle.fill"
+        case .backup: return "shippingbox.fill"
         }
     }
 }

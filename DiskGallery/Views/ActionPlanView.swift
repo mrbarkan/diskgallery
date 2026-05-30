@@ -15,9 +15,7 @@ struct ActionPlanView: View {
         }
     }
 
-    private var totalDelete: Int64 { stats.reduce(0) { $0 + $1.deleteBytes } }
-    private var totalKeep: Int64 { stats.reduce(0) { $0 + $1.keepBytes } }
-    private var totalReview: Int64 { stats.reduce(0) { $0 + $1.reviewBytes } }
+    private func total(for tag: Tag) -> Int64 { stats.reduce(0) { $0 + $1.bytes(for: tag) } }
     private var drivesToConnect: Int {
         planned.filter { !env.volumes.isConnected(key: $0.volumeKey) }.count
     }
@@ -46,9 +44,10 @@ struct ActionPlanView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            StatPill(title: "To delete", value: Format.bytes(totalDelete), tint: .red)
-            StatPill(title: "To keep", value: Format.bytes(totalKeep), tint: .green)
-            StatPill(title: "To review", value: Format.bytes(totalReview), tint: .yellow)
+            ForEach([Tag.move, .backup, .keep, .delete]) { tag in
+                StatPill(title: "To \(tag.label.lowercased())", value: Format.bytes(total(for: tag)),
+                         tint: tag.swiftUIColor)
+            }
             StatPill(title: "Drives to connect", value: "\(drivesToConnect)", tint: .accentColor)
         }
         .padding(12)
@@ -89,10 +88,10 @@ private struct DrivePlanRow: View {
                     }
                     Text("Last scanned \(Format.relativeDate(drive.scannedAt))")
                         .font(.caption).foregroundStyle(.secondary)
-                    HStack(spacing: 14) {
-                        tagStat(.delete, count: drive.deleteCount, bytes: drive.deleteBytes)
-                        tagStat(.keep, count: drive.keepCount, bytes: drive.keepBytes)
-                        tagStat(.review, count: drive.reviewCount, bytes: drive.reviewBytes)
+                    HStack(spacing: 12) {
+                        ForEach(Tag.actionTags) { tag in
+                            tagStat(tag, count: drive.count(for: tag), bytes: drive.bytes(for: tag))
+                        }
                     }
                     .padding(.top, 2)
                 }

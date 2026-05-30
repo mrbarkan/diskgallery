@@ -25,7 +25,7 @@ struct LibrarySidebarView: View {
             }
 
             Section("Action Tags") {
-                ForEach([Tag.delete, Tag.keep, Tag.review]) { tag in
+                ForEach(Tag.actionTags) { tag in
                     Label(tag.label, systemImage: icon(for: tag))
                         .badge(env.tagCounts[tag] ?? 0)
                         .tag(SidebarItem.tagged(tag))
@@ -75,7 +75,7 @@ struct LibrarySidebarView: View {
     }
 
     private var plannedItemCount: Int {
-        [Tag.delete, .keep, .review].reduce(0) { $0 + (env.tagCounts[$1] ?? 0) }
+        Tag.actionTags.reduce(0) { $0 + (env.tagCounts[$1] ?? 0) }
     }
 
     private func icon(for tag: Tag) -> String {
@@ -83,6 +83,8 @@ struct LibrarySidebarView: View {
         case .delete: return "trash"
         case .keep: return "checkmark.seal"
         case .review: return "questionmark.circle"
+        case .move: return "arrow.right.circle"
+        case .backup: return "shippingbox"
         case .none: return "tag"
         }
     }

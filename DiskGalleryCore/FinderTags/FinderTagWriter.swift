@@ -22,7 +22,7 @@ public struct FinderTagWriter: Sendable {
 
     /// Tag names DiskGallery owns — applying replaces only these, never the user's own.
     static let managedNames: Set<String> = {
-        var names: Set<String> = [Tag.keep.label, Tag.delete.label, Tag.review.label]
+        var names = Set(Tag.actionTags.map(\.label))
         for color in FinderColor.allCases where color != .none { names.insert(color.tagName) }
         return names
     }()

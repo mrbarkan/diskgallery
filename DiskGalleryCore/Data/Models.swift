@@ -1,14 +1,20 @@
 import Foundation
 import GRDB
 
-/// A keep/delete decision a user attaches to a file or folder.
+/// An action a user attaches to a file or folder. Raw values are stable (stored in
+/// the catalog) — only ever append new cases.
 public enum Tag: Int, Codable, Sendable, CaseIterable, Identifiable {
     case none = 0
     case keep = 1
     case delete = 2
     case review = 3
+    case move = 4        // relocate to another drive
+    case backup = 5      // copy to a backup drive
 
     public var id: Int { rawValue }
+
+    /// The action tags in a sensible workflow order (excludes `.none`).
+    public static let actionTags: [Tag] = [.keep, .move, .backup, .review, .delete]
 
     public var label: String {
         switch self {
@@ -16,6 +22,8 @@ public enum Tag: Int, Codable, Sendable, CaseIterable, Identifiable {
         case .keep: return "Keep"
         case .delete: return "Delete"
         case .review: return "Review"
+        case .move: return "Move"
+        case .backup: return "Backup"
         }
     }
 
@@ -26,6 +34,8 @@ public enum Tag: Int, Codable, Sendable, CaseIterable, Identifiable {
         case .keep: return FinderColor.green.rawValue
         case .delete: return FinderColor.red.rawValue
         case .review: return FinderColor.yellow.rawValue
+        case .move: return FinderColor.blue.rawValue
+        case .backup: return FinderColor.purple.rawValue
         }
     }
 }

@@ -5,25 +5,20 @@ import DiskGalleryCore
 /// A user-bindable tagging action. Pressing an action's key applies it; pressing it
 /// again on an already-tagged selection clears it (toggle).
 enum ShortcutAction: String, CaseIterable, Identifiable {
-    case keep, delete, review
+    case keep, delete, review, move, backup
     case color1, color2, color3, color4, color5, color6, color7
 
     var id: String { rawValue }
 
-    var title: String {
-        switch self {
-        case .keep: return "Keep"
-        case .delete: return "Delete"
-        case .review: return "Review"
-        default: return color?.tagName ?? rawValue
-        }
-    }
+    var title: String { decision?.label ?? color?.tagName ?? rawValue.capitalized }
 
     var defaultKey: String {
         switch self {
         case .keep: return "q"
         case .delete: return "w"
         case .review: return "e"
+        case .move: return "r"
+        case .backup: return "t"
         case .color1: return "1"
         case .color2: return "2"
         case .color3: return "3"
@@ -39,6 +34,8 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .keep: return .keep
         case .delete: return .delete
         case .review: return .review
+        case .move: return .move
+        case .backup: return .backup
         default: return nil
         }
     }
@@ -62,11 +59,13 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
         case .keep: return .keep
         case .delete: return .delete
         case .review: return .review
+        case .move: return .move
+        case .backup: return .backup
         case .none: return nil
         }
     }
 
-    static let decisionActions: [ShortcutAction] = [.keep, .delete, .review]
+    static let decisionActions: [ShortcutAction] = [.keep, .move, .backup, .review, .delete]
     static let colorActions: [ShortcutAction] = [.color1, .color2, .color3, .color4, .color5, .color6, .color7]
 }
 
