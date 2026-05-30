@@ -53,8 +53,11 @@ struct EntryInspector: View {
             }
         }
         .formStyle(.grouped)
+        .modernListChrome(modern)
         .task(id: reloadKey) { await load() }
     }
+
+    private var modern: Bool { env.theme.skin == .modern }
 
     private var reloadKey: String { "\(entry.id)-\(env.dataVersion)" }
 
@@ -83,7 +86,10 @@ struct MultiSelectInspector: View {
             }
         }
         .formStyle(.grouped)
+        .modernListChrome(modern)
     }
+
+    private var modern: Bool { env.theme.skin == .modern }
 }
 
 // MARK: - Shared tag controls
