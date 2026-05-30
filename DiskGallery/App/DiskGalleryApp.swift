@@ -91,6 +91,7 @@ struct ContentView: View {
             EntryDetailView()
                 .navigationSplitViewColumnWidth(min: 280, ideal: 320)
         }
+        .background { if modern { SpatialBackdrop(palette: env.theme.accent.palette) } }
         .sheet(isPresented: Binding(get: { env.activeScan != nil }, set: { _ in })) {
             ScanProgressView()
         }
@@ -104,6 +105,8 @@ struct ContentView: View {
         .tint(env.theme.accent.palette.accent)
         .preferredColorScheme(env.theme.mode.colorScheme)
     }
+
+    private var modern: Bool { env.theme.skin == .modern }
 }
 
 /// Routes the middle column based on the sidebar selection.

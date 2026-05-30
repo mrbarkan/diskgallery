@@ -24,6 +24,7 @@
 		32F55E13BEB72EA7D463AADC /* MutationGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 411D66DC8AAED302B83CB44B /* MutationGuardTests.swift */; };
 		364EC7F2121DE680B84DA20A /* EntryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7B796F9140FFB75649FBEA /* EntryDetailView.swift */; };
 		3F89243663D3FAF7DEFED70A /* VolumeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B2DFD8332DA70FF37376FB /* VolumeService.swift */; };
+		4070ECA12242DA1D969EDECE /* ModernBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */; };
 		412F1FED7D5647E1F85054CF /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CEE1A004B973AABD3E7B995 /* Models.swift */; };
 		46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */; };
 		54F7E036F94C146237106B8D /* FinderTagTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4105C0CC1F9C0469C2052248 /* FinderTagTests.swift */; };
@@ -35,6 +36,7 @@
 		6205D1CDDC40C2DF2A953BE7 /* VolumeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0860DD76D728A4E486E6CD1 /* VolumeMetadata.swift */; };
 		622D7AFD130991BA9BC8B80C /* LibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B474506196335AB972ACF0B4 /* LibraryService.swift */; };
 		656C5629B8D927DFB5320AF1 /* ActionPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C72B112CB1A19D091849CB /* ActionPlanView.swift */; };
+		67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239E19F08DFE1282FEAB493B /* ModernGlass.swift */; };
 		675EA47A2AEBA04940BC35A8 /* AnnotationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8541EFC2B903B51A3A69F365 /* AnnotationStore.swift */; };
 		739E488DA632B6F0175589E1 /* ScanProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395CB1FD1B89F2B19088F80B /* ScanProgress.swift */; };
 		78F985AE016928608959CE27 /* AnnotationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EFB0CEC11A298EB4F9FFCC /* AnnotationTests.swift */; };
@@ -130,6 +132,7 @@
 		1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTagWriter.swift; sourceTree = "<group>"; };
 		1FAB06D51560916D60F1560F /* OLEDDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OLEDDisplayView.swift; sourceTree = "<group>"; };
 		2303765E6DD32995AC1EC81B /* ChangeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeService.swift; sourceTree = "<group>"; };
+		239E19F08DFE1282FEAB493B /* ModernGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernGlass.swift; sourceTree = "<group>"; };
 		2C7B796F9140FFB75649FBEA /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
 		2DF8B6014428D118FD2C366E /* ChangeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeTests.swift; sourceTree = "<group>"; };
 		32BBDA2EB412284EC0D8DC4B /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
@@ -155,6 +158,7 @@
 		7CAB8199993101F11F86332D /* ChangesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangesView.swift; sourceTree = "<group>"; };
 		8541EFC2B903B51A3A69F365 /* AnnotationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationStore.swift; sourceTree = "<group>"; };
 		86D3048FEAC718F9F9AF6C11 /* TaggedListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaggedListView.swift; sourceTree = "<group>"; };
+		8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernBackdrop.swift; sourceTree = "<group>"; };
 		93B2DFD8332DA70FF37376FB /* VolumeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeService.swift; sourceTree = "<group>"; };
 		970327FB4C59803D34408AB0 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
 		97084FB885F63B7AB7363CAB /* BrowserNav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserNav.swift; sourceTree = "<group>"; };
@@ -240,6 +244,7 @@
 		348DD25B395404EA8B8BCA50 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				4E1B890DEC2E3FD25610A383 /* Modern */,
 				E8C72B112CB1A19D091849CB /* ActionPlanView.swift */,
 				7CAB8199993101F11F86332D /* ChangesView.swift */,
 				DDDE0C869FC4D5E82CC433DA /* Components.swift */,
@@ -282,6 +287,15 @@
 				1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */,
 			);
 			path = FinderTags;
+			sourceTree = "<group>";
+		};
+		4E1B890DEC2E3FD25610A383 /* Modern */ = {
+			isa = PBXGroup;
+			children = (
+				8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */,
+				239E19F08DFE1282FEAB493B /* ModernGlass.swift */,
+			);
+			path = Modern;
 			sourceTree = "<group>";
 		};
 		4EF4D1B03A8BCFCD227596A9 /* Data */ = {
@@ -627,6 +641,8 @@
 				8D42FF94DD3DB0E8C7B7F256 /* Formatters.swift in Sources */,
 				9C5E0BBD9E34E1611BED70ED /* LibrarySidebarView.swift in Sources */,
 				1C9272BC8B0BC1C338147B3E /* LicenseStore.swift in Sources */,
+				4070ECA12242DA1D969EDECE /* ModernBackdrop.swift in Sources */,
+				67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */,
 				F59567BB049A3F13DB80FB2A /* OLEDDisplayView.swift in Sources */,
 				087128B95EFB93784C4FCD5E /* ScanProgressView.swift in Sources */,
 				B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */,
