@@ -8,8 +8,6 @@ struct VolumeBrowserView: View {
     @State private var nav = BrowserNav()
     @State private var showChanges = false
 
-    private var modern: Bool { env.theme.skin == .modern }
-
     @ViewBuilder private var browser: some View {
         Group {
             if let snapshotId = summary.latestSnapshotId {
@@ -36,39 +34,13 @@ struct VolumeBrowserView: View {
     var body: some View {
         VStack(spacing: 0) {
             if summary.latestSnapshotId != nil {
-                if env.theme.skin == .modern {
-                    OLEDDisplayView(
-                        summary: summary,
-                        connected: env.volumes.isConnected(key: summary.uuid ?? summary.name),
-                        browsePath: "/Volumes/\(summary.name)",
-                        layout: env.theme.oledLayout,
-                        palette: env.theme.accent.palette
-                    )
-                    .padding(12)
-                    ModernActionRow(summary: summary) { showChanges = true }
-                } else {
-                    DriveHeaderBar(summary: summary) { showChanges = true }
-                    Divider()
-                }
+                DriveHeaderBar(summary: summary) { showChanges = true }
+                Divider()
             }
             if summary.latestSnapshotComplete == false {
                 IncompleteBanner(summary: summary)
             }
-            if modern {
-                browser
-                    .glassCard()
-                    .padding([.horizontal, .bottom], 12)
-            } else {
-                browser
-            }
-            if modern, summary.latestSnapshotId != nil {
-                HStack(spacing: 12) {
-                    ReclaimableTile(palette: env.theme.accent.palette)
-                    ActionPlanTile()
-                }
-                .frame(height: 132)
-                .padding([.horizontal, .bottom], 12)
-            }
+            browser
         }
         .onAppear { env.selectedVolumeKey = summary.uuid ?? summary.name }
         .sheet(isPresented: $showChanges) { ChangesView(summary: summary) }
@@ -117,32 +89,6 @@ struct DriveHeaderBar: View {
         if let files = summary.fileCount { parts.append("\(Format.count(files)) files") }
         if summary.scannedAt != nil { parts.append("scanned \(Format.relativeDate(summary.scannedAt))") }
         return parts.joined(separator: " · ")
-    }
-}
-
-/// Compact action row shown under the OLED hero in the Modern skin — keeps the
-/// Changes… / Re-scan actions that DriveHeaderBar provides in Classic.
-struct ModernActionRow: View {
-    @Environment(AppEnvironment.self) private var env
-    let summary: VolumeSummary
-    let onShowChanges: () -> Void
-
-    var body: some View {
-        let connected = env.volumes.isConnected(key: summary.uuid ?? summary.name)
-        HStack(spacing: 8) {
-            Spacer()
-            Button(action: onShowChanges) {
-                Label("Changes…", systemImage: "clock.arrow.2.circlepath")
-            }
-            .help("Compare this drive's scans to see what changed")
-            if connected {
-                Button { env.rescan(volume: summary) } label: {
-                    Label("Re-scan", systemImage: "arrow.clockwise")
-                }
-                .help("Scan again to update the catalog and detect changes")
-            }
-        }
-        .padding(.horizontal, 12).padding(.bottom, 8)
     }
 }
 
