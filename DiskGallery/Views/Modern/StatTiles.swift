@@ -18,8 +18,8 @@ struct ReclaimableTile: View {
             Button { env.selection = .duplicates } label: { Text("View →").modernTileLabel() }
                 .buttonStyle(.plain)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .glassCard()
     }
 }
@@ -28,13 +28,13 @@ struct ActionPlanTile: View {
     @Environment(AppEnvironment.self) private var env
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Action Plan").modernTileLabel()
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {
                 ForEach([Tag.keep, .backup, .review, .delete]) { tag in
                     HStack(spacing: 8) {
-                        Text(tag.label).font(.caption).foregroundStyle(.secondary)
-                            .frame(width: 56, alignment: .leading)
+                        Text(tag.label).font(.caption2).foregroundStyle(.secondary)
+                            .frame(width: 48, alignment: .leading)
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
                                 Capsule().fill(.quaternary)
@@ -42,10 +42,10 @@ struct ActionPlanTile: View {
                                     .frame(width: geo.size.width * share(tag))
                             }
                         }
-                        .frame(height: 6)
+                        .frame(height: 5)
                         Text("\(env.tagCounts[tag] ?? 0)")
-                            .font(.caption.monospaced()).foregroundStyle(.secondary)
-                            .frame(width: 40, alignment: .trailing)
+                            .font(.caption2.monospaced()).foregroundStyle(.secondary)
+                            .frame(width: 30, alignment: .trailing)
                     }
                 }
             }
@@ -53,8 +53,8 @@ struct ActionPlanTile: View {
             Button { env.selection = .plan } label: { Text("Open plan →").modernTileLabel() }
                 .buttonStyle(.plain)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .glassCard()
     }
 

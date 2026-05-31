@@ -39,4 +39,11 @@ final class ThemeStore {
             defaults.set(migrated.rawValue, forKey: "accent")
         }
     }
+
+    /// Advances the OLED display to the next layout (Telemetry → Gauge → Minimal → …).
+    func cycleOLEDLayout() {
+        let all = OLEDLayout.allCases
+        guard let i = all.firstIndex(of: oledLayout) else { return }
+        oledLayout = all[(i + 1) % all.count]
+    }
 }

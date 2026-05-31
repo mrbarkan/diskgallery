@@ -27,3 +27,20 @@ extension View {
         if modern { self.scrollContentBackground(.hidden) } else { self }
     }
 }
+
+/// An integrated frosted-glass capsule button for the Modern workspace (the design's pill).
+struct ModernPillButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var scheme
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12, weight: .medium))
+            .padding(.horizontal, 12).padding(.vertical, 7)
+            .background(.regularMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(
+                scheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.10), lineWidth: 1))
+            .shadow(color: .black.opacity(scheme == .dark ? 0.35 : 0.10), radius: 6, y: 3)
+            .opacity(configuration.isPressed ? 0.65 : 1)
+            .contentShape(Capsule())
+    }
+}

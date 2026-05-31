@@ -15,7 +15,7 @@ struct VolumeBrowserView: View {
             if let snapshotId = summary.latestSnapshotId {
                 if let root = rootEntry {
                     NavigationStack(path: $nav.path) {
-                        FolderView(snapshotId: snapshotId, folder: root, nav: nav)
+                        FolderView(snapshotId: snapshotId, folder: root, nav: nav, isRoot: true)
                             .navigationDestination(for: Entry.self) { child in
                                 FolderView(snapshotId: snapshotId, folder: child, nav: nav)
                             }
@@ -66,7 +66,7 @@ struct VolumeBrowserView: View {
                     ReclaimableTile(palette: env.theme.accent.palette)
                     ActionPlanTile()
                 }
-                .frame(height: 132)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding([.horizontal, .bottom], 12)
             }
         }
@@ -120,8 +120,9 @@ struct DriveHeaderBar: View {
     }
 }
 
-/// Compact action row shown under the OLED hero in the Modern skin — keeps the
-/// Changes… / Re-scan actions that DriveHeaderBar provides in Classic.
+/// Compact action row shown under the OLED hero in the Modern skin — integrated glass
+/// pills for cycling the OLED layout and the Changes… / Re-scan actions that
+/// DriveHeaderBar provides in Classic.
 struct ModernActionRow: View {
     @Environment(AppEnvironment.self) private var env
     let summary: VolumeSummary
@@ -129,20 +130,41 @@ struct ModernActionRow: View {
 
     var body: some View {
         let connected = env.volumes.isConnected(key: summary.uuid ?? summary.name)
+        let accent = env.theme.accent.palette.accent
         HStack(spacing: 8) {
+            Button { env.theme.cycleOLEDLayout() } label: {
+                pill(env.theme.oledLayout.name, systemImage: oledIcon, accent: accent)
+            }
+            .help("Switch the OLED display layout (Telemetry · Gauge · Minimal)")
             Spacer()
             Button(action: onShowChanges) {
-                Label("Changes…", systemImage: "clock.arrow.2.circlepath")
+                pill("Changes…", systemImage: "clock.arrow.2.circlepath", accent: accent)
             }
             .help("Compare this drive's scans to see what changed")
             if connected {
                 Button { env.rescan(volume: summary) } label: {
-                    Label("Re-scan", systemImage: "arrow.clockwise")
+                    pill("Re-scan", systemImage: "arrow.clockwise", accent: accent)
                 }
                 .help("Scan again to update the catalog and detect changes")
             }
         }
+        .buttonStyle(ModernPillButtonStyle())
         .padding(.horizontal, 12).padding(.bottom, 8)
+    }
+
+    private var oledIcon: String {
+        switch env.theme.oledLayout {
+        case .telemetry: return "rectangle.split.3x1"
+        case .gauge:     return "gauge.medium"
+        case .minimal:   return "textformat.size"
+        }
+    }
+
+    private func pill(_ title: String, systemImage: String, accent: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage).foregroundStyle(accent)
+            Text(title)
+        }
     }
 }
 
@@ -177,6 +199,7 @@ struct FolderView: View {
     let snapshotId: Int64
     let folder: Entry
     let nav: BrowserNav
+    var isRoot: Bool = false
 
     @State private var children: [Entry] = []
     @State private var annotations: [String: Annotation] = [:]
@@ -185,6 +208,31 @@ struct FolderView: View {
     private var modern: Bool { env.theme.skin == .modern }
 
     var body: some View {
+        Group {
+            if modern {
+                VStack(spacing: 0) {
+                    modernHeader
+                    list
+                }
+            } else {
+                list
+            }
+        }
+        .navigationTitle(modern ? "" : folder.name)
+        .toolbar {
+            if !modern {
+                ToolbarItem(placement: .navigation) {
+                    Text(headerSummary).font(.callout).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .task(id: folder.id) { await load() }
+        .onChange(of: env.dataVersion) { _, _ in Task { await load() } }
+        .onChange(of: selection) { _, _ in updateSelection() }
+        .onAppear { if selection.isEmpty { env.selectedEntries = [folder] } }
+    }
+
+    private var list: some View {
         List(selection: $selection) {
             ForEach(children) { entry in
                 EntryRow(entry: entry, annotation: annotations[entry.relPath])
@@ -202,16 +250,22 @@ struct FolderView: View {
                 nav.open(entry)
             }
         }
-        .navigationTitle(folder.name)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Text(headerSummary).font(.callout).foregroundStyle(.secondary)
+    }
+
+    /// Slim integrated header for Modern (the OLED hero already shows the drive),
+    /// replacing the heavy navigation-bar title. Shows the folder name only when
+    /// drilled in (not at the root), plus the item count.
+    @ViewBuilder private var modernHeader: some View {
+        HStack(spacing: 8) {
+            if !isRoot {
+                Image(systemName: "folder.fill").font(.caption2)
+                    .foregroundStyle(env.theme.accent.palette.accent)
+                Text(folder.name).font(.system(size: 12, weight: .semibold)).lineLimit(1)
             }
+            Spacer()
+            Text(headerSummary).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary)
         }
-        .task(id: folder.id) { await load() }
-        .onChange(of: env.dataVersion) { _, _ in Task { await load() } }
-        .onChange(of: selection) { _, _ in updateSelection() }
-        .onAppear { if selection.isEmpty { env.selectedEntries = [folder] } }
+        .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 4)
     }
 
     private var headerSummary: String {
