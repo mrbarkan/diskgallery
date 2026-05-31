@@ -114,14 +114,16 @@ struct ContentView: View {
         }
     }
 
-    // Modern — two-pane: glass sidebar + one bento workspace (inspector lives inside it).
+    // Modern — two floating glass panes over the spatial backdrop (the mockup's
+    // `grid-template-columns: 272px 1fr; gap:14; padding:14`). A custom HStack rather
+    // than NavigationSplitView so the panes float with a true gutter (matches mockup).
     private var modernSplit: some View {
-        NavigationSplitView {
-            ModernSidebar()
-                .navigationSplitViewColumnWidth(min: 248, ideal: 272)
-        } detail: {
-            ModernWorkspace()
+        HStack(spacing: 14) {
+            ModernSidebar().frame(width: 272)
+            ModernWorkspace().frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var modern: Bool { env.theme.skin == .modern }
