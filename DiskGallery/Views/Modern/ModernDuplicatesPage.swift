@@ -10,7 +10,7 @@ struct ModernDuplicatesPage: View {
 
     @State private var sets: [DuplicateSet] = []
     @State private var selectedSetID: String?
-    @State private var filter: String = "All"
+    @State private var filter: String = FileCategory.all.rawValue
     @State private var members: [DuplicateMember] = []
     @State private var keepRule: String = "Fastest drive"
 
@@ -82,31 +82,38 @@ private struct DupSetsCard: View {
     let totalReclaimable: Int64
 
     private var accent: Color { env.theme.accent.palette.accent }
-    private let chips = ["All", "Photos", "Video", "RAW", "Documents"]
+    private let chips = FileCategory.allCases
+
+    /// Sets narrowed to the selected file-type chip (`.all` → everything).
+    private var visibleSets: [DuplicateSet] {
+        let category = FileCategory(rawValue: filter) ?? .all
+        return sets.filter { category.matches(filename: $0.name) }
+    }
+    private var visibleReclaimable: Int64 { visibleSets.reduce(0) { $0 + $1.reclaimable } }
 
     var body: some View {
         GlassCard {
             VStack(spacing: 0) {
                 ModernCardHeader(systemImage: "square.on.square", title: "Duplicate Sets",
-                                 meta: "\(Format.count(sets.count)) sets · \(Format.bytes(totalReclaimable))",
+                                 meta: "\(Format.count(visibleSets.count)) sets · \(Format.bytes(visibleReclaimable))",
                                  accent: accent)
                 HStack(spacing: 7) {
                     ForEach(chips, id: \.self) { c in
-                        ModernFilterChip(label: c, selected: filter == c) { filter = c }
+                        ModernFilterChip(label: c.label, selected: filter == c.rawValue) { filter = c.rawValue }
                     }
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 16).padding(.bottom, 10)
 
                 List(selection: $selectedSetID) {
-                    ForEach(sets) { set in
+                    ForEach(visibleSets) { set in
                         DupSetRow(set: set, accent: accent)
                             .tag(set.id)
                             .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 18))
                             .listRowSeparator(.hidden)
                             .listRowBackground(rowBackground(set.id == selectedSetID))
                     }
-                    if sets.isEmpty {
+                    if visibleSets.isEmpty {
                         Text("No duplicates found").font(.system(size: 13)).foregroundStyle(DGToken.ink3(scheme))
                             .listRowSeparator(.hidden).listRowBackground(Color.clear)
                     }
