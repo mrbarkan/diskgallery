@@ -10,6 +10,29 @@ struct VolumeBrowserView: View {
 
     private var modern: Bool { env.theme.skin == .modern }
 
+    @ViewBuilder private var browser: some View {
+        Group {
+            if let snapshotId = summary.latestSnapshotId {
+                if let root = rootEntry {
+                    NavigationStack(path: $nav.path) {
+                        FolderView(snapshotId: snapshotId, folder: root, nav: nav)
+                            .navigationDestination(for: Entry.self) { child in
+                                FolderView(snapshotId: snapshotId, folder: child, nav: nav)
+                            }
+                    }
+                } else {
+                    ProgressView().task(id: snapshotId) {
+                        rootEntry = try? await env.catalog.library.rootEntry(snapshotId: snapshotId)
+                    }
+                }
+            } else {
+                ContentUnavailableView("Not scanned yet",
+                                       systemImage: "externaldrive.badge.questionmark",
+                                       description: Text("Connect this drive and scan it to browse its contents."))
+            }
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             if summary.latestSnapshotId != nil {
@@ -23,7 +46,6 @@ struct VolumeBrowserView: View {
                     )
                     .padding(12)
                     ModernActionRow(summary: summary) { showChanges = true }
-                    Divider()
                 } else {
                     DriveHeaderBar(summary: summary) { showChanges = true }
                     Divider()
@@ -32,25 +54,12 @@ struct VolumeBrowserView: View {
             if summary.latestSnapshotComplete == false {
                 IncompleteBanner(summary: summary)
             }
-            Group {
-                if let snapshotId = summary.latestSnapshotId {
-                    if let root = rootEntry {
-                        NavigationStack(path: $nav.path) {
-                            FolderView(snapshotId: snapshotId, folder: root, nav: nav)
-                                .navigationDestination(for: Entry.self) { child in
-                                    FolderView(snapshotId: snapshotId, folder: child, nav: nav)
-                                }
-                        }
-                    } else {
-                        ProgressView().task(id: snapshotId) {
-                            rootEntry = try? await env.catalog.library.rootEntry(snapshotId: snapshotId)
-                        }
-                    }
-                } else {
-                    ContentUnavailableView("Not scanned yet",
-                                           systemImage: "externaldrive.badge.questionmark",
-                                           description: Text("Connect this drive and scan it to browse its contents."))
-                }
+            if modern {
+                browser
+                    .glassCard()
+                    .padding([.horizontal, .bottom], 12)
+            } else {
+                browser
             }
             if modern, summary.latestSnapshotId != nil {
                 HStack(spacing: 12) {
