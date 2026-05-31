@@ -15,6 +15,7 @@
 		0C776729B8CC44319F10FF53 /* BrowserNav.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97084FB885F63B7AB7363CAB /* BrowserNav.swift */; };
 		10C1AC576EACE8AE9E799385 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9E8F92833EFD609815E1633 /* Colors.swift */; };
 		119F3A7CA0084C00109D5EE1 /* AccentPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 481741FBB56E535B49151FE4 /* AccentPalette.swift */; };
+		1413BAE28BBFD4DB63531FBC /* ModernBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 306BD8977188CC295B8CA426 /* ModernBrowser.swift */; };
 		163787F6E82DDAE41147E42E /* HashVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */; };
 		181E3433E8EF0D7AFA7419B4 /* ThemeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B60F525D3DE6BD4E0A73D7F /* ThemeModel.swift */; };
 		1BBC250BE23923DBA37ABCB0 /* BackupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82987EC891FA8B2F0A51F0F /* BackupTests.swift */; };
@@ -142,6 +143,7 @@
 		239E19F08DFE1282FEAB493B /* ModernGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernGlass.swift; sourceTree = "<group>"; };
 		2C7B796F9140FFB75649FBEA /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
 		2DF8B6014428D118FD2C366E /* ChangeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeTests.swift; sourceTree = "<group>"; };
+		306BD8977188CC295B8CA426 /* ModernBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernBrowser.swift; sourceTree = "<group>"; };
 		32BBDA2EB412284EC0D8DC4B /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		369012288A55FF3177C489B1 /* DiskGalleryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiskGalleryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		395CB1FD1B89F2B19088F80B /* ScanProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProgress.swift; sourceTree = "<group>"; };
@@ -305,6 +307,7 @@
 			isa = PBXGroup;
 			children = (
 				8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */,
+				306BD8977188CC295B8CA426 /* ModernBrowser.swift */,
 				239E19F08DFE1282FEAB493B /* ModernGlass.swift */,
 				10269A217E263D34BEDFBA60 /* ModernSidebar.swift */,
 				78FE7F3B93BD72C5DBA42FA8 /* ModernTopbar.swift */,
@@ -660,6 +663,7 @@
 				9C5E0BBD9E34E1611BED70ED /* LibrarySidebarView.swift in Sources */,
 				1C9272BC8B0BC1C338147B3E /* LicenseStore.swift in Sources */,
 				4070ECA12242DA1D969EDECE /* ModernBackdrop.swift in Sources */,
+				1413BAE28BBFD4DB63531FBC /* ModernBrowser.swift in Sources */,
 				67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */,
 				85A5A04FD5595BFF8E9A5C15 /* ModernSidebar.swift in Sources */,
 				F8D9199F3503262624C78237 /* ModernTokens.swift in Sources */,
