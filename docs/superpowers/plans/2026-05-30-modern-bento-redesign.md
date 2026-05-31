@@ -437,7 +437,7 @@ git commit -m "Modern Search + Tagged: glass list chrome over the backdrop"
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1.** Update the Themes bullet (currently mentions Classic/Modern + OLED) to note the Modern look now spans the whole interface. Replace it with:
+- [x] **Step 1.** Update the Themes bullet (currently mentions Classic/Modern + OLED) to note the Modern look now spans the whole interface. Replace it with:
 
 ```markdown
 - **Themes** — a **Classic** or **Modern** look. Modern restyles the whole interface as a
@@ -447,11 +447,13 @@ git commit -m "Modern Search + Tagged: glass list chrome over the backdrop"
   light / dark / system mode — all in Settings.
 ```
 
-- [ ] **Step 2: Full Core test suite** (regression guard): `xcodebuild -project DiskGallery.xcodeproj -scheme DiskGalleryCore -configuration Debug -destination 'platform=macOS,arch=arm64' test 2>&1 | tail -20` → `** TEST SUCCEEDED **` (~48 tests). If any fail, STOP and report.
+- [x] **Step 2: Full Core test suite** (regression guard): `xcodebuild -project DiskGallery.xcodeproj -scheme DiskGalleryCore -configuration Debug -destination 'platform=macOS,arch=arm64' test 2>&1 | tail -20` → `** TEST SUCCEEDED **` (~48 tests). If any fail, STOP and report.
+  - **Result (2026-05-30):** Executed 48 tests, with 0 failures — `** TEST SUCCEEDED **`
 
-- [ ] **Step 3: Full app build** → `** BUILD SUCCEEDED **`.
+- [x] **Step 3: Full app build** → `** BUILD SUCCEEDED **`.
+  - **Result (2026-05-30):** `** BUILD SUCCEEDED **` (arm64, Debug, macOS)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add README.md

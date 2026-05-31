@@ -13,24 +13,34 @@ struct LibrarySidebarView: View {
             Section {
                 Label("Duplicates", systemImage: "doc.on.doc")
                     .badge(env.totalReclaimable > 0 ? Text(Format.bytes(env.totalReclaimable)) : nil)
+                    .modernRowTint(modern, selected: env.selection == .duplicates, accent: env.theme.accent.palette.accent)
                     .tag(SidebarItem.duplicates)
+                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .duplicates)) : nil)
                 Label("Search", systemImage: "magnifyingglass")
+                    .modernRowTint(modern, selected: env.selection == .search, accent: env.theme.accent.palette.accent)
                     .tag(SidebarItem.search)
+                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .search)) : nil)
             } header: { sectionHeader("Library") }
 
             Section {
                 Label("Action Plan", systemImage: "checklist")
                     .badge(plannedItemCount)
+                    .modernRowTint(modern, selected: env.selection == .plan, accent: env.theme.accent.palette.accent)
                     .tag(SidebarItem.plan)
+                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .plan)) : nil)
                 Label("Transfer Planner", systemImage: "arrow.left.arrow.right")
+                    .modernRowTint(modern, selected: env.selection == .transfer, accent: env.theme.accent.palette.accent)
                     .tag(SidebarItem.transfer)
+                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .transfer)) : nil)
             } header: { sectionHeader("Plan") }
 
             Section {
                 ForEach(Tag.actionTags) { tag in
                     Label(tag.label, systemImage: icon(for: tag))
                         .badge(env.tagCounts[tag] ?? 0)
+                        .modernRowTint(modern, selected: env.selection == .tagged(tag), accent: env.theme.accent.palette.accent)
                         .tag(SidebarItem.tagged(tag))
+                        .listRowBackground(modern ? AnyView(modernRowBackground(for: .tagged(tag))) : nil)
                 }
             } header: { sectionHeader("Action Tags") }
 
@@ -43,6 +53,7 @@ struct LibrarySidebarView: View {
                 ForEach(env.volumeSummaries) { summary in
                     DriveRow(summary: summary)
                         .tag(SidebarItem.volume(summary.id))
+                        .listRowBackground(modern ? AnyView(modernRowBackground(for: .volume(summary.id))) : nil)
                         .contextMenu {
                             if summary.latestSnapshotComplete == false {
                                 Button("Resume Scan") { env.resumeScan(volume: summary) }
@@ -79,6 +90,18 @@ struct LibrarySidebarView: View {
 
     private var plannedItemCount: Int {
         Tag.actionTags.reduce(0) { $0 + (env.tagCounts[$1] ?? 0) }
+    }
+
+    /// Modern only: an accent-soft rounded fill behind the currently-selected nav row
+    /// (the design's `nav-item.on` treatment). Returns a clear background for unselected
+    /// rows. This is *only* used in Modern — Classic passes `nil` so the system default
+    /// selection style is preserved byte-for-byte.
+    @ViewBuilder private func modernRowBackground(for item: SidebarItem) -> some View {
+        if env.selection == item {
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(env.theme.accent.palette.soft)
+        } else {
+            Color.clear
+        }
     }
 
     @ViewBuilder private func sectionHeader(_ title: String) -> some View {
@@ -158,5 +181,18 @@ struct DriveRow: View {
             return "\(Format.bytes(total)) · \(Format.count(files)) files"
         }
         return "Not scanned"
+    }
+}
+
+private extension View {
+    /// Modern only: tint a selected nav row's label with the accent (the design's
+    /// `nav-item.on` text/icon color). When `modern` is false this is a no-op, so the
+    /// Classic label color is left exactly as the system draws it.
+    @ViewBuilder func modernRowTint(_ modern: Bool, selected: Bool, accent: Color) -> some View {
+        if modern && selected {
+            self.foregroundStyle(accent)
+        } else {
+            self
+        }
     }
 }
