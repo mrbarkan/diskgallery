@@ -31,14 +31,11 @@ struct OLEDDisplayView: View {
         .padding(.horizontal, 22)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(screen)
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(scanlines)
-            .overlay(vignette)
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(.black, lineWidth: 1))
-            .shadow(color: palette.glow, radius: 26)
-            .shadow(color: .black.opacity(0.55), radius: 28, y: 16)
-            .environment(\.colorScheme, .dark)
+        .background(OLEDColor.screen)   // pitch black — a real OLED panel
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(.white.opacity(0.06), lineWidth: 1))
+        .shadow(color: .black.opacity(0.6), radius: 18, y: 10)
+        .environment(\.colorScheme, .dark)
     }
 
     @ViewBuilder private var content: some View {
@@ -47,36 +44,6 @@ struct OLEDDisplayView: View {
         case .gauge:     gauge
         case .minimal:   minimal
         }
-    }
-
-    // MARK: Chassis
-
-    private var screen: some View {
-        LinearGradient(colors: [OLEDColor.screenTop, OLEDColor.screen], startPoint: .top, endPoint: .bottom)
-            .overlay(RadialGradient(colors: [palette.accent.opacity(0.09), .clear],
-                                    center: .topLeading, startRadius: 0, endRadius: 360))
-    }
-
-    private var scanlines: some View {
-        Canvas { ctx, size in
-            let shading = GraphicsContext.Shading.color(.white.opacity(0.022))
-            var y: CGFloat = 0
-            while y < size.height {
-                ctx.fill(Path(CGRect(x: 0, y: y, width: size.width, height: 1)), with: shading)
-                y += 3
-            }
-        }
-        .blendMode(.screen)
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-
-    private var vignette: some View {
-        RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .fill(RadialGradient(colors: [.clear, .black.opacity(0.5)], center: .center, startRadius: 70, endRadius: 340))
-            .blendMode(.multiply)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
     }
 
     // MARK: Layout A — Telemetry
@@ -101,7 +68,7 @@ struct OLEDDisplayView: View {
                 cellDivider
                 OLEDStatCell(k: "Used", value: Format.bytes(usedBytes),
                              sub: summary.totalCapacity == nil ? nil : "\(percent)% full",
-                             tint: palette.accent, glow: palette.glow, valueSize: 30)
+                             tint: palette.accent, valueSize: 30)
                 cellDivider
                 OLEDStatCell(k: "Files", value: Format.count(summary.fileCount), sub: "cataloged", valueSize: 30)
                 if let reclaimable, reclaimable > 0 {
@@ -128,7 +95,6 @@ struct OLEDDisplayView: View {
                     Circle().trim(from: 0, to: fraction)
                         .stroke(over ? OLEDColor.bad : palette.accent, style: StrokeStyle(lineWidth: 13, lineCap: .round))
                         .rotationEffect(.degrees(-90))
-                        .shadow(color: palette.glow, radius: 10)
                 }
                 VStack(spacing: 2) {
                     HStack(alignment: .firstTextBaseline, spacing: 1) {
@@ -146,7 +112,7 @@ struct OLEDDisplayView: View {
                 Text(gaugeSubtitle).font(.system(size: 11, design: .monospaced)).foregroundStyle(OLEDColor.ink2)
                 HStack(spacing: 24) {
                     OLEDStatCell(k: "Capacity", value: Format.bytes(summary.totalCapacity))
-                    OLEDStatCell(k: "Used", value: Format.bytes(usedBytes), tint: palette.accent, glow: palette.glow)
+                    OLEDStatCell(k: "Used", value: Format.bytes(usedBytes), tint: palette.accent)
                     OLEDStatCell(k: "Files", value: Format.count(summary.fileCount))
                 }
             }
@@ -207,7 +173,7 @@ private struct OLEDPill: View {
     var live: Bool = false
     var body: some View {
         HStack(spacing: 6) {
-            if live { Circle().fill(OLEDColor.ok).frame(width: 6, height: 6).shadow(color: OLEDColor.ok, radius: 4) }
+            if live { Circle().fill(OLEDColor.ok).frame(width: 6, height: 6) }
             Text(text.uppercased()).font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1.2)
         }
         .foregroundStyle(live ? OLEDColor.ok : OLEDColor.ink2)
@@ -230,13 +196,11 @@ private struct OLEDStatCell: View {
     let value: String
     var sub: String? = nil
     var tint: Color = OLEDColor.ink
-    var glow: Color? = nil
     var valueSize: CGFloat = 26
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             OLEDKey(k)
-            Text(value).font(.system(size: valueSize, weight: .bold, design: .monospaced)).foregroundStyle(tint)
-                .shadow(color: glow ?? .clear, radius: glow == nil ? 0 : 14).lineLimit(1)
+            Text(value).font(.system(size: valueSize, weight: .bold, design: .monospaced)).foregroundStyle(tint).lineLimit(1)
             if let sub { OLEDKey(sub) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -265,10 +229,9 @@ private struct OLEDCapacityBar: View {
                 Capsule().fill(OLEDColor.ink.opacity(0.08))
                 Capsule()
                     .fill(over ? AnyShapeStyle(OLEDColor.bad)
-                               : AnyShapeStyle(LinearGradient(colors: [palette.accentDeep, palette.accent],
+                               : AnyShapeStyle(LinearGradient(colors: [palette.accent2, palette.accent],
                                                               startPoint: .leading, endPoint: .trailing)))
                     .frame(width: max(0, geo.size.width * fraction))
-                    .shadow(color: over ? OLEDColor.bad.opacity(0.6) : palette.glow, radius: 8)
             }
         }
     }

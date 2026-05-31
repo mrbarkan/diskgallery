@@ -41,7 +41,7 @@ struct ModernSidebar: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(EdgeInsets(top: 34, leading: 18, bottom: 14, trailing: 18))
+        .padding(EdgeInsets(top: 18, leading: 18, bottom: 14, trailing: 18))
     }
 
     // MARK: Scan button

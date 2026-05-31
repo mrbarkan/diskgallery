@@ -120,11 +120,13 @@ struct ContentView: View {
     // `grid-template-columns: 272px 1fr; gap:14; padding:14`). A custom HStack rather
     // than NavigationSplitView so the panes float with a true gutter (matches mockup).
     private var modernSplit: some View {
-        HStack(spacing: 14) {
-            ModernSidebar().frame(width: 272)
+        HStack(alignment: .top, spacing: 14) {
+            // Drop the sidebar by one topbar row (40 + 14 gap) so its top edge lines up
+            // with the OLED, leaving the traffic-light strip clear above it.
+            ModernSidebar().frame(width: 272).padding(.top, 54)
             ModernWorkspace().frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding(14)
+        .padding(.horizontal, 14).padding(.bottom, 14).padding(.top, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
