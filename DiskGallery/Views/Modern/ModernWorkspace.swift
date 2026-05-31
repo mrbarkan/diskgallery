@@ -64,9 +64,27 @@ struct RouteBentoWorkspace<Content: View>: View {
 
     private var accent: Color { env.theme.accent.palette.accent }
 
+    /// The drive whose telemetry the permanent OLED shows: the last-selected volume,
+    /// else the first cataloged one.
+    private var currentDrive: VolumeSummary? {
+        if let key = env.selectedVolumeKey,
+           let match = env.volumeSummaries.first(where: { ($0.uuid ?? $0.name) == key }) {
+            return match
+        }
+        return env.volumeSummaries.first
+    }
+
     var body: some View {
         VStack(spacing: 14) {
             ModernTopbar(leadingIcon: systemImage, crumbs: [title], onSearch: { env.selection = .search })
+            if let drive = currentDrive {
+                OLEDDisplayView(summary: drive,
+                                connected: env.volumes.isConnected(key: drive.uuid ?? drive.name),
+                                reclaimable: env.totalReclaimable,
+                                layout: env.theme.oledLayout,
+                                palette: env.theme.accent.palette)
+                    .frame(height: 216)
+            }
             GeometryReader { geo in
                 let gap: CGFloat = 14
                 if showInspector {

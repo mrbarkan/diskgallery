@@ -57,6 +57,7 @@ struct DiskGalleryApp: App {
             }
         }
         .windowToolbarStyle(.unified)
+        .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1320, height: 860)
         .commands {
             CommandGroup(after: .newItem) {
@@ -80,6 +81,7 @@ struct DiskGalleryApp: App {
 
 struct ContentView: View {
     @Environment(AppEnvironment.self) private var env
+    @State private var systemAppearance = SystemAppearance()
 
     var body: some View {
         Group {
@@ -98,8 +100,18 @@ struct ContentView: View {
             Text(env.errorMessage ?? "")
         }
         .tint(env.theme.accent.palette.accent)
-        .preferredColorScheme(env.theme.mode.colorScheme)
+        .preferredColorScheme(effectiveScheme)
         .frame(minWidth: 1040, minHeight: 680)
+    }
+
+    /// Resolve "System" to a concrete scheme so Modern tokens & glass materials stay in
+    /// sync (a nil preferredColorScheme renders a mixed light/dark UI in this app).
+    private var effectiveScheme: ColorScheme {
+        switch env.theme.mode {
+        case .light:  .light
+        case .dark:   .dark
+        case .system: systemAppearance.colorScheme
+        }
     }
 
     // Classic — the original three-column layout, unchanged.
@@ -128,6 +140,7 @@ struct ContentView: View {
         }
         .padding(.horizontal, 14).padding(.bottom, 14).padding(.top, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea()
     }
 
     private var modern: Bool { env.theme.skin == .modern }

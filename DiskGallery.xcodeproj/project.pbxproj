@@ -28,6 +28,7 @@
 		4070ECA12242DA1D969EDECE /* ModernBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */; };
 		412F1FED7D5647E1F85054CF /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CEE1A004B973AABD3E7B995 /* Models.swift */; };
 		46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */; };
+		526BC038E5FBA275C315A6DA /* SystemAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D93D14E859992536494962C /* SystemAppearance.swift */; };
 		54F7E036F94C146237106B8D /* FinderTagTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4105C0CC1F9C0469C2052248 /* FinderTagTests.swift */; };
 		5538B61725F67104A80877F5 /* DiskGalleryCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5571B1DB44FDD3A6AA8BDC0F /* Scanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0886F22F3BD10A946192FCA /* Scanner.swift */; };
@@ -167,6 +168,7 @@
 		79E7150F9FAC9E3145394AE1 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
 		7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashVerifier.swift; sourceTree = "<group>"; };
 		7CAB8199993101F11F86332D /* ChangesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangesView.swift; sourceTree = "<group>"; };
+		7D93D14E859992536494962C /* SystemAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAppearance.swift; sourceTree = "<group>"; };
 		835B501A45322390BEEF4345 /* ModernTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernTokens.swift; sourceTree = "<group>"; };
 		8541EFC2B903B51A3A69F365 /* AnnotationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationStore.swift; sourceTree = "<group>"; };
 		86D3048FEAC718F9F9AF6C11 /* TaggedListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaggedListView.swift; sourceTree = "<group>"; };
@@ -371,6 +373,7 @@
 				149B608FC593D130B299F9C8 /* DiskGalleryApp.swift */,
 				5473AB3A7C7A7143F2118E2E /* LicenseStore.swift */,
 				3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */,
+				7D93D14E859992536494962C /* SystemAppearance.swift */,
 				ECBA2AE40DDF4B70537C8F4F /* ThemeStore.swift */,
 			);
 			path = App;
@@ -679,6 +682,7 @@
 				C723B2681D13ADAD6B82B080 /* SettingsView.swift in Sources */,
 				C5A6E538914E1290442AEC7A /* ShortcutStore.swift in Sources */,
 				F33C2DBD411AD01139F80987 /* StatTiles.swift in Sources */,
+				526BC038E5FBA275C315A6DA /* SystemAppearance.swift in Sources */,
 				A6F8081BD8E0E7CE48D5F3ED /* TaggedListView.swift in Sources */,
 				95871C43166ACC0954915B1D /* ThemeStore.swift in Sources */,
 				8E21B24409BF7A7A1D5FE6E2 /* TransferPlannerView.swift in Sources */,

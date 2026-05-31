@@ -1,10 +1,10 @@
 import SwiftUI
 import AppKit
 
-/// Drives full-bleed window chrome for the Modern skin: transparent title bar, content
-/// under it, the (empty) unified toolbar hidden, and a sane on-screen frame. Classic
-/// restores the standard chrome. Applied via `viewDidMoveToWindow` so it reliably runs
-/// once the hosting NSWindow exists. Spec §4.2.
+/// Complements `.windowStyle(.hiddenTitleBar)`: in Modern it keeps the canvas full-bleed
+/// (hidden toolbar, no separator) and gives the window a sane on-screen frame; in Classic
+/// it restores the standard title bar + toolbar over the hidden-title-bar base. Applied via
+/// `viewDidMoveToWindow` so it reliably runs once the NSWindow exists. Spec §4.2.
 struct WindowChrome: NSViewRepresentable {
     var fullBleed: Bool
 
@@ -32,33 +32,39 @@ final class ChromeNSView: NSView {
 
     func applyChrome() {
         guard let window else { return }
-        window.titlebarAppearsTransparent = fullBleed
-        window.titleVisibility = fullBleed ? .hidden : .visible
-        window.titlebarSeparatorStyle = fullBleed ? .none : .automatic
-        window.isMovableByWindowBackground = fullBleed
         if fullBleed {
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.titlebarSeparatorStyle = .none
+            window.isMovableByWindowBackground = true
             window.styleMask.insert(.fullSizeContentView)
+            window.toolbar?.isVisible = false   // hide the empty unified toolbar strip
+            placeIfNeeded(window)
         } else {
+            // Classic: restore the standard title bar + toolbar over the hidden-title-bar base.
+            window.titlebarAppearsTransparent = false
+            window.titleVisibility = .visible
+            window.titlebarSeparatorStyle = .automatic
+            window.isMovableByWindowBackground = false
             window.styleMask.remove(.fullSizeContentView)
+            window.toolbar?.isVisible = true
         }
-        // The unified toolbar reserves an (empty) strip in Modern — hide it for a true
-        // full-bleed canvas. Classic keeps its toolbar (scan / library menu).
-        window.toolbar?.isVisible = !fullBleed
+    }
 
-        // The custom two-pane Modern shell has no intrinsic size, so a restored frame
-        // can be collapsed or off-screen. Fix only bad frames (preserve good ones).
-        if fullBleed, !placed {
-            placed = true
-            let frame = window.frame
-            let onScreen = NSScreen.screens.contains { $0.frame.intersects(frame) }
-            if frame.width < 980 || frame.height < 640 || !onScreen, let screen = NSScreen.main {
-                let vis = screen.visibleFrame
-                let size = NSSize(width: min(1320, vis.width - 80), height: min(880, vis.height - 80))
-                let origin = NSPoint(x: vis.midX - size.width / 2, y: vis.midY - size.height / 2)
-                window.setFrame(NSRect(origin: origin, size: size), display: true)
-            }
-            window.makeKeyAndOrderFront(nil)
+    /// The custom two-pane Modern shell has no intrinsic size, so a restored frame can be
+    /// collapsed or off-screen. Recenter once, only when the frame is bad.
+    private func placeIfNeeded(_ window: NSWindow) {
+        guard !placed else { return }
+        placed = true
+        let frame = window.frame
+        let onScreen = NSScreen.screens.contains { $0.frame.intersects(frame) }
+        if frame.width < 980 || frame.height < 640 || !onScreen, let screen = NSScreen.main {
+            let vis = screen.visibleFrame
+            let size = NSSize(width: min(1320, vis.width - 80), height: min(880, vis.height - 80))
+            let origin = NSPoint(x: vis.midX - size.width / 2, y: vis.midY - size.height / 2)
+            window.setFrame(NSRect(origin: origin, size: size), display: true)
         }
+        window.makeKeyAndOrderFront(nil)
     }
 }
 
