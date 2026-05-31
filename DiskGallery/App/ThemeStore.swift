@@ -39,4 +39,11 @@ final class ThemeStore {
             defaults.set(migrated.rawValue, forKey: "accent")
         }
     }
+
+    /// Advance the OLED layout Telemetry → Gauge → Minimal → Telemetry (the Display button).
+    func cycleOLEDLayout() {
+        let all = OLEDLayout.allCases
+        guard let i = all.firstIndex(of: oledLayout) else { return }
+        oledLayout = all[(i + 1) % all.count]
+    }
 }
