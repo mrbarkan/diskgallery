@@ -81,17 +81,11 @@ struct ContentView: View {
     @Environment(AppEnvironment.self) private var env
 
     var body: some View {
-        NavigationSplitView {
-            LibrarySidebarView()
-                .navigationSplitViewColumnWidth(min: 220, ideal: 250)
-        } content: {
-            ContentColumn()
-                .navigationSplitViewColumnWidth(min: 360, ideal: 480)
-        } detail: {
-            EntryDetailView()
-                .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+        Group {
+            if modern { modernSplit } else { classicSplit }
         }
         .background { if modern { SpatialBackdrop(palette: env.theme.accent.palette) } }
+        .modernWindowChrome(modern)
         .sheet(isPresented: Binding(get: { env.activeScan != nil }, set: { _ in })) {
             ScanProgressView()
         }
@@ -104,6 +98,30 @@ struct ContentView: View {
         }
         .tint(env.theme.accent.palette.accent)
         .preferredColorScheme(env.theme.mode.colorScheme)
+    }
+
+    // Classic — the original three-column layout, unchanged.
+    private var classicSplit: some View {
+        NavigationSplitView {
+            LibrarySidebarView()
+                .navigationSplitViewColumnWidth(min: 220, ideal: 250)
+        } content: {
+            ContentColumn()
+                .navigationSplitViewColumnWidth(min: 360, ideal: 480)
+        } detail: {
+            EntryDetailView()
+                .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+        }
+    }
+
+    // Modern — two-pane: glass sidebar + one bento workspace (inspector lives inside it).
+    private var modernSplit: some View {
+        NavigationSplitView {
+            ModernSidebar()
+                .navigationSplitViewColumnWidth(min: 248, ideal: 272)
+        } detail: {
+            ModernWorkspace()
+        }
     }
 
     private var modern: Bool { env.theme.skin == .modern }

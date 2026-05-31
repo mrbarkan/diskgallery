@@ -39,11 +39,13 @@
 		656C5629B8D927DFB5320AF1 /* ActionPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C72B112CB1A19D091849CB /* ActionPlanView.swift */; };
 		67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239E19F08DFE1282FEAB493B /* ModernGlass.swift */; };
 		675EA47A2AEBA04940BC35A8 /* AnnotationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8541EFC2B903B51A3A69F365 /* AnnotationStore.swift */; };
+		67A61E43F56FE7C41BF5B13C /* ModernWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54ECFB382AC39796AC01E43 /* ModernWorkspace.swift */; };
 		739E488DA632B6F0175589E1 /* ScanProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395CB1FD1B89F2B19088F80B /* ScanProgress.swift */; };
 		78F985AE016928608959CE27 /* AnnotationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EFB0CEC11A298EB4F9FFCC /* AnnotationTests.swift */; };
 		7F9684CC87181356712AA720 /* PlanningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C8DCECD169ABFB6FA93CFA2 /* PlanningTests.swift */; };
 		8232FE4C5D1ECE53E8D19C6C /* Capacity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ABD4966F2629801B58174E0 /* Capacity.swift */; };
 		83A13362369ACD6FE56C51CF /* PlanningService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF52A4E49B04053DEEC78B56 /* PlanningService.swift */; };
+		85A5A04FD5595BFF8E9A5C15 /* ModernSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10269A217E263D34BEDFBA60 /* ModernSidebar.swift */; };
 		8D42FF94DD3DB0E8C7B7F256 /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55AD4B91FA397B9471B601E /* Formatters.swift */; };
 		8E21B24409BF7A7A1D5FE6E2 /* TransferPlannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46FB69746E1A1F87B2D46BA /* TransferPlannerView.swift */; };
 		8E2F47EDF2184A0D97425283 /* VolumeBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC4B9FE3D85994F49AE8AC8 /* VolumeBrowserView.swift */; };
@@ -128,6 +130,7 @@
 /* Begin PBXFileReference section */
 		052F1C86EE5C7C4897CBB317 /* DuplicateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateEngine.swift; sourceTree = "<group>"; };
 		0ABD4966F2629801B58174E0 /* Capacity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Capacity.swift; sourceTree = "<group>"; };
+		10269A217E263D34BEDFBA60 /* ModernSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernSidebar.swift; sourceTree = "<group>"; };
 		146D1C1E98B588853D9D5BB8 /* SearchResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResultsView.swift; sourceTree = "<group>"; };
 		149B608FC593D130B299F9C8 /* DiskGalleryApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskGalleryApp.swift; sourceTree = "<group>"; };
 		1AFFB1E76AE447035048FF76 /* Catalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalog.swift; sourceTree = "<group>"; };
@@ -178,6 +181,7 @@
 		B82987EC891FA8B2F0A51F0F /* BackupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupTests.swift; sourceTree = "<group>"; };
 		B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DiskGalleryCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0886F22F3BD10A946192FCA /* Scanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scanner.swift; sourceTree = "<group>"; };
+		C54ECFB382AC39796AC01E43 /* ModernWorkspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernWorkspace.swift; sourceTree = "<group>"; };
 		C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicatesView.swift; sourceTree = "<group>"; };
 		CF52A4E49B04053DEEC78B56 /* PlanningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningService.swift; sourceTree = "<group>"; };
 		D4DAF550E4C8CE67CFE830AD /* CrossDriveDuplicateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossDriveDuplicateTests.swift; sourceTree = "<group>"; };
@@ -300,6 +304,8 @@
 			children = (
 				8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */,
 				239E19F08DFE1282FEAB493B /* ModernGlass.swift */,
+				10269A217E263D34BEDFBA60 /* ModernSidebar.swift */,
+				C54ECFB382AC39796AC01E43 /* ModernWorkspace.swift */,
 				F9C040BBD8951A53231F2AC7 /* StatTiles.swift */,
 				ACB0E106C7984E3911A8244E /* WindowAccessor.swift */,
 			);
@@ -652,7 +658,9 @@
 				1C9272BC8B0BC1C338147B3E /* LicenseStore.swift in Sources */,
 				4070ECA12242DA1D969EDECE /* ModernBackdrop.swift in Sources */,
 				67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */,
+				85A5A04FD5595BFF8E9A5C15 /* ModernSidebar.swift in Sources */,
 				F8D9199F3503262624C78237 /* ModernTokens.swift in Sources */,
+				67A61E43F56FE7C41BF5B13C /* ModernWorkspace.swift in Sources */,
 				F59567BB049A3F13DB80FB2A /* OLEDDisplayView.swift in Sources */,
 				087128B95EFB93784C4FCD5E /* ScanProgressView.swift in Sources */,
 				B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */,
