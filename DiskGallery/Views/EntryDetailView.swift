@@ -27,7 +27,17 @@ struct EntryInspector: View {
     @State private var annotation: Annotation?
     @State private var note: String = ""
 
+    private var modern: Bool { env.theme.skin == .modern }
+
     var body: some View {
+        Group {
+            if modern { modernBody } else { classicForm }
+        }
+        .task(id: reloadKey) { await load() }
+    }
+
+    // Classic — the original grouped Form, unchanged.
+    private var classicForm: some View {
         Form {
             Section {
                 LabeledContent("Name", value: entry.name)
@@ -40,12 +50,10 @@ struct EntryInspector: View {
                 LabeledContent("Modified", value: Format.date(entry.modifiedAt))
                 LabeledContent("Path", value: entry.relPath.isEmpty ? "/" : entry.relPath)
             }
-
             Section("Tags") {
                 TagControls(targets: [entry], current: annotation)
                 FinderSyncNote()
             }
-
             Section("Note") {
                 TextField("Note", text: $note, axis: .vertical)
                     .lineLimit(3, reservesSpace: true)
@@ -53,11 +61,73 @@ struct EntryInspector: View {
             }
         }
         .formStyle(.grouped)
-        .modernListChrome(modern)
-        .task(id: reloadKey) { await load() }
     }
 
-    private var modern: Bool { env.theme.skin == .modern }
+    // Modern — a frosted-glass inspector card on the spatial backdrop.
+    private var modernBody: some View {
+        let accent = env.theme.accent.palette.accent
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous).fill(accent.opacity(0.22))
+                        Image(systemName: entry.isDir ? "folder.fill" : "doc.fill")
+                            .font(.system(size: 22)).foregroundStyle(accent)
+                    }
+                    .frame(width: 52, height: 52)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(entry.name).font(.headline).lineLimit(2)
+                        Text(entry.isDir ? "Folder" : (entry.ext.map { ".\($0)" } ?? "File"))
+                            .font(.system(.caption, design: .monospaced)).textCase(.uppercase)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                specGrid(accent: accent)
+
+                ModernInspectorSection(title: "Action Tag") {
+                    TagControls(targets: [entry], current: annotation, modern: true)
+                    FinderSyncNote()
+                }
+
+                ModernInspectorSection(title: "Note") {
+                    TextField("Note", text: $note, axis: .vertical)
+                        .lineLimit(3, reservesSpace: true)
+                        .textFieldStyle(.roundedBorder)
+                    Button("Save Note") { Task { await env.applyNote(note, to: entry) } }
+                        .controlSize(.small)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassCard()
+            .padding(12)
+        }
+        .scrollContentBackground(.hidden)
+    }
+
+    @ViewBuilder private func specGrid(accent: Color) -> some View {
+        Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 7) {
+            specRow("Size", Format.bytes(entry.displaySize), color: accent)
+            if !entry.isDir { specRow("On disk", Format.bytes(entry.allocSize)) }
+            specRow("Modified", Format.date(entry.modifiedAt))
+            specRow("Path", entry.relPath.isEmpty ? "/" : entry.relPath)
+        }
+        .padding(.top, 2)
+    }
+
+    @ViewBuilder private func specRow(_ key: String, _ value: String, color: Color = .primary) -> some View {
+        GridRow {
+            Text(key)
+                .font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1)
+                .textCase(.uppercase).foregroundStyle(.tertiary)
+                .gridColumnAlignment(.leading)
+            Text(value)
+                .font(.system(.caption, design: .monospaced)).foregroundStyle(color)
+                .lineLimit(1).truncationMode(.middle)
+        }
+    }
 
     private var reloadKey: String { "\(entry.id)-\(env.dataVersion)" }
 
@@ -74,22 +144,55 @@ struct MultiSelectInspector: View {
     @Environment(AppEnvironment.self) private var env
     let entries: [Entry]
 
-    var body: some View {
-        Form {
-            Section {
-                LabeledContent("Selected", value: "\(entries.count) items")
-                LabeledContent("Total size", value: Format.bytes(entries.reduce(0) { $0 + $1.displaySize }))
-            }
-            Section("Tag all selected") {
-                TagControls(targets: entries, current: nil)
-                FinderSyncNote()
-            }
-        }
-        .formStyle(.grouped)
-        .modernListChrome(modern)
-    }
-
     private var modern: Bool { env.theme.skin == .modern }
+
+    var body: some View {
+        if modern {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("\(entries.count) items selected").font(.headline)
+                    Text("Total \(Format.bytes(entries.reduce(0) { $0 + $1.displaySize }))")
+                        .font(.system(.caption, design: .monospaced)).foregroundStyle(.secondary)
+                    ModernInspectorSection(title: "Tag all selected") {
+                        TagControls(targets: entries, current: nil, modern: true)
+                        FinderSyncNote()
+                    }
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .glassCard()
+                .padding(12)
+            }
+            .scrollContentBackground(.hidden)
+        } else {
+            Form {
+                Section {
+                    LabeledContent("Selected", value: "\(entries.count) items")
+                    LabeledContent("Total size", value: Format.bytes(entries.reduce(0) { $0 + $1.displaySize }))
+                }
+                Section("Tag all selected") {
+                    TagControls(targets: entries, current: nil)
+                    FinderSyncNote()
+                }
+            }
+            .formStyle(.grouped)
+        }
+    }
+}
+
+/// Mono-caps section wrapper used in the Modern inspector.
+struct ModernInspectorSection<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1.2)
+                .textCase(.uppercase).foregroundStyle(.tertiary)
+            content
+        }
+    }
 }
 
 // MARK: - Shared tag controls
@@ -98,16 +201,18 @@ struct TagControls: View {
     @Environment(AppEnvironment.self) private var env
     let targets: [Entry]
     let current: Annotation?
+    var modern: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Action Tag").font(.caption).foregroundStyle(.secondary)
+                if !modern { Text("Action Tag").font(.caption).foregroundStyle(.secondary) }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 82), spacing: 6)], spacing: 6) {
                     ForEach([Tag.none] + Tag.actionTags) { tag in
                         DecisionButton(tag: tag,
                                        active: current?.tag == tag,
-                                       key: ShortcutAction.forDecision(tag).map { env.shortcuts.key(for: $0) }) {
+                                       key: ShortcutAction.forDecision(tag).map { env.shortcuts.key(for: $0) },
+                                       modern: modern) {
                             Task { await env.applyDecision(tag, to: targets) }
                         }
                     }
@@ -136,21 +241,37 @@ struct DecisionButton: View {
     let tag: Tag
     let active: Bool
     let key: String?
+    var modern: Bool = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
+            content
+                .padding(.vertical, modern ? 9 : 5).padding(.horizontal, 8)
+                .frame(maxWidth: .infinity)
+                .background(active ? tag.swiftUIColor.opacity(0.22) : Color.gray.opacity(0.10),
+                            in: RoundedRectangle(cornerRadius: modern ? 11 : 7))
+                .overlay(RoundedRectangle(cornerRadius: modern ? 11 : 7)
+                    .strokeBorder(active ? tag.swiftUIColor : .clear, lineWidth: 1.5))
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(active ? tag.swiftUIColor : .primary)
+    }
+
+    // Modern: icon-over-label (the design's .tagbtn). Classic: label+icon with key hint.
+    @ViewBuilder private var content: some View {
+        if modern {
+            VStack(spacing: 5) {
+                Image(systemName: tag.symbol).font(.system(size: 15))
+                Text(tag.label)
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced)).textCase(.uppercase)
+            }
+        } else {
             VStack(spacing: 2) {
                 Label(tag.label, systemImage: tag.symbol).labelStyle(.titleAndIcon).font(.callout)
                 Text((key ?? " ").uppercased()).font(.caption2).foregroundStyle(.secondary)
             }
-            .padding(.vertical, 5).padding(.horizontal, 8)
-            .frame(maxWidth: .infinity)
-            .background(active ? tag.swiftUIColor.opacity(0.22) : Color.gray.opacity(0.10), in: RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(active ? tag.swiftUIColor : .clear, lineWidth: 1.5))
         }
-        .buttonStyle(.plain)
-        .foregroundStyle(active ? tag.swiftUIColor : .primary)
     }
 }
 
