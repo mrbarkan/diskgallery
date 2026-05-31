@@ -42,6 +42,7 @@
 		67A61E43F56FE7C41BF5B13C /* ModernWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54ECFB382AC39796AC01E43 /* ModernWorkspace.swift */; };
 		739E488DA632B6F0175589E1 /* ScanProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395CB1FD1B89F2B19088F80B /* ScanProgress.swift */; };
 		78F985AE016928608959CE27 /* AnnotationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EFB0CEC11A298EB4F9FFCC /* AnnotationTests.swift */; };
+		7F3732F1D0CEE2CA251374B2 /* ModernTopbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78FE7F3B93BD72C5DBA42FA8 /* ModernTopbar.swift */; };
 		7F9684CC87181356712AA720 /* PlanningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C8DCECD169ABFB6FA93CFA2 /* PlanningTests.swift */; };
 		8232FE4C5D1ECE53E8D19C6C /* Capacity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ABD4966F2629801B58174E0 /* Capacity.swift */; };
 		83A13362369ACD6FE56C51CF /* PlanningService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF52A4E49B04053DEEC78B56 /* PlanningService.swift */; };
@@ -159,6 +160,7 @@
 		6CEE1A004B973AABD3E7B995 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		73DE55DAEC232BB0BE14679A /* CapacityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapacityTests.swift; sourceTree = "<group>"; };
 		77EFB0CEC11A298EB4F9FFCC /* AnnotationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationTests.swift; sourceTree = "<group>"; };
+		78FE7F3B93BD72C5DBA42FA8 /* ModernTopbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernTopbar.swift; sourceTree = "<group>"; };
 		79E7150F9FAC9E3145394AE1 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
 		7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashVerifier.swift; sourceTree = "<group>"; };
 		7CAB8199993101F11F86332D /* ChangesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangesView.swift; sourceTree = "<group>"; };
@@ -305,6 +307,7 @@
 				8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */,
 				239E19F08DFE1282FEAB493B /* ModernGlass.swift */,
 				10269A217E263D34BEDFBA60 /* ModernSidebar.swift */,
+				78FE7F3B93BD72C5DBA42FA8 /* ModernTopbar.swift */,
 				C54ECFB382AC39796AC01E43 /* ModernWorkspace.swift */,
 				F9C040BBD8951A53231F2AC7 /* StatTiles.swift */,
 				ACB0E106C7984E3911A8244E /* WindowAccessor.swift */,
@@ -660,6 +663,7 @@
 				67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */,
 				85A5A04FD5595BFF8E9A5C15 /* ModernSidebar.swift in Sources */,
 				F8D9199F3503262624C78237 /* ModernTokens.swift in Sources */,
+				7F3732F1D0CEE2CA251374B2 /* ModernTopbar.swift in Sources */,
 				67A61E43F56FE7C41BF5B13C /* ModernWorkspace.swift in Sources */,
 				F59567BB049A3F13DB80FB2A /* OLEDDisplayView.swift in Sources */,
 				087128B95EFB93784C4FCD5E /* ScanProgressView.swift in Sources */,
