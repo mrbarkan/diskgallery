@@ -57,6 +57,7 @@ struct DiskGalleryApp: App {
             }
         }
         .windowToolbarStyle(.unified)
+        .defaultSize(width: 1320, height: 860)
         .commands {
             CommandGroup(after: .newItem) {
                 Divider()
@@ -98,6 +99,7 @@ struct ContentView: View {
         }
         .tint(env.theme.accent.palette.accent)
         .preferredColorScheme(env.theme.mode.colorScheme)
+        .frame(minWidth: 1040, minHeight: 680)
     }
 
     // Classic — the original three-column layout, unchanged.
