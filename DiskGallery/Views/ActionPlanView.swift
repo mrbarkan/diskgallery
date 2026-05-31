@@ -46,7 +46,7 @@ struct ActionPlanView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        let pills = HStack(spacing: 10) {
             ForEach([Tag.move, .backup, .keep, .delete]) { tag in
                 StatPill(title: "To \(tag.label.lowercased())", value: Format.bytes(total(for: tag)),
                          tint: tag.swiftUIColor)
@@ -54,6 +54,13 @@ struct ActionPlanView: View {
             StatPill(title: "Drives to connect", value: "\(drivesToConnect)", tint: .accentColor)
         }
         .padding(12)
+        return Group {
+            if modern {
+                pills.glassCard(radius: 14).padding(.horizontal, 12)
+            } else {
+                pills
+            }
+        }
     }
 
     private func load() async {

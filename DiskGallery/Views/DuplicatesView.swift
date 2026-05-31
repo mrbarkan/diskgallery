@@ -12,8 +12,16 @@ struct DuplicatesView: View {
 
     var body: some View {
         VSplitView {
-            setsList
-            membersPanel
+            if modern {
+                setsList.glassCard().padding(8)
+            } else {
+                setsList
+            }
+            if modern {
+                membersPanel.glassCard().padding(8)
+            } else {
+                membersPanel
+            }
         }
         .navigationTitle("Duplicates")
         .task(id: reloadKey) { await loadSets() }
