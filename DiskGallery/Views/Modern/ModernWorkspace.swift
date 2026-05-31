@@ -1,7 +1,9 @@
 import SwiftUI
 import DiskGalleryCore
 
-/// Modern two-pane workspace router (spec §4.3). The detail pane for the Modern shell.
+/// Modern workspace router (spec §4.3). The detail pane for the Modern shell.
+/// Volume routes use the drive-browser bento; the four library routes use their own
+/// page views, each wrapped in `ModernPageScaffold` (topbar + permanent OLED).
 struct ModernWorkspace: View {
     @Environment(AppEnvironment.self) private var env
 
@@ -13,104 +15,19 @@ struct ModernWorkspace: View {
             } else {
                 ModernEmptyWorkspace(title: "Drive not found", systemImage: "externaldrive")
             }
-        case .search:
-            RouteBentoWorkspace(title: "Search", systemImage: "magnifyingglass", wrapInCard: true, showInspector: true) {
-                SearchResultsView()
-            }
-        case .tagged(let tag):
-            RouteBentoWorkspace(title: tag.label, systemImage: tagIcon(tag), wrapInCard: true, showInspector: true) {
-                TaggedListView(tag: tag)
-            }
         case .duplicates:
-            RouteBentoWorkspace(title: "Duplicates", systemImage: "square.on.square", wrapInCard: false, showInspector: false) {
-                DuplicatesView()
-            }
+            ModernDuplicatesPage()
         case .plan:
-            RouteBentoWorkspace(title: "Action Plan", systemImage: "checklist", wrapInCard: false, showInspector: false) {
-                ActionPlanView()
-            }
+            ModernActionPlanPage(initialFilter: nil)
+        case .tagged(let tag):
+            ModernActionPlanPage(initialFilter: tag)
         case .transfer:
-            RouteBentoWorkspace(title: "Transfer Planner", systemImage: "arrow.left.arrow.right", wrapInCard: false, showInspector: false) {
-                TransferPlannerView()
-            }
+            ModernTransferPage()
+        case .search:
+            ModernSearchPage()
         case nil:
             ModernEmptyWorkspace(title: "Select a drive", systemImage: "sidebar.left",
                                  message: "Pick a drive, or scan a new one, to browse its catalog.")
-        }
-    }
-
-    private func tagIcon(_ tag: Tag) -> String {
-        switch tag {
-        case .keep:   "checkmark.circle"
-        case .delete: "trash"
-        case .review: "questionmark.circle"
-        case .move:   "arrow.right.circle"
-        case .backup: "shippingbox"
-        case .none:   "tag"
-        }
-    }
-}
-
-/// Bento shell for non-volume routes (spec §12): topbar + content (+ optional inspector).
-/// Routes that already style themselves (Duplicates/Plan/Transfer) render directly;
-/// plain lists (Search/Tagged) get a glass card + header and the inspector alongside.
-struct RouteBentoWorkspace<Content: View>: View {
-    @Environment(AppEnvironment.self) private var env
-    let title: String
-    var systemImage: String
-    var wrapInCard: Bool = true
-    var showInspector: Bool = false
-    @ViewBuilder var content: Content
-
-    private var accent: Color { env.theme.accent.palette.accent }
-
-    /// The drive whose telemetry the permanent OLED shows: the last-selected volume,
-    /// else the first cataloged one.
-    private var currentDrive: VolumeSummary? {
-        if let key = env.selectedVolumeKey,
-           let match = env.volumeSummaries.first(where: { ($0.uuid ?? $0.name) == key }) {
-            return match
-        }
-        return env.volumeSummaries.first
-    }
-
-    var body: some View {
-        VStack(spacing: 14) {
-            ModernTopbar(leadingIcon: systemImage, crumbs: [title], onSearch: { env.selection = .search })
-            if let drive = currentDrive {
-                OLEDDisplayView(summary: drive,
-                                connected: env.volumes.isConnected(key: drive.uuid ?? drive.name),
-                                reclaimable: env.totalReclaimable,
-                                layout: env.theme.oledLayout,
-                                palette: env.theme.accent.palette)
-                    .frame(height: 216)
-            }
-            GeometryReader { geo in
-                let gap: CGFloat = 14
-                if showInspector {
-                    let leftW = (geo.size.width - gap) * (1.55 / 2.55)
-                    HStack(spacing: gap) {
-                        contentArea.frame(width: leftW, height: geo.size.height)
-                        ModernInspectorCard().frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                } else {
-                    contentArea.frame(width: geo.size.width, height: geo.size.height)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    @ViewBuilder private var contentArea: some View {
-        if wrapInCard {
-            GlassCard {
-                VStack(spacing: 0) {
-                    ModernCardHeader(systemImage: systemImage, title: title, accent: accent)
-                    content.modernListChrome(true).frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            }
-        } else {
-            content
         }
     }
 }
