@@ -204,7 +204,9 @@ struct TagControls: View {
     var modern: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        // In Modern, use the accent for the active Finder-color swatch ring (spec §5).
+        let accentRing: Color = modern ? env.theme.accent.palette.accent : .primary
+        return VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
                 if !modern { Text("Action Tag").font(.caption).foregroundStyle(.secondary) }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 82), spacing: 6)], spacing: 6) {
@@ -221,12 +223,14 @@ struct TagControls: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Finder Color").font(.caption).foregroundStyle(.secondary)
                 HStack(spacing: 6) {
-                    ColorSwatch(color: .none, active: current?.color == FinderColor.none, key: nil) {
+                    ColorSwatch(color: .none, active: current?.color == FinderColor.none,
+                                key: nil, activeRing: accentRing) {
                         Task { await env.applyColor(.none, to: targets) }
                     }
                     ForEach(Array(FinderColor.keyOrder.enumerated()), id: \.offset) { index, color in
                         ColorSwatch(color: color, active: current?.color == color,
-                                    key: env.shortcuts.key(for: ShortcutAction.colorActions[index])) {
+                                    key: env.shortcuts.key(for: ShortcutAction.colorActions[index]),
+                                    activeRing: accentRing) {
                             Task { await env.applyColor(color, to: targets) }
                         }
                     }
@@ -279,6 +283,8 @@ struct ColorSwatch: View {
     let color: FinderColor
     let active: Bool
     let key: String?
+    /// Active ring color: `.primary` in Classic, accent in Modern (spec §5).
+    var activeRing: Color = .primary
     let action: () -> Void
 
     var body: some View {
@@ -292,7 +298,7 @@ struct ColorSwatch: View {
                     }
                 }
                 .frame(width: 22, height: 22)
-                .overlay(Circle().strokeBorder(active ? Color.primary : .clear, lineWidth: 2))
+                .overlay(Circle().strokeBorder(active ? activeRing : .clear, lineWidth: 2))
                 Text(key ?? " ").font(.caption2).foregroundStyle(.secondary)
             }
         }
