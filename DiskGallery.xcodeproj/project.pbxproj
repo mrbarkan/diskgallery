@@ -60,6 +60,7 @@
 		9C5E0BBD9E34E1611BED70ED /* LibrarySidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5844EC9B6BCF8A8733084C2E /* LibrarySidebarView.swift */; };
 		9FAA111FB1D47D4A250CFF75 /* Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AFFB1E76AE447035048FF76 /* Catalog.swift */; };
 		A6F8081BD8E0E7CE48D5F3ED /* TaggedListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D3048FEAC718F9F9AF6C11 /* TaggedListView.swift */; };
+		A706A33776F445979BAFE087 /* ModernInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = D564B66BBB945852BB905402 /* ModernInspector.swift */; };
 		AC9701D75226543C584AA598 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = EDAD081A4FE6D77943D6D89D /* GRDB */; };
 		AF4B6A53D3887455342582AF /* Migrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 419C2FE432E8213D40143239 /* Migrations.swift */; };
 		AF654013EAEE5BC737A5585F /* ChangesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAB8199993101F11F86332D /* ChangesView.swift */; };
@@ -189,6 +190,7 @@
 		C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicatesView.swift; sourceTree = "<group>"; };
 		CF52A4E49B04053DEEC78B56 /* PlanningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningService.swift; sourceTree = "<group>"; };
 		D4DAF550E4C8CE67CFE830AD /* CrossDriveDuplicateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossDriveDuplicateTests.swift; sourceTree = "<group>"; };
+		D564B66BBB945852BB905402 /* ModernInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernInspector.swift; sourceTree = "<group>"; };
 		D8A5C5983831D1A837A4B865 /* Support.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Support.swift; sourceTree = "<group>"; };
 		DDDB8CF07C09E98A6414D28D /* DiskGallery.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DiskGallery.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDDE0C869FC4D5E82CC433DA /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
@@ -309,6 +311,7 @@
 				8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */,
 				306BD8977188CC295B8CA426 /* ModernBrowser.swift */,
 				239E19F08DFE1282FEAB493B /* ModernGlass.swift */,
+				D564B66BBB945852BB905402 /* ModernInspector.swift */,
 				10269A217E263D34BEDFBA60 /* ModernSidebar.swift */,
 				78FE7F3B93BD72C5DBA42FA8 /* ModernTopbar.swift */,
 				C54ECFB382AC39796AC01E43 /* ModernWorkspace.swift */,
@@ -665,6 +668,7 @@
 				4070ECA12242DA1D969EDECE /* ModernBackdrop.swift in Sources */,
 				1413BAE28BBFD4DB63531FBC /* ModernBrowser.swift in Sources */,
 				67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */,
+				A706A33776F445979BAFE087 /* ModernInspector.swift in Sources */,
 				85A5A04FD5595BFF8E9A5C15 /* ModernSidebar.swift in Sources */,
 				F8D9199F3503262624C78237 /* ModernTokens.swift in Sources */,
 				7F3732F1D0CEE2CA251374B2 /* ModernTopbar.swift in Sources */,
