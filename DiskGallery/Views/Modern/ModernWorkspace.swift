@@ -13,12 +13,86 @@ struct ModernWorkspace: View {
             } else {
                 ModernEmptyWorkspace(title: "Drive not found", systemImage: "externaldrive")
             }
+        case .search:
+            RouteBentoWorkspace(title: "Search", systemImage: "magnifyingglass", wrapInCard: true, showInspector: true) {
+                SearchResultsView()
+            }
+        case .tagged(let tag):
+            RouteBentoWorkspace(title: tag.label, systemImage: tagIcon(tag), wrapInCard: true, showInspector: true) {
+                TaggedListView(tag: tag)
+            }
+        case .duplicates:
+            RouteBentoWorkspace(title: "Duplicates", systemImage: "square.on.square", wrapInCard: false, showInspector: false) {
+                DuplicatesView()
+            }
+        case .plan:
+            RouteBentoWorkspace(title: "Action Plan", systemImage: "checklist", wrapInCard: false, showInspector: false) {
+                ActionPlanView()
+            }
+        case .transfer:
+            RouteBentoWorkspace(title: "Transfer Planner", systemImage: "arrow.left.arrow.right", wrapInCard: false, showInspector: false) {
+                TransferPlannerView()
+            }
         case nil:
             ModernEmptyWorkspace(title: "Select a drive", systemImage: "sidebar.left",
                                  message: "Pick a drive, or scan a new one, to browse its catalog.")
-        default:
-            // Other routes get the full bento shell in Task 12. Temporary: existing content.
-            ContentColumn()
+        }
+    }
+
+    private func tagIcon(_ tag: Tag) -> String {
+        switch tag {
+        case .keep:   "checkmark.circle"
+        case .delete: "trash"
+        case .review: "questionmark.circle"
+        case .move:   "arrow.right.circle"
+        case .backup: "shippingbox"
+        case .none:   "tag"
+        }
+    }
+}
+
+/// Bento shell for non-volume routes (spec §12): topbar + content (+ optional inspector).
+/// Routes that already style themselves (Duplicates/Plan/Transfer) render directly;
+/// plain lists (Search/Tagged) get a glass card + header and the inspector alongside.
+struct RouteBentoWorkspace<Content: View>: View {
+    @Environment(AppEnvironment.self) private var env
+    let title: String
+    var systemImage: String
+    var wrapInCard: Bool = true
+    var showInspector: Bool = false
+    @ViewBuilder var content: Content
+
+    private var accent: Color { env.theme.accent.palette.accent }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            ModernTopbar(leadingIcon: systemImage, crumbs: [title], onSearch: { env.selection = .search })
+            GeometryReader { geo in
+                let gap: CGFloat = 14
+                if showInspector {
+                    let leftW = (geo.size.width - gap) * (1.55 / 2.55)
+                    HStack(spacing: gap) {
+                        contentArea.frame(width: leftW, height: geo.size.height)
+                        ModernInspectorCard().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                } else {
+                    contentArea.frame(width: geo.size.width, height: geo.size.height)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder private var contentArea: some View {
+        if wrapInCard {
+            GlassCard {
+                VStack(spacing: 0) {
+                    ModernCardHeader(systemImage: systemImage, title: title, accent: accent)
+                    content.modernListChrome(true).frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+        } else {
+            content
         }
     }
 }
