@@ -7,6 +7,7 @@ struct OLEDDisplayView: View {
     let summary: VolumeSummary
     let connected: Bool
     var browsePath: String? = nil
+    var reclaimable: Int64? = nil
     let layout: OLEDLayout
     let palette: AccentPalette
 
@@ -19,11 +20,18 @@ struct OLEDDisplayView: View {
     }
 
     var body: some View {
-        content
-            .padding(.horizontal, 22)
-            .padding(.vertical, 18)
-            .frame(maxWidth: .infinity, minHeight: 132, alignment: .leading)
-            .background(screen)
+        ZStack(alignment: .leading) {
+            content
+                .id(layout)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .offset(y: 12)),
+                    removal: .opacity.combined(with: .offset(y: -10))))
+        }
+        .animation(.easeOut(duration: 0.42), value: layout)
+        .padding(.horizontal, 22)
+        .padding(.vertical, 18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(screen)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(scanlines)
             .overlay(vignette)
@@ -89,13 +97,18 @@ struct OLEDDisplayView: View {
             }
             HStack(alignment: .top, spacing: 0) {
                 OLEDStatCell(k: "Capacity", value: Format.bytes(summary.totalCapacity),
-                             sub: summary.freeCapacity.map { "\(Format.bytes($0)) free" })
+                             sub: summary.freeCapacity.map { "\(Format.bytes($0)) free" }, valueSize: 30)
                 cellDivider
                 OLEDStatCell(k: "Used", value: Format.bytes(usedBytes),
                              sub: summary.totalCapacity == nil ? nil : "\(percent)% full",
-                             tint: palette.accent, glow: palette.glow)
+                             tint: palette.accent, glow: palette.glow, valueSize: 30)
                 cellDivider
-                OLEDStatCell(k: "Files", value: Format.count(summary.fileCount), sub: "cataloged")
+                OLEDStatCell(k: "Files", value: Format.count(summary.fileCount), sub: "cataloged", valueSize: 30)
+                if let reclaimable, reclaimable > 0 {
+                    cellDivider
+                    OLEDStatCell(k: "Reclaimable", value: Format.bytes(reclaimable), sub: "duplicates",
+                                 tint: OLEDColor.ok, valueSize: 30)
+                }
             }
             OLEDBottomBar(uuid: summary.uuid, fraction: fraction, over: over, path: browsePath, palette: palette)
         }
@@ -165,6 +178,9 @@ struct OLEDDisplayView: View {
                 OLEDInline(value: Format.bytes(usedBytes), unit: "used")
                 if let free = summary.freeCapacity { OLEDInline(value: Format.bytes(free), unit: "free") }
                 OLEDInline(value: Format.count(summary.fileCount), unit: "files")
+                if let reclaimable, reclaimable > 0 {
+                    OLEDInline(value: Format.bytes(reclaimable), unit: "reclaimable", tint: OLEDColor.ok)
+                }
             }
         }
     }
@@ -215,10 +231,11 @@ private struct OLEDStatCell: View {
     var sub: String? = nil
     var tint: Color = OLEDColor.ink
     var glow: Color? = nil
+    var valueSize: CGFloat = 26
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             OLEDKey(k)
-            Text(value).font(.system(size: 26, weight: .bold, design: .monospaced)).foregroundStyle(tint)
+            Text(value).font(.system(size: valueSize, weight: .bold, design: .monospaced)).foregroundStyle(tint)
                 .shadow(color: glow ?? .clear, radius: glow == nil ? 0 : 14).lineLimit(1)
             if let sub { OLEDKey(sub) }
         }
@@ -229,9 +246,10 @@ private struct OLEDStatCell: View {
 private struct OLEDInline: View {
     let value: String
     let unit: String
+    var tint: Color = OLEDColor.ink
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
-            Text(value).font(.system(size: 16, weight: .bold, design: .monospaced)).foregroundStyle(OLEDColor.ink)
+            Text(value).font(.system(size: 16, weight: .bold, design: .monospaced)).foregroundStyle(tint)
             Text(unit.uppercased()).font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundStyle(OLEDColor.ink2)
         }
     }
