@@ -37,6 +37,7 @@ enum HeadlessScan {
 
 struct DiskGalleryApp: App {
     @State private var env: AppEnvironment? = try? AppEnvironment()
+    @State private var systemAppearance = SystemAppearance()
 
     var body: some Scene {
         WindowGroup {
@@ -73,7 +74,7 @@ struct DiskGalleryApp: App {
             if let env {
                 SettingsView()
                     .environment(env)
-                    .preferredColorScheme(env.theme.mode.colorScheme)
+                    .preferredColorScheme(env.theme.mode.resolvedScheme(systemAppearance))
             }
         }
     }
@@ -106,13 +107,7 @@ struct ContentView: View {
 
     /// Resolve "System" to a concrete scheme so Modern tokens & glass materials stay in
     /// sync (a nil preferredColorScheme renders a mixed light/dark UI in this app).
-    private var effectiveScheme: ColorScheme {
-        switch env.theme.mode {
-        case .light:  .light
-        case .dark:   .dark
-        case .system: systemAppearance.colorScheme
-        }
-    }
+    private var effectiveScheme: ColorScheme { env.theme.mode.resolvedScheme(systemAppearance) }
 
     // Classic — the original three-column layout, unchanged.
     private var classicSplit: some View {

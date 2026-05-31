@@ -120,7 +120,7 @@ struct TransferPlannerView: View {
             List(items) { item in
                 HStack(spacing: 8) {
                     Image(systemName: item.isDir ? "folder.fill" : "doc")
-                        .foregroundStyle(item.isDir ? Color.accentColor : .secondary).frame(width: 16)
+                        .foregroundStyle(item.isDir ? env.theme.accent.palette.accent : .secondary).frame(width: 16)
                     Text(item.name).lineLimit(1)
                     Spacer()
                     Text(Format.bytes(item.sizeBytes)).foregroundStyle(.secondary).monospacedDigit()

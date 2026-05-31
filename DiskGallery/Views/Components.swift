@@ -3,6 +3,7 @@ import DiskGalleryCore
 
 /// A horizontal capacity gauge: how full a drive is, with a free/total caption.
 struct CapacityBar: View {
+    @Environment(AppEnvironment.self) private var env
     let total: Int64?
     let free: Int64?
     /// Optional second segment (e.g. bytes about to be transferred in) drawn ahead
@@ -22,7 +23,7 @@ struct CapacityBar: View {
                         let usedW = width * fraction(used, of: total)
                         let incW = width * fraction(incoming ?? 0, of: total)
                         Capsule()
-                            .fill(overCapacity ? Color.red : Color.accentColor)
+                            .fill(overCapacity ? Color.red : env.theme.accent.palette.accent)
                             .frame(width: min(width, usedW))
                         if incoming ?? 0 > 0 {
                             Capsule()

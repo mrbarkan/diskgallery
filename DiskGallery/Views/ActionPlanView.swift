@@ -51,7 +51,7 @@ struct ActionPlanView: View {
                 StatPill(title: "To \(tag.label.lowercased())", value: Format.bytes(total(for: tag)),
                          tint: tag.swiftUIColor)
             }
-            StatPill(title: "Drives to connect", value: "\(drivesToConnect)", tint: .accentColor)
+            StatPill(title: "Drives to connect", value: "\(drivesToConnect)", tint: env.theme.accent.palette.accent)
         }
         .padding(12)
         return Group {
@@ -83,7 +83,7 @@ private struct DrivePlanRow: View {
                 Text("\(order)")
                     .font(.callout.weight(.bold)).foregroundStyle(.white)
                     .frame(width: 24, height: 24)
-                    .background(connected ? Color.accentColor : Color.secondary, in: Circle())
+                    .background(connected ? env.theme.accent.palette.accent : Color.secondary, in: Circle())
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {

@@ -58,13 +58,15 @@ final class ChromeNSView: NSView {
         placed = true
         let frame = window.frame
         let onScreen = NSScreen.screens.contains { $0.frame.intersects(frame) }
+        // Only touch the window when its frame is genuinely bad — otherwise leave ordering
+        // alone so toggling the skin doesn't yank this window in front of Settings.
         if frame.width < 980 || frame.height < 640 || !onScreen, let screen = NSScreen.main {
             let vis = screen.visibleFrame
             let size = NSSize(width: min(1320, vis.width - 80), height: min(880, vis.height - 80))
             let origin = NSPoint(x: vis.midX - size.width / 2, y: vis.midY - size.height / 2)
             window.setFrame(NSRect(origin: origin, size: size), display: true)
+            window.orderFront(nil)
         }
-        window.makeKeyAndOrderFront(nil)
     }
 }
 

@@ -52,7 +52,7 @@ struct DuplicatesView: View {
                 List(sets, selection: $selectedSetID) { set in
                     HStack {
                         Image(systemName: set.spansDrives ? "externaldrive.badge.checkmark" : "doc.on.doc")
-                            .foregroundStyle(set.spansDrives ? Color.accentColor : .secondary)
+                            .foregroundStyle(set.spansDrives ? env.theme.accent.palette.accent : .secondary)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(set.name).lineLimit(1)
                             Text("\(set.copies) copies · \(Format.bytes(set.logicalSize)) each")

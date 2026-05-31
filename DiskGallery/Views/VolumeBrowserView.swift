@@ -208,13 +208,14 @@ struct FolderView: View {
 }
 
 struct EntryRow: View {
+    @Environment(AppEnvironment.self) private var env
     let entry: Entry
     let annotation: Annotation?
 
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: entry.isDir ? "folder.fill" : "doc")
-                .foregroundStyle(entry.isDir ? Color.accentColor : Color.secondary)
+                .foregroundStyle(entry.isDir ? env.theme.accent.palette.accent : Color.secondary)
                 .frame(width: 18)
             Text(entry.name).lineLimit(1)
             Spacer(minLength: 8)

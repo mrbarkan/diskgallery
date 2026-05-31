@@ -26,3 +26,15 @@ final class SystemAppearance {
         return match == .darkAqua ? .dark : .light
     }
 }
+
+extension AppearanceMode {
+    /// Resolve to a concrete scheme, mapping `.system` through the live system appearance.
+    @MainActor
+    func resolvedScheme(_ system: SystemAppearance) -> ColorScheme {
+        switch self {
+        case .light:  .light
+        case .dark:   .dark
+        case .system: system.colorScheme
+        }
+    }
+}
