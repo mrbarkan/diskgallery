@@ -38,29 +38,42 @@ enum HeadlessScan {
 struct DiskGalleryApp: App {
     @State private var env: AppEnvironment? = try? AppEnvironment()
     @State private var systemAppearance = SystemAppearance()
+    @State private var launching = true
 
     var body: some Scene {
         WindowGroup {
-            if let env {
-                ContentView()
-                    .environment(env)
-                    .task {
-                        env.installKeyboardMonitor()
-                        await env.refresh()
-                        if env.selection == nil {
-                            env.selection = env.volumeSummaries.first.map { SidebarItem.volume($0.id) }
-                        }
+            ZStack {
+                if let env {
+                    ContentView().environment(env)
+                } else {
+                    ContentUnavailableView("Couldn't open the catalog",
+                                           systemImage: "exclamationmark.triangle",
+                                           description: Text("The DiskGallery database could not be created."))
+                }
+                if launching {
+                    SplashView().transition(.opacity)
+                }
+            }
+            .task {
+                // Open the catalog, then fade the splash after a brief beat.
+                if let env {
+                    env.installKeyboardMonitor()
+                    await env.refresh()
+                    if env.selection == nil {
+                        env.selection = env.volumeSummaries.first.map { SidebarItem.volume($0.id) }
                     }
-            } else {
-                ContentUnavailableView("Couldn't open the catalog",
-                                       systemImage: "exclamationmark.triangle",
-                                       description: Text("The DiskGallery database could not be created."))
+                }
+                try? await Task.sleep(for: .milliseconds(550))
+                withAnimation(.easeOut(duration: 0.5)) { launching = false }
             }
         }
         .windowToolbarStyle(.unified)
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1320, height: 860)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                AboutMenuItem()
+            }
             CommandGroup(after: .newItem) {
                 Divider()
                 Button("Export Library…") { env?.exportLibrary() }
@@ -70,6 +83,16 @@ struct DiskGalleryApp: App {
             }
         }
 
+        // Custom branded About panel (replaces the system one).
+        Window("About DiskGallery", id: "about") {
+            AboutView(licensedTo: aboutLicensee, license: aboutLicense)
+                .fixedSize()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+        .restorationBehavior(.disabled)
+
         Settings {
             if let env {
                 SettingsView()
@@ -77,6 +100,32 @@ struct DiskGalleryApp: App {
                     .preferredColorScheme(env.theme.mode.resolvedScheme(systemAppearance))
             }
         }
+    }
+
+    // License block for the About window, derived from the offline license state.
+    private var aboutLicensee: String {
+        switch env?.license.status {
+        case .licensed(let email):  return email
+        case .trial:                return "Trial"
+        case .trialExpired:         return "Trial expired"
+        case .unconfigured, .none:  return "—"
+        }
+    }
+    private var aboutLicense: String {
+        switch env?.license.status {
+        case .licensed:                 return "Perpetual"
+        case .trial(let daysLeft):      return "Trial · \(daysLeft) days left"
+        case .trialExpired:             return "Trial expired"
+        case .unconfigured, .none:      return "Unlicensed"
+        }
+    }
+}
+
+/// The "About DiskGallery" menu item — opens the branded About window.
+private struct AboutMenuItem: View {
+    @Environment(\.openWindow) private var openWindow
+    var body: some View {
+        Button("About DiskGallery") { openWindow(id: "about") }
     }
 }
 
