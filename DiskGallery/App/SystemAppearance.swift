@@ -22,8 +22,14 @@ final class SystemAppearance {
     }
 
     static func current() -> ColorScheme {
-        let match = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua])
-        return match == .darkAqua ? .dark : .light
+        // NSApp is nil during App.init (before the app finishes launching), so reading
+        // NSApp.effectiveAppearance there traps. Fall back to the global appearance default.
+        let app: NSApplication? = NSApp
+        if let appearance = app?.effectiveAppearance {
+            return appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light
+        }
+        let style = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") ?? ""
+        return style.lowercased().contains("dark") ? .dark : .light
     }
 }
 
