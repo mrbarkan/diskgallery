@@ -15,6 +15,20 @@ extension FinderColor {
         case .orange: return .orange
         }
     }
+
+    /// Exact mockup hex for Modern swatches/dots (spec §3.3). `.none` = clear.
+    var modernColor: Color {
+        switch self {
+        case .none:   return .clear
+        case .red:    return Color(hex: 0xF8736B)
+        case .orange: return Color(hex: 0xF6A23C)
+        case .yellow: return Color(hex: 0xF5CF52)
+        case .green:  return Color(hex: 0x5FD38A)
+        case .blue:   return Color(hex: 0x5AA2FF)
+        case .purple: return Color(hex: 0xB78CFF)
+        case .gray:   return Color(hex: 0x8A909D)
+        }
+    }
 }
 
 extension Tag {
@@ -37,6 +51,18 @@ extension Tag {
         case .review: return "questionmark.circle.fill"
         case .move:   return "arrow.right.circle.fill"
         case .backup: return "shippingbox.fill"
+        }
+    }
+
+    /// Exact mockup signal color for Modern chips / tag buttons / plan rows (spec §10).
+    var modernColor: Color {
+        switch self {
+        case .none:   return Color(hex: 0x6C7280)
+        case .keep:   return Color(hex: 0x4ADE80)
+        case .delete: return Color(hex: 0xF8736B)
+        case .review: return Color(hex: 0xF7B955)
+        case .move:   return Color(hex: 0xB78CFF)
+        case .backup: return Color(hex: 0x5AA2FF)
         }
     }
 }

@@ -72,6 +72,7 @@
 		F33C2DBD411AD01139F80987 /* StatTiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9C040BBD8951A53231F2AC7 /* StatTiles.swift */; };
 		F4798D76A8EBE58BB98FC812 /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */; };
 		F59567BB049A3F13DB80FB2A /* OLEDDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FAB06D51560916D60F1560F /* OLEDDisplayView.swift */; };
+		F8D9199F3503262624C78237 /* ModernTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835B501A45322390BEEF4345 /* ModernTokens.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -157,6 +158,7 @@
 		79E7150F9FAC9E3145394AE1 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
 		7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashVerifier.swift; sourceTree = "<group>"; };
 		7CAB8199993101F11F86332D /* ChangesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangesView.swift; sourceTree = "<group>"; };
+		835B501A45322390BEEF4345 /* ModernTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernTokens.swift; sourceTree = "<group>"; };
 		8541EFC2B903B51A3A69F365 /* AnnotationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationStore.swift; sourceTree = "<group>"; };
 		86D3048FEAC718F9F9AF6C11 /* TaggedListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaggedListView.swift; sourceTree = "<group>"; };
 		8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernBackdrop.swift; sourceTree = "<group>"; };
@@ -317,6 +319,7 @@
 				481741FBB56E535B49151FE4 /* AccentPalette.swift */,
 				A9E8F92833EFD609815E1633 /* Colors.swift */,
 				A55AD4B91FA397B9471B601E /* Formatters.swift */,
+				835B501A45322390BEEF4345 /* ModernTokens.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -646,6 +649,7 @@
 				1C9272BC8B0BC1C338147B3E /* LicenseStore.swift in Sources */,
 				4070ECA12242DA1D969EDECE /* ModernBackdrop.swift in Sources */,
 				67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */,
+				F8D9199F3503262624C78237 /* ModernTokens.swift in Sources */,
 				F59567BB049A3F13DB80FB2A /* OLEDDisplayView.swift in Sources */,
 				087128B95EFB93784C4FCD5E /* ScanProgressView.swift in Sources */,
 				B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */,
