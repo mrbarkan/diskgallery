@@ -18,9 +18,9 @@ struct ModernWorkspace: View {
         case .duplicates:
             ModernDuplicatesPage()
         case .plan:
-            ModernActionPlanPage(initialFilter: nil)
+            ModernActionPlanPage(initialFilter: nil).id("plan")
         case .tagged(let tag):
-            ModernActionPlanPage(initialFilter: tag)
+            ModernActionPlanPage(initialFilter: tag).id("tagged-\(tag.rawValue)")
         case .transfer:
             ModernTransferPage()
         case .search:
