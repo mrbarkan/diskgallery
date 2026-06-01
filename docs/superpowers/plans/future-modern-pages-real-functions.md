@@ -6,6 +6,10 @@
 > This backlog covers the mockup elements that are currently **rendered but not yet functional**,
 > with a concrete approach for each so they can be picked up next sprint.
 
+> **Shipped (launch, 2026-05-31):** §1 filter chips, §2 keep-rule, §3 step 1 (Finder-tag sync),
+> §5 recent persistence + saved-search scopes. **Still deferred:** §3 steps 2–4 and §4
+> `TransferService` (real copy/move/delete) — the Transfer page is marked "coming soon".
+
 **Context for a fresh engineer:** DiskGallery is a read-only macOS catalog of external drives.
 Today the app never deletes, moves, or copies files — it scans, indexes, finds duplicates, and
 writes **Finder tags** (color labels) onto files. The Modern pages live in
