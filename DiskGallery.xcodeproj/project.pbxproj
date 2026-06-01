@@ -56,6 +56,7 @@
 		6B5290098201AEBC93793B1D /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30214F42D630FDFEBE410EB4 /* BrandMark.swift */; };
 		739E488DA632B6F0175589E1 /* ScanProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395CB1FD1B89F2B19088F80B /* ScanProgress.swift */; };
 		78F985AE016928608959CE27 /* AnnotationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EFB0CEC11A298EB4F9FFCC /* AnnotationTests.swift */; };
+		961A1FC97CD64B8ABD53CF6D /* AnnotationListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB44338C7B3943478B3AE596 /* AnnotationListTests.swift */; };
 		7D1F55325120238833DCEEF6 /* ModernDuplicatesPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A178B3604C1960353B91A16 /* ModernDuplicatesPage.swift */; };
 		7F3732F1D0CEE2CA251374B2 /* ModernTopbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78FE7F3B93BD72C5DBA42FA8 /* ModernTopbar.swift */; };
 		7F9684CC87181356712AA720 /* PlanningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C8DCECD169ABFB6FA93CFA2 /* PlanningTests.swift */; };
@@ -187,6 +188,7 @@
 		6CEE1A004B973AABD3E7B995 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		73DE55DAEC232BB0BE14679A /* CapacityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapacityTests.swift; sourceTree = "<group>"; };
 		77EFB0CEC11A298EB4F9FFCC /* AnnotationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationTests.swift; sourceTree = "<group>"; };
+		AB44338C7B3943478B3AE596 /* AnnotationListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationListTests.swift; sourceTree = "<group>"; };
 		78FE7F3B93BD72C5DBA42FA8 /* ModernTopbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernTopbar.swift; sourceTree = "<group>"; };
 		79E7150F9FAC9E3145394AE1 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
 		7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashVerifier.swift; sourceTree = "<group>"; };
@@ -398,6 +400,7 @@
 			isa = PBXGroup;
 			children = (
 				77EFB0CEC11A298EB4F9FFCC /* AnnotationTests.swift */,
+				AB44338C7B3943478B3AE596 /* AnnotationListTests.swift */,
 				B82987EC891FA8B2F0A51F0F /* BackupTests.swift */,
 				73DE55DAEC232BB0BE14679A /* CapacityTests.swift */,
 				2DF8B6014428D118FD2C366E /* ChangeTests.swift */,
@@ -692,6 +695,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				78F985AE016928608959CE27 /* AnnotationTests.swift in Sources */,
+				961A1FC97CD64B8ABD53CF6D /* AnnotationListTests.swift in Sources */,
 				1BBC250BE23923DBA37ABCB0 /* BackupTests.swift in Sources */,
 				D717C2F20D3C102722251C7F /* CapacityTests.swift in Sources */,
 				04FD7DD0404A7ED926DCD970 /* ChangeTests.swift in Sources */,

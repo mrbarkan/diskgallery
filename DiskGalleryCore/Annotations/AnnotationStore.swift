@@ -108,6 +108,14 @@ public struct AnnotationStore: Sendable {
 
     // MARK: Lists & counts
 
+    /// Every annotation row (decision tags and color-only), for syncing Finder tags
+    /// across all drives.
+    public func all() async throws -> [Annotation] {
+        try await db.writer.read { db in
+            try Annotation.fetchAll(db)
+        }
+    }
+
     public func taggedEntries(_ tag: Tag) async throws -> [TaggedEntry] {
         try await db.writer.read { db in
             try TaggedEntry.fetchAll(db, sql: """
