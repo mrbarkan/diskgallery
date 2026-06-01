@@ -3,8 +3,9 @@ import DiskGalleryCore
 
 /// Modern Duplicates page (mockup `.page--dupes`): sets list + resolve inspector + reclaim tile,
 /// below the permanent OLED. Real data throughout; the "Delete N" / "Auto-resolve all" actions
-/// tag the redundant copies as Delete (never touch files). File-type filter chips and keep-rule
-/// chips are rendered but their real behavior is deferred (see future-sprint backlog).
+/// tag the redundant copies as Delete (never touch files). File-type filter chips, the keep-rule
+/// chips, and the keep-rule actions are all live and gated as Pro (`.keepRuleApply` /
+/// `.dupFilterChips`); manual per-file tagging stays free.
 struct ModernDuplicatesPage: View {
     @Environment(AppEnvironment.self) private var env
 
@@ -198,6 +199,7 @@ private struct DupReclaimTile: View {
                         .textCase(.uppercase).foregroundStyle(accent)
                 }
                 .buttonStyle(.plain)
+                .proGated(.keepRuleApply)
             }
         }
         .padding(16)
@@ -242,6 +244,7 @@ private struct ResolveSetCard: View {
                             keepRuleSection
                             CTAButton(title: "Delete \(deleteCount) duplicates · free \(Format.bytes(set.reclaimable))",
                                       systemImage: "trash", tint: DGToken.bad, action: onDelete)
+                                .proGated(.keepRuleApply)
                             if allVerified {
                                 ModernNote(text: "Verified identical by checksum (SHA-256)", systemImage: "checkmark.shield")
                             } else {
