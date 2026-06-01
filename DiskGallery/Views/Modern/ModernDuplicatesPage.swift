@@ -113,6 +113,7 @@ private struct DupSetsCard: View {
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 16).padding(.bottom, 10)
+                .proGated(.dupFilterChips)
 
                 List(selection: $selectedSetID) {
                     ForEach(visibleSets) { set in
@@ -307,6 +308,7 @@ private struct ResolveSetCard: View {
                            systemImage: "info.circle")
             }
         }
+        .proGated(.keepRuleApply)
     }
 }
 

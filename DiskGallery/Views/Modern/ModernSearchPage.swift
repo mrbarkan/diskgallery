@@ -108,6 +108,7 @@ struct ModernSearchPage: View {
             }
             Spacer(minLength: 0)
         }
+        .proGated(.savedSearches)
     }
 
     private var recentSection: some View {
