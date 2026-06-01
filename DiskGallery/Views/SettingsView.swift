@@ -56,10 +56,10 @@ struct LicenseSettings: View {
             Label("Licensing not configured — all features unlocked", systemImage: "lock.open")
                 .foregroundStyle(.secondary)
         case .free:
-            Label("Free — upgrade to Pro to unlock all features", systemImage: "lock")
-                .foregroundStyle(.secondary)
+            Label("Free — upgrade to Pro to unlock the power tools", systemImage: "person")
         case .licensed(let email):
-            Label("Licensed to \(email)", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
+            Label("DiskGallery Pro — licensed to \(email)", systemImage: "checkmark.seal.fill")
+                .foregroundStyle(.green)
         }
     }
 }
