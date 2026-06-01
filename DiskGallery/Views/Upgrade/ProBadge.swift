@@ -17,30 +17,32 @@ struct ProBadge: View {
 private struct ProGate: ViewModifier {
     @Environment(AppEnvironment.self) private var env
     let feature: Feature
-    @State private var showSheet = false
 
     func body(content: Content) -> some View {
         let unlocked = env.license.isUnlocked(feature)
         content
+            // When locked, the underlying control is inert and dimmed; a transparent
+            // tap-catcher on top routes taps to the single app-level upgrade sheet.
+            .disabled(!unlocked)
+            .opacity(unlocked ? 1 : 0.55)
             .overlay(alignment: .topTrailing) {
                 if !unlocked { ProBadge().offset(x: 6, y: -8) }
             }
-            // When locked, a transparent overlay on top captures every tap before the
-            // underlying control can act, and opens the upgrade sheet instead.
             .overlay {
                 if !unlocked {
                     Color.clear
                         .contentShape(Rectangle())
-                        .onTapGesture { showSheet = true }
+                        .onTapGesture { env.requestUpgrade(feature) }
+                        .accessibilityLabel("\(feature.displayName) — Pro feature")
+                        .accessibilityAddTraits(.isButton)
                 }
             }
-            .sheet(isPresented: $showSheet) { UpgradeSheet(feature: feature).environment(env) }
     }
 }
 
 extension View {
-    /// Marks a control as Pro: shows a PRO badge and, when locked, intercepts taps to
-    /// present the upgrade sheet instead of running the underlying action.
+    /// Marks a control as Pro: dims and disables it when locked, shows a PRO badge, and
+    /// routes taps to the shared upgrade sheet (`env.upgradeFeature`). Pass-through when unlocked.
     func proGated(_ feature: Feature) -> some View {
         modifier(ProGate(feature: feature))
     }
