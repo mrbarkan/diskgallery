@@ -966,6 +966,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.dbarkan.DiskGallery;
 				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(DG_BETA)";
 			};
 			name = Debug;
 		};
@@ -1063,6 +1064,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.dbarkan.DiskGallery;
 				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(DG_BETA)";
 			};
 			name = Release;
 		};

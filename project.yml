@@ -55,6 +55,11 @@ targets:
         INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 dbarkan"
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
+        # Beta hard-stop flag, scoped to THIS target only. The beta build passes
+        # DG_BETA=BETA on the xcodebuild command line; GRDB and other targets keep
+        # their own compilation conditions (passing BETA globally wipes GRDB's
+        # SQLITE_ENABLE_FTS5 and breaks the FTS5 search migration).
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) $(DG_BETA)"
 
   # Unit tests for the Core framework. No TEST_HOST needed (tests a framework).
   DiskGalleryCoreTests:

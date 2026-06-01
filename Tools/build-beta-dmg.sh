@@ -44,7 +44,7 @@ xcodebuild archive \
   CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY="Developer ID Application" \
   OTHER_CODE_SIGN_FLAGS="--timestamp" \
-  SWIFT_ACTIVE_COMPILATION_CONDITIONS="BETA" \
+  DG_BETA="BETA" \
   | tail -20
 
 echo "==> Exporting Developer ID app"
