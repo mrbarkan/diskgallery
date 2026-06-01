@@ -53,4 +53,46 @@ final class SearchTests: XCTestCase {
         let scoped = try await catalog.search.search("txt", scope: .volumeLatest(volume.id))
         XCTAssertEqual(scoped.count, 4)
     }
+
+    func testDuplicatesOnlyFilterWithQuery() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let root = try Fixture.makeTree()
+        _ = try await Fixture.scan(catalog, root)
+
+        let dups = try await catalog.search.search("txt", filter: .duplicatesOnly)
+        XCTAssertEqual(Set(dups.map(\.relPath)), ["a.txt", "sub/a.txt"])
+    }
+
+    func testTaggedFilterStandalone() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let root = try Fixture.makeTree()
+        _ = try await Fixture.scan(catalog, root)
+        let volumes = try await catalog.library.volumes()
+        let volume = try XCTUnwrap(volumes.first)
+        let key = AnnotationStore.volumeKey(uuid: volume.uuid, name: volume.name)
+        try await catalog.annotations.setDecision(.delete, volumeKey: key, relPath: "b.txt")
+
+        let tagged = try await catalog.search.search("", filter: .tagged(.delete))
+        XCTAssertEqual(tagged.map(\.relPath), ["b.txt"])
+    }
+
+    func testCategoryFilterWithQuery() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let root = try Fixture.makeTree()
+        try Fixture.writeFile(root, "holiday.jpg", bytes: 10)
+        _ = try await Fixture.scan(catalog, root)
+
+        let photos = try await catalog.search.search("h", filter: .category(.photos))
+        XCTAssertTrue(photos.contains { $0.relPath == "holiday.jpg" })
+        let raw = try await catalog.search.search("h", filter: .category(.raw))
+        XCTAssertFalse(raw.contains { $0.relPath == "holiday.jpg" })
+    }
+
+    func testEmptyQueryNoFilterStillReturnsNothing() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let root = try Fixture.makeTree()
+        _ = try await Fixture.scan(catalog, root)
+        let none = try await catalog.search.search("", filter: .none)
+        XCTAssertEqual(none.count, 0)
+    }
 }
