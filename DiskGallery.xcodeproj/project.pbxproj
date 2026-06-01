@@ -37,8 +37,10 @@
 		5538B61725F67104A80877F5 /* DiskGalleryCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5571B1DB44FDD3A6AA8BDC0F /* Scanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0886F22F3BD10A946192FCA /* Scanner.swift */; };
 		5767A44CEC56229399FB8C08 /* DuplicateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7564DDC8279F5702EE38072 /* DuplicateTests.swift */; };
+		84F5BAC121164EAEB287905B /* KeepRuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BDC81545906420BAC7831BF /* KeepRuleTests.swift */; };
 		5AA0B13893DCA8DC49879706 /* ChangeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2303765E6DD32995AC1EC81B /* ChangeService.swift */; };
 		60595B0C3850E9835F789891 /* DuplicateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 052F1C86EE5C7C4897CBB317 /* DuplicateEngine.swift */; };
+		C434987D0DF449DEADDED6DF /* KeepRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99277F9652944842A6426E1F /* KeepRule.swift */; };
 		D44BE8D24FA34F2FB3C1BE7D /* FileCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D40853762C144283A827E8EE /* FileCategory.swift */; };
 		96EAD3CE4F3B49FF90B8477B /* FileCategoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A140C15E8A54DD9AFFFA0BD /* FileCategoryTests.swift */; };
 		6205D1CDDC40C2DF2A953BE7 /* VolumeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0860DD76D728A4E486E6CD1 /* VolumeMetadata.swift */; };
@@ -146,6 +148,7 @@
 
 /* Begin PBXFileReference section */
 		052F1C86EE5C7C4897CBB317 /* DuplicateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateEngine.swift; sourceTree = "<group>"; };
+		99277F9652944842A6426E1F /* KeepRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepRule.swift; sourceTree = "<group>"; };
 		D40853762C144283A827E8EE /* FileCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCategory.swift; sourceTree = "<group>"; };
 		0A140C15E8A54DD9AFFFA0BD /* FileCategoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCategoryTests.swift; sourceTree = "<group>"; };
 		0ABD4966F2629801B58174E0 /* Capacity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Capacity.swift; sourceTree = "<group>"; };
@@ -228,6 +231,7 @@
 		ECBA2AE40DDF4B70537C8F4F /* ThemeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeStore.swift; sourceTree = "<group>"; };
 		F46FB69746E1A1F87B2D46BA /* TransferPlannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferPlannerView.swift; sourceTree = "<group>"; };
 		F7564DDC8279F5702EE38072 /* DuplicateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateTests.swift; sourceTree = "<group>"; };
+		4BDC81545906420BAC7831BF /* KeepRuleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepRuleTests.swift; sourceTree = "<group>"; };
 		F99FC8A7DC3A97C0CC85640D /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		F9C040BBD8951A53231F2AC7 /* StatTiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatTiles.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -399,6 +403,7 @@
 				2DF8B6014428D118FD2C366E /* ChangeTests.swift */,
 				D4DAF550E4C8CE67CFE830AD /* CrossDriveDuplicateTests.swift */,
 				F7564DDC8279F5702EE38072 /* DuplicateTests.swift */,
+				4BDC81545906420BAC7831BF /* KeepRuleTests.swift */,
 				0A140C15E8A54DD9AFFFA0BD /* FileCategoryTests.swift */,
 				4105C0CC1F9C0469C2052248 /* FinderTagTests.swift */,
 				A29447DD438A0EDA49CD6D07 /* LicenseTests.swift */,
@@ -482,6 +487,7 @@
 			children = (
 				052F1C86EE5C7C4897CBB317 /* DuplicateEngine.swift */,
 				7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */,
+				99277F9652944842A6426E1F /* KeepRule.swift */,
 			);
 			path = Duplicates;
 			sourceTree = "<group>";
@@ -691,6 +697,7 @@
 				04FD7DD0404A7ED926DCD970 /* ChangeTests.swift in Sources */,
 				04EE7BB7F97B50A3F09BE417 /* CrossDriveDuplicateTests.swift in Sources */,
 				5767A44CEC56229399FB8C08 /* DuplicateTests.swift in Sources */,
+				84F5BAC121164EAEB287905B /* KeepRuleTests.swift in Sources */,
 				96EAD3CE4F3B49FF90B8477B /* FileCategoryTests.swift in Sources */,
 				54F7E036F94C146237106B8D /* FinderTagTests.swift in Sources */,
 				907624D036768D1FF01C7D85 /* LicenseTests.swift in Sources */,
@@ -773,6 +780,7 @@
 				9FAA111FB1D47D4A250CFF75 /* Catalog.swift in Sources */,
 				5AA0B13893DCA8DC49879706 /* ChangeService.swift in Sources */,
 				60595B0C3850E9835F789891 /* DuplicateEngine.swift in Sources */,
+				C434987D0DF449DEADDED6DF /* KeepRule.swift in Sources */,
 				D44BE8D24FA34F2FB3C1BE7D /* FileCategory.swift in Sources */,
 				46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */,
 				163787F6E82DDAE41147E42E /* HashVerifier.swift in Sources */,
