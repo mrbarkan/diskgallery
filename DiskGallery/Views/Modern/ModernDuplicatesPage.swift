@@ -10,12 +10,15 @@ struct ModernDuplicatesPage: View {
 
     @State private var sets: [DuplicateSet] = []
     @State private var selectedSetID: String?
-    @State private var filter: String = "All"
+    @State private var filter: String = FileCategory.all.rawValue
     @State private var members: [DuplicateMember] = []
-    @State private var keepRule: String = "Fastest drive"
+    @State private var keepRule: String = KeepRule.fastestDrive.label
+    @State private var capacities: [String: Int64] = [:]
 
     private var selectedSet: DuplicateSet? { sets.first { $0.id == selectedSetID } }
     private var redundantCopies: Int { sets.reduce(0) { $0 + max($1.copies - 1, 0) } }
+    private var rule: KeepRule { KeepRule.allCases.first { $0.label == keepRule } ?? .fastestDrive }
+    private var keptID: Int64? { keptMemberID(members: members, rule: rule, capacities: capacities) }
 
     var body: some View {
         ModernPageScaffold(leadingIcon: "square.on.square", crumbs: ["Duplicates", "All drives"]) {
@@ -26,7 +29,7 @@ struct ModernDuplicatesPage: View {
                 DupReclaimTile(setCount: sets.count, redundantCopies: redundantCopies,
                                onAutoResolve: { Task { await autoResolveAll() } })
             } right: {
-                ResolveSetCard(set: selectedSet, members: members, keepRule: $keepRule,
+                ResolveSetCard(set: selectedSet, members: members, keepRule: $keepRule, keptID: keptID,
                                onDelete: { Task { await deleteRedundant() } },
                                onVerify: { if let s = selectedSet { Task { await env.verify(set: s); await loadMembers() } } })
             }
@@ -37,6 +40,9 @@ struct ModernDuplicatesPage: View {
 
     private func loadSets() async {
         sets = (try? await env.catalog.duplicates.duplicateSets()) ?? []
+        let stats = (try? await env.catalog.planning.driveStats()) ?? []
+        capacities = Dictionary(stats.map { ($0.volumeKey, $0.totalCapacity ?? 0) },
+                                uniquingKeysWith: { first, _ in first })
         if selectedSetID == nil || !sets.contains(where: { $0.id == selectedSetID }) {
             selectedSetID = sets.first?.id
         }
@@ -48,23 +54,26 @@ struct ModernDuplicatesPage: View {
         members = (try? await env.catalog.duplicates.members(name: s.name, logicalSize: s.logicalSize)) ?? []
     }
 
-    /// Keep-rule (this sprint): keep the first sorted copy, tag the rest Delete.
+    /// Tags every copy except the keep-rule's chosen one as Delete (the current set).
     private func deleteRedundant() async {
         guard members.count > 1 else { return }
-        await tagRedundant(members)
+        await tagRedundant(members, keepID: keptID)
     }
 
+    /// Applies the keep-rule across every set, recomputing the kept copy per set.
     private func autoResolveAll() async {
         for s in sets {
             let ms = (try? await env.catalog.duplicates.members(name: s.name, logicalSize: s.logicalSize)) ?? []
-            await tagRedundant(ms)
+            let keep = keptMemberID(members: ms, rule: rule, capacities: capacities)
+            await tagRedundant(ms, keepID: keep)
         }
     }
 
-    private func tagRedundant(_ ms: [DuplicateMember]) async {
+    /// Tags everything except `keepID` as Delete. Never touches files (catalog + Finder tags only).
+    private func tagRedundant(_ ms: [DuplicateMember], keepID: Int64?) async {
         guard ms.count > 1 else { return }
         var entries: [Entry] = []
-        for m in ms.dropFirst() {
+        for m in ms where m.entryId != keepID {
             if let e = try? await env.catalog.library.entry(id: m.entryId) { entries.append(e) }
         }
         if !entries.isEmpty { await env.applyDecision(.delete, to: entries) }
@@ -82,31 +91,38 @@ private struct DupSetsCard: View {
     let totalReclaimable: Int64
 
     private var accent: Color { env.theme.accent.palette.accent }
-    private let chips = ["All", "Photos", "Video", "RAW", "Documents"]
+    private let chips = FileCategory.allCases
+
+    /// Sets narrowed to the selected file-type chip (`.all` → everything).
+    private var visibleSets: [DuplicateSet] {
+        let category = FileCategory(rawValue: filter) ?? .all
+        return sets.filter { category.matches(filename: $0.name) }
+    }
+    private var visibleReclaimable: Int64 { visibleSets.reduce(0) { $0 + $1.reclaimable } }
 
     var body: some View {
         GlassCard {
             VStack(spacing: 0) {
                 ModernCardHeader(systemImage: "square.on.square", title: "Duplicate Sets",
-                                 meta: "\(Format.count(sets.count)) sets · \(Format.bytes(totalReclaimable))",
+                                 meta: "\(Format.count(visibleSets.count)) sets · \(Format.bytes(visibleReclaimable))",
                                  accent: accent)
                 HStack(spacing: 7) {
                     ForEach(chips, id: \.self) { c in
-                        ModernFilterChip(label: c, selected: filter == c) { filter = c }
+                        ModernFilterChip(label: c.label, selected: filter == c.rawValue) { filter = c.rawValue }
                     }
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 16).padding(.bottom, 10)
 
                 List(selection: $selectedSetID) {
-                    ForEach(sets) { set in
+                    ForEach(visibleSets) { set in
                         DupSetRow(set: set, accent: accent)
                             .tag(set.id)
                             .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 18))
                             .listRowSeparator(.hidden)
                             .listRowBackground(rowBackground(set.id == selectedSetID))
                     }
-                    if sets.isEmpty {
+                    if visibleSets.isEmpty {
                         Text("No duplicates found").font(.system(size: 13)).foregroundStyle(DGToken.ink3(scheme))
                             .listRowSeparator(.hidden).listRowBackground(Color.clear)
                     }
@@ -203,11 +219,12 @@ private struct ResolveSetCard: View {
     let set: DuplicateSet?
     let members: [DuplicateMember]
     @Binding var keepRule: String
+    let keptID: Int64?
     let onDelete: () -> Void
     let onVerify: () -> Void
 
     private var accent: Color { env.theme.accent.palette.accent }
-    private let rules = ["Fastest drive", "Newest", "Largest drive"]
+    private let rules = KeepRule.allCases.map(\.label)
     private var allVerified: Bool { !members.isEmpty && members.allSatisfy { $0.contentHash != nil } }
     private var deleteCount: Int { max((set?.copies ?? 1) - 1, 0) }
 
@@ -269,8 +286,8 @@ private struct ResolveSetCard: View {
         VStack(alignment: .leading, spacing: 9) {
             SecHeader(title: "Copies found")
             VStack(spacing: 8) {
-                ForEach(Array(members.enumerated()), id: \.element.id) { idx, m in
-                    CopyRow(drive: m.volumeName, path: m.relPath, keep: idx == 0)
+                ForEach(members) { m in
+                    CopyRow(drive: m.volumeName, path: m.relPath, keep: m.entryId == keptID)
                 }
             }
         }
@@ -284,6 +301,10 @@ private struct ResolveSetCard: View {
                     ModernFilterChip(label: r, selected: keepRule == r) { keepRule = r }
                 }
                 Spacer(minLength: 0)
+            }
+            if keepRule == KeepRule.fastestDrive.label {
+                ModernNote(text: "No drive-speed data yet — keeping the copy on the largest drive.",
+                           systemImage: "info.circle")
             }
         }
     }

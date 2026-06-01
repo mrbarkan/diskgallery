@@ -292,12 +292,15 @@ private struct TransferSummaryTile: View {
                 Text("Transfer Summary").modernMonoLabel(size: 9.5, tracking: 1.9)
                 BigNum(bytes: queueBytes, tint: accent).padding(.top, 10)
                 (Text("\(jobCount)").fontWeight(.bold).foregroundColor(DGToken.ink(scheme))
-                 + Text(" jobs · est. ").foregroundColor(DGToken.ink2(scheme))
-                 + Text("—").foregroundColor(DGToken.ink3(scheme))
-                 + Text(" over USB-C").foregroundColor(DGToken.ink2(scheme)))
+                 + Text(" jobs · ").foregroundColor(DGToken.ink2(scheme))
+                 + Text("planning only").foregroundColor(DGToken.ink3(scheme)))
                     .font(.system(size: 12)).padding(.top, 8)
                 Spacer(minLength: 8)
-                CTAButton(title: "Start transfer", systemImage: "arrow.left.arrow.right", action: onStart)
+                CTAButton(title: "Start transfer", systemImage: "arrow.left.arrow.right",
+                          disabled: true, action: onStart)
+                ModernNote(text: "Transfer engine coming soon — this page plans the move; files aren't copied yet.",
+                           systemImage: "info.circle")
+                    .padding(.top, 8)
             }
             .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)

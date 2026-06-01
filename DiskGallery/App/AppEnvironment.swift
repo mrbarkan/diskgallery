@@ -20,6 +20,15 @@ struct ScanState {
     var isResume: Bool
 }
 
+/// Outcome of pushing catalogued annotations onto connected drives as Finder tags.
+struct TagSyncResult {
+    var drivesSynced = 0
+    var filesWritten = 0
+    var drivesSkipped = 0   // offline drives
+    var filesSkipped = 0    // annotations on offline drives
+    var failures = 0        // write errors
+}
+
 /// Holds the catalog + live UI state. The single source of truth injected into the
 /// view tree. GRDB never appears here — everything goes through `Catalog`.
 @MainActor
@@ -30,6 +39,7 @@ final class AppEnvironment {
     let shortcuts = ShortcutStore()
     let theme = ThemeStore()
     let license = LicenseStore()
+    let recentSearches = RecentSearchStore()
 
     var volumeSummaries: [VolumeSummary] = []
     var tagCounts: [Tag: Int] = [:]
@@ -355,6 +365,40 @@ final class AppEnvironment {
                 try? writer.apply(decision: write.decision, color: write.color, to: write.url)
             }
         }.value
+    }
+
+    /// Pushes every catalogued annotation onto its drive as a Finder tag, for all
+    /// connected drives. Non-destructive — the same write the app already performs at
+    /// tag time, batched for drives that were offline then. Offline drives are skipped.
+    func syncFinderTags() async -> TagSyncResult {
+        var result = TagSyncResult()
+        let annotations = (try? await catalog.annotations.all()) ?? []
+        guard !annotations.isEmpty else { return result }
+
+        let byVolume = Dictionary(grouping: annotations, by: { $0.volumeUuid })
+        let writer = catalog.finderTags
+
+        for (key, group) in byVolume {
+            guard let mount = volumes.mountURL(forKey: key) else {
+                result.drivesSkipped += 1
+                result.filesSkipped += group.count
+                continue
+            }
+            result.drivesSynced += 1
+            let jobs = group.map { (url: mount.appendingPathComponent($0.relPath),
+                                    decision: $0.tag, color: $0.color) }
+            let failures = await Task.detached(priority: .utility) { () -> Int in
+                var failed = 0
+                for job in jobs {
+                    do { try writer.apply(decision: job.decision, color: job.color, to: job.url) }
+                    catch { failed += 1 }
+                }
+                return failed
+            }.value
+            result.failures += failures
+            result.filesWritten += group.count - failures
+        }
+        return result
     }
 
     // MARK: Catalog management

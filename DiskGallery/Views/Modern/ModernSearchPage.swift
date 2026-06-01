@@ -13,12 +13,12 @@ struct ModernSearchPage: View {
     @State private var results: [SearchResult] = []
     @State private var scope: SearchScope = .all
     @State private var scopeLabel = "All drives"
-    @State private var recent: [RecentSearch] = []
+    @State private var filter: SearchFilter = .none
     @FocusState private var focused: Bool
 
     private var accent: Color { env.theme.accent.palette.accent }
     private var trimmed: String { query.trimmingCharacters(in: .whitespaces) }
-    private var showResults: Bool { trimmed.count >= 2 }
+    private var showResults: Bool { trimmed.count >= 2 || filter != .none }
 
     var body: some View {
         ModernPageScaffold(leadingIcon: "magnifyingglass", crumbs: ["Search"]) {
@@ -34,7 +34,7 @@ struct ModernSearchPage: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: showResults ? .top : .center)
         }
-        .task(id: query + "|" + scopeLabel) { await runSearch() }
+        .task(id: query + "|" + scopeLabel + "|" + String(describing: filter)) { await runSearch() }
         .onAppear { focused = true }
     }
 
@@ -53,6 +53,7 @@ struct ModernSearchPage: View {
                 }
                 searchField
                 scopeChips
+                savedSearchChips
                 if !showResults { recentSection }
             }
             .padding(EdgeInsets(top: 36, leading: 34, bottom: 30, trailing: 34))
@@ -91,14 +92,40 @@ struct ModernSearchPage: View {
         }
     }
 
+    /// The saved searches the mockup hints at, each a real predicate.
+    private var savedSearches: [(label: String, filter: SearchFilter)] {
+        [("Photos · RAW", .category(.photos)),
+         ("Duplicates only", .duplicatesOnly),
+         ("Tagged: Delete", .tagged(.delete))]
+    }
+
+    private var savedSearchChips: some View {
+        HStack(spacing: 7) {
+            ForEach(savedSearches, id: \.label) { item in
+                ModernFilterChip(label: item.label, selected: filter == item.filter) {
+                    filter = (filter == item.filter) ? .none : item.filter
+                }
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
     private var recentSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            SecHeader(title: "Recent")
-            if recent.isEmpty {
+            HStack {
+                SecHeader(title: "Recent")
+                if !env.recentSearches.items.isEmpty {
+                    Button("Clear") { env.recentSearches.clear() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundStyle(accent)
+                }
+            }
+            if env.recentSearches.items.isEmpty {
                 Text("No recent searches yet").font(.system(size: 13)).foregroundStyle(DGToken.ink3(scheme))
                     .padding(.vertical, 9)
             } else {
-                ForEach(Array(recent.enumerated()), id: \.element.id) { idx, r in
+                ForEach(Array(env.recentSearches.items.enumerated()), id: \.element.id) { idx, r in
                     Button { query = r.query } label: {
                         HStack(spacing: 11) {
                             Image(systemName: "clock").font(.system(size: 15)).foregroundStyle(DGToken.ink3(scheme))
@@ -109,7 +136,7 @@ struct ModernSearchPage: View {
                         }
                         .padding(.vertical, 9).padding(.horizontal, 6)
                         .overlay(alignment: .bottom) {
-                            if idx < recent.count - 1 { Rectangle().fill(DGToken.hair(scheme)).frame(height: 1) }
+                            if idx < env.recentSearches.items.count - 1 { Rectangle().fill(DGToken.hair(scheme)).frame(height: 1) }
                         }
                         .contentShape(Rectangle())
                     }
@@ -143,23 +170,11 @@ struct ModernSearchPage: View {
     }
 
     private func runSearch() async {
-        guard trimmed.count >= 2 else { results = []; return }
-        let found = (try? await env.catalog.search.search(trimmed, scope: scope)) ?? []
+        guard trimmed.count >= 2 || filter != .none else { results = []; return }
+        let found = (try? await env.catalog.search.search(trimmed, scope: scope, filter: filter)) ?? []
         results = found
-        remember(trimmed, count: found.count)
+        if trimmed.count >= 2 { env.recentSearches.record(query: trimmed, count: found.count) }
     }
-
-    private func remember(_ q: String, count: Int) {
-        recent.removeAll { $0.query == q }
-        recent.insert(RecentSearch(query: q, count: count), at: 0)
-        if recent.count > 5 { recent = Array(recent.prefix(5)) }
-    }
-}
-
-struct RecentSearch: Identifiable {
-    let query: String
-    let count: Int
-    var id: String { query }
 }
 
 /// Wrapping row of filter chips (scopes can exceed one line).
