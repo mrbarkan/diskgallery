@@ -16,3 +16,7 @@ xcuserdata/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
+# Seller-side license private key — NEVER commit
+dg-private-key.txt
+Tools/dgkeygen/.build/

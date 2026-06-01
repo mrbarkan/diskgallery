@@ -206,6 +206,7 @@ private struct ExecutePlanCard: View {
                                   systemImage: "play.fill", disabled: running) {
                             Task { await run() }
                         }
+                        .proGated(.bulkTagSync)
                         if let resultText {
                             ModernNote(text: resultText, systemImage: "checkmark.shield")
                         } else if agg.disconnected > 0 {

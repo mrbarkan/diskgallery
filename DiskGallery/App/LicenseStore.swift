@@ -2,60 +2,60 @@ import Foundation
 import Observation
 import DiskGalleryCore
 
-/// Build-time licensing configuration. Fill these in when you set up sales.
+/// Build-time licensing configuration.
 enum LicenseConfig {
     static let product = "com.dbarkan.DiskGallery"
 
-    /// Your Ed25519 **public** key (base64), produced alongside the private key you
-    /// keep secret for signing keys. While this is empty, licensing stays OFF and every
-    /// feature is unlocked — so development and testing are never blocked.
-    ///
-    /// Generate a keypair with `LicenseSigner()` (e.g. a tiny one-off script):
-    ///   let s = LicenseSigner(); print(s.privateKeyBase64, s.publicKeyBase64)
-    static let publicKeyBase64 = ""
+    /// Ed25519 **public** key (base64). Empty ⇒ licensing disabled ⇒ everything unlocked
+    /// (dev builds). Paired private key lives only in the seller's `dgkeygen` env.
+    static let publicKeyBase64 = "iH7+6uh/56PEP/YfcjUhgHOkNdGmLWgdxezXsNa0M2k="
 
-    static let trialDays = 14
+    /// One-time Pro price, shown in the upgrade sheet. Configurable; nothing depends on the value.
+    static let proPrice = "$19"
 
-    /// Where the "Buy" button sends people (your Lemon Squeezy / Paddle / site link).
+    /// Where "Buy" sends people.
     static let buyURL = URL(string: "https://diskgallery.app")!
+    /// Where the expired-beta "Check for update" button sends people (Sparkle-ready later).
+    static let updatesURL = URL(string: "https://diskgallery.app/download")!
+    /// Where the expired-beta "Send feedback" button sends people.
+    static let feedbackURL = URL(string: "https://diskgallery.app/feedback")!
 }
 
-/// Tracks the app's license state: free trial, activated license, or (once configured)
-/// an expired trial. Verification is fully offline via `LicenseVerifier`.
+/// Tracks freemium license state. Verification is fully offline via `LicenseVerifier`.
+/// Free tier is perpetual; Pro is a one-time unlock. No trial.
 @MainActor
 @Observable
 final class LicenseStore {
     enum Status: Equatable {
-        case unconfigured           // no public key in this build → licensing disabled
-        case trial(daysLeft: Int)
-        case trialExpired
+        case unconfigured            // no public key in this build → licensing disabled
+        case free                    // configured, no valid key → free tier
         case licensed(email: String)
     }
 
     private let verifier: LicenseVerifier?
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
     private let keyDefaultsKey = "license.key"
-    private let firstLaunchKey = "license.firstLaunch"
 
     private(set) var status: Status = .unconfigured
 
-    init() {
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         verifier = try? LicenseVerifier(product: LicenseConfig.product,
                                         publicKeyBase64: LicenseConfig.publicKeyBase64)
-        if defaults.object(forKey: firstLaunchKey) == nil {
-            defaults.set(Date(), forKey: firstLaunchKey)
-        }
         refresh()
     }
 
-    /// Are premium features unlocked? Always true until licensing is configured and the
-    /// trial has expired, so turning licensing on later is a one-line gate per feature.
+    /// Premium features unlocked? True for unconfigured (dev) and licensed; false for free.
     var isPro: Bool {
         switch status {
-        case .unconfigured, .trial, .licensed: return true
-        case .trialExpired: return false
+        case .unconfigured, .licensed: return true
+        case .free:                    return false
         }
     }
+
+    /// Single call site for gating. Uniform policy today (== isPro); the `Feature`
+    /// argument lets the policy vary per-feature later without touching callers.
+    func isUnlocked(_ feature: Feature) -> Bool { isPro }
 
     var licenseEmail: String? {
         if case .licensed(let email) = status { return email }
@@ -66,12 +66,9 @@ final class LicenseStore {
         guard let verifier else { status = .unconfigured; return }
         if let key = defaults.string(forKey: keyDefaultsKey), let payload = try? verifier.verify(key) {
             status = .licensed(email: payload.email)
-            return
+        } else {
+            status = .free
         }
-        let first = (defaults.object(forKey: firstLaunchKey) as? Date) ?? Date()
-        let elapsed = Calendar.current.dateComponents([.day], from: first, to: Date()).day ?? 0
-        let left = LicenseConfig.trialDays - elapsed
-        status = left > 0 ? .trial(daysLeft: left) : .trialExpired
     }
 
     /// Activates a pasted key. Returns nil on success, or a human-readable error.
