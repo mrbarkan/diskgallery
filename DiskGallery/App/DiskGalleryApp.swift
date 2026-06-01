@@ -37,13 +37,16 @@ enum HeadlessScan {
 
 struct DiskGalleryApp: App {
     @State private var env: AppEnvironment? = try? AppEnvironment()
+    @State private var betaGate = BetaGate()
     @State private var systemAppearance = SystemAppearance()
     @State private var launching = true
 
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if let env {
+                if betaGate.isExpired {
+                    BetaExpiredView()
+                } else if let env {
                     ContentView().environment(env)
                 } else {
                     ContentUnavailableView("Couldn't open the catalog",
@@ -76,10 +79,16 @@ struct DiskGalleryApp: App {
             }
             CommandGroup(after: .newItem) {
                 Divider()
-                Button("Export Library…") { env?.exportLibrary() }
-                    .keyboardShortcut("e", modifiers: [.command, .shift])
-                Button("Import Library…") { env?.importLibrary() }
-                    .keyboardShortcut("i", modifiers: [.command, .shift])
+                Button("Export Library…") {
+                    if env?.license.isUnlocked(.exportImport) == true { env?.exportLibrary() }
+                    else { env?.requestUpgrade(.exportImport) }
+                }
+                .keyboardShortcut("e", modifiers: [.command, .shift])
+                Button("Import Library…") {
+                    if env?.license.isUnlocked(.exportImport) == true { env?.importLibrary() }
+                    else { env?.requestUpgrade(.exportImport) }
+                }
+                .keyboardShortcut("i", modifiers: [.command, .shift])
             }
         }
 
@@ -106,17 +115,15 @@ struct DiskGalleryApp: App {
     private var aboutLicensee: String {
         switch env?.license.status {
         case .licensed(let email):  return email
-        case .trial:                return "Trial"
-        case .trialExpired:         return "Trial expired"
+        case .free:                 return "Free"
         case .unconfigured, .none:  return "—"
         }
     }
     private var aboutLicense: String {
         switch env?.license.status {
-        case .licensed:                 return "Perpetual"
-        case .trial(let daysLeft):      return "Trial · \(daysLeft) days left"
-        case .trialExpired:             return "Trial expired"
-        case .unconfigured, .none:      return "Unlicensed"
+        case .licensed:             return "Pro · Perpetual"
+        case .free:                 return "Free"
+        case .unconfigured, .none:  return "Unlicensed"
         }
     }
 }
@@ -148,6 +155,11 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(env.errorMessage ?? "")
+        }
+        .sheet(item: Binding(get: { env.upgradeFeature.map { FeatureBox($0) } },
+                             set: { env.upgradeFeature = $0?.feature })) { box in
+            UpgradeSheet(feature: box.feature)
+                .environment(env)
         }
         .tint(env.theme.accent.palette.accent)
         .preferredColorScheme(effectiveScheme)
@@ -219,3 +231,7 @@ struct ContentColumn: View {
         }
     }
 }
+
+/// Wraps a `Feature` so it can drive a `.sheet(item:)`.
+struct FeatureBox: Identifiable { let feature: Feature; var id: String { feature.rawValue }
+    init(_ feature: Feature) { self.feature = feature } }

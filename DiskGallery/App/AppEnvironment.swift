@@ -53,6 +53,7 @@ final class AppEnvironment {
     var stopRequested = false        // Stop pressed; scan halted; showing the prompt
     var dataVersion = 0          // bumped on any mutation, so views reload
     var errorMessage: String?
+    var upgradeFeature: Feature?     // non-nil ⇒ show the upgrade sheet for this feature
 
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var currentScanSnapshotId: Int64?
@@ -90,6 +91,8 @@ final class AppEnvironment {
         Task { await perform(action, on: targets) }
         return true
     }
+
+    func requestUpgrade(_ feature: Feature) { upgradeFeature = feature }
 
     var isSelectedVolumeConnected: Bool {
         guard let key = selectedVolumeKey else { return false }

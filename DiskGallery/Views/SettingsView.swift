@@ -55,10 +55,9 @@ struct LicenseSettings: View {
         case .unconfigured:
             Label("Licensing not configured — all features unlocked", systemImage: "lock.open")
                 .foregroundStyle(.secondary)
-        case .trial(let daysLeft):
-            Label("Free trial — \(daysLeft) day\(daysLeft == 1 ? "" : "s") left", systemImage: "clock")
-        case .trialExpired:
-            Label("Trial expired", systemImage: "lock").foregroundStyle(.red)
+        case .free:
+            Label("Free — upgrade to Pro to unlock all features", systemImage: "lock")
+                .foregroundStyle(.secondary)
         case .licensed(let email):
             Label("Licensed to \(email)", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
         }
