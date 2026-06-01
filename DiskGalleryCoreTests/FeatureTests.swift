@@ -2,10 +2,10 @@ import XCTest
 @testable import DiskGalleryCore
 
 final class FeatureTests: XCTestCase {
-    func testRawValueRoundTrips() {
-        for feature in Feature.allCases {
-            XCTAssertEqual(Feature(rawValue: feature.rawValue), feature)
-        }
+    func testDisplayNamesAreCorrect() {
+        XCTAssertEqual(Feature.transfer.displayName, "Transfer engine")
+        XCTAssertEqual(Feature.savedSearches.displayName, "Saved searches")
+        XCTAssertEqual(Feature.bulkTagSync.displayName, "Bulk Finder-tag sync")
     }
 
     func testEveryFeatureHasNonEmptyDisplayName() {

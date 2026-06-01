@@ -1,5 +1,3 @@
-import Foundation
-
 /// A premium capability the app gates behind a Pro license. The raw value is a stable
 /// identifier (used in analytics/UI keys); `displayName` is the human label shown in the
 /// upgrade sheet. The gating *policy* lives in the app's `LicenseStore.isUnlocked(_:)`.
