@@ -39,6 +39,7 @@ final class AppEnvironment {
     let shortcuts = ShortcutStore()
     let theme = ThemeStore()
     let license = LicenseStore()
+    let recentSearches = RecentSearchStore()
 
     var volumeSummaries: [VolumeSummary] = []
     var tagCounts: [Tag: Int] = [:]

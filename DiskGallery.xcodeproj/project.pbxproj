@@ -82,6 +82,7 @@
 		B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146D1C1E98B588853D9D5BB8 /* SearchResultsView.swift */; };
 		B4DBC5A1263F638B10DDD6C6 /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79E7150F9FAC9E3145394AE1 /* AppDatabase.swift */; };
 		C008A1A21F408B78714FCF84 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6069A75F596EED173763F9A6 /* AboutView.swift */; };
+		B2A63FADE24B4CCCA165EDD8 /* RecentSearchStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0638EF766C243EE9CEEDD87 /* RecentSearchStore.swift */; };
 		C5A6E538914E1290442AEC7A /* ShortcutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */; };
 		C723B2681D13ADAD6B82B080 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E79766C18BB7460C63E09866 /* SettingsView.swift */; };
 		CD719B56A1B4188454864BB9 /* ModernControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641768447517CCF35814381 /* ModernControls.swift */; };
@@ -170,6 +171,7 @@
 		369012288A55FF3177C489B1 /* DiskGalleryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiskGalleryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		395CB1FD1B89F2B19088F80B /* ScanProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProgress.swift; sourceTree = "<group>"; };
 		3C8DCECD169ABFB6FA93CFA2 /* PlanningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningTests.swift; sourceTree = "<group>"; };
+		A0638EF766C243EE9CEEDD87 /* RecentSearchStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentSearchStore.swift; sourceTree = "<group>"; };
 		3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutStore.swift; sourceTree = "<group>"; };
 		4105C0CC1F9C0469C2052248 /* FinderTagTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTagTests.swift; sourceTree = "<group>"; };
 		411D66DC8AAED302B83CB44B /* MutationGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MutationGuardTests.swift; sourceTree = "<group>"; };
@@ -427,6 +429,7 @@
 				97084FB885F63B7AB7363CAB /* BrowserNav.swift */,
 				149B608FC593D130B299F9C8 /* DiskGalleryApp.swift */,
 				5473AB3A7C7A7143F2118E2E /* LicenseStore.swift */,
+				A0638EF766C243EE9CEEDD87 /* RecentSearchStore.swift */,
 				3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */,
 				7D93D14E859992536494962C /* SystemAppearance.swift */,
 				ECBA2AE40DDF4B70537C8F4F /* ThemeStore.swift */,
@@ -760,6 +763,7 @@
 				087128B95EFB93784C4FCD5E /* ScanProgressView.swift in Sources */,
 				B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */,
 				C723B2681D13ADAD6B82B080 /* SettingsView.swift in Sources */,
+				B2A63FADE24B4CCCA165EDD8 /* RecentSearchStore.swift in Sources */,
 				C5A6E538914E1290442AEC7A /* ShortcutStore.swift in Sources */,
 				2C0B049C5CB6873A381D4EBB /* SplashView.swift in Sources */,
 				F33C2DBD411AD01139F80987 /* StatTiles.swift in Sources */,
