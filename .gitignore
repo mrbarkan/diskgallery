@@ -20,3 +20,6 @@ xcuserdata/
 # Seller-side license private key — NEVER commit
 dg-private-key.txt
 Tools/dgkeygen/.build/
+
+# Claude Code local state
+.claude/
