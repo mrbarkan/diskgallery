@@ -13,6 +13,7 @@ struct CTAButton: View {
     var systemImage: String
     var ghost: Bool = false
     var tint: Color? = nil          // override fill (e.g. `.bad` for Delete)
+    var disabled: Bool = false
     let action: () -> Void
 
     private var accent: Color { tint ?? env.theme.accent.palette.accent }
@@ -44,6 +45,8 @@ struct CTAButton: View {
             .shadow(color: ghost ? .clear : accent.opacity(0.40), radius: 12, y: 8)
         }
         .buttonStyle(.plain)
+        .disabled(disabled)
+        .opacity(disabled ? 0.5 : 1)
     }
 }
 

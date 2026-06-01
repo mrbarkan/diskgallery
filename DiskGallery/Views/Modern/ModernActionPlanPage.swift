@@ -27,7 +27,7 @@ struct ModernActionPlanPage: View {
             } bottomLeft: {
                 PlanTotalsTile(agg: agg)
             } right: {
-                ExecutePlanCard(agg: agg, onRun: { /* real execution: future-sprint backlog */ })
+                ExecutePlanCard(agg: agg)
             }
         }
         .task(id: env.dataVersion) { await reload() }
@@ -173,9 +173,25 @@ private struct ExecutePlanCard: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.colorScheme) private var scheme
     let agg: PlanAggregate
-    let onRun: () -> Void
+
+    @State private var running = false
+    @State private var result: TagSyncResult?
 
     private var accent: Color { env.theme.accent.palette.accent }
+
+    private func run() async {
+        running = true
+        result = await env.syncFinderTags()
+        running = false
+    }
+
+    private var resultText: String? {
+        guard let r = result else { return nil }
+        var parts = ["Wrote \(r.filesWritten) tag\(r.filesWritten == 1 ? "" : "s") across \(r.drivesSynced) drive\(r.drivesSynced == 1 ? "" : "s")"]
+        if r.filesSkipped > 0 { parts.append("\(r.filesSkipped) skipped (offline)") }
+        if r.failures > 0 { parts.append("\(r.failures) failed") }
+        return parts.joined(separator: " · ")
+    }
 
     var body: some View {
         GlassCard {
@@ -186,9 +202,14 @@ private struct ExecutePlanCard: View {
                     VStack(alignment: .leading, spacing: 14) {
                         sumGrid
                         runOrder
-                        CTAButton(title: "Run plan", systemImage: "play.fill", action: onRun)
-                        if agg.disconnected > 0 {
-                            ModernNote(text: "\(agg.disconnected) drive\(agg.disconnected == 1 ? "" : "s") must be connected to run",
+                        CTAButton(title: running ? "Writing Finder tags…" : "Run plan",
+                                  systemImage: "play.fill", disabled: running) {
+                            Task { await run() }
+                        }
+                        if let resultText {
+                            ModernNote(text: resultText, systemImage: "checkmark.shield")
+                        } else if agg.disconnected > 0 {
+                            ModernNote(text: "\(agg.disconnected) drive\(agg.disconnected == 1 ? "" : "s") offline — connected drives will still sync",
                                        systemImage: "exclamationmark.triangle", warn: true)
                         } else {
                             ModernNote(text: "All tagged drives connected", systemImage: "checkmark.shield")
