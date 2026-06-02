@@ -79,8 +79,9 @@ public struct Scanner: Sendable {
             snapshotId = resumeId
         } else {
             let info = VolumeMetadata.read(scanRoot)
+            let hardware = DriveHardwareProbe.read(scanRoot)
             snapshotId = try await db.writer.write { db -> Int64 in
-                let volumeId = try Scanner.findOrCreateVolume(db, info: info, now: now)
+                let volumeId = try Scanner.findOrCreateVolume(db, info: info, hardware: hardware, now: now)
                 var snapshot = Snapshot(volumeId: volumeId, scannedAt: now,
                                         totalCapacity: info.totalCapacity, freeCapacity: info.freeCapacity,
                                         fsType: info.fsType, isComplete: false)
@@ -251,16 +252,30 @@ public struct Scanner: Sendable {
         }
     }
 
-    static func findOrCreateVolume(_ db: Database, info: VolumeInfo, now: Date) throws -> Int64 {
+    static func findOrCreateVolume(_ db: Database, info: VolumeInfo,
+                                   hardware: DriveHardware?, now: Date) throws -> Int64 {
+        // Refresh hardware on a known drive, but never disturb its group/order.
+        func refreshing(_ existing: Volume) throws -> Int64 {
+            if let hardware, existing.hardware != hardware {
+                var updated = existing
+                updated.hardware = hardware
+                try updated.update(db, columns: ["hardware"])
+            }
+            return existing.id!
+        }
         if let uuid = info.uuid {
             if let existing = try Volume.filter(Column("uuid") == uuid).fetchOne(db) {
-                return existing.id!
+                return try refreshing(existing)
             }
         } else if let existing = try Volume
             .filter(Column("uuid") == nil && Column("name") == info.name).fetchOne(db) {
-            return existing.id!
+            return try refreshing(existing)
         }
-        var volume = Volume(uuid: info.uuid, name: info.name, createdAt: now)
+        // New drive: append to the bottom of the ungrouped section.
+        let nextIndex = (try Int.fetchOne(db,
+            sql: "SELECT IFNULL(MAX(sortIndex), -1) + 1 FROM volume WHERE groupId IS NULL") ?? 0)
+        var volume = Volume(uuid: info.uuid, name: info.name, createdAt: now,
+                            sortIndex: nextIndex, hardware: hardware)
         try volume.insert(db)
         return volume.id!
     }

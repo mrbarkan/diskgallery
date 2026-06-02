@@ -72,6 +72,63 @@ public enum FinderColor: Int, Codable, Sendable, CaseIterable, Identifiable {
     public static let keyOrder: [FinderColor] = [.red, .orange, .yellow, .green, .blue, .purple, .gray]
 }
 
+/// Read-only hardware facts about the device backing a volume — bus, medium,
+/// brand/model, and negotiated link speed. Captured best-effort via DiskArbitration
+/// + IOKit (see `DriveHardwareProbe`); any field the OS won't report stays nil.
+/// Stored as JSON on the `volume` row (GRDB encodes nested Codable to a text column).
+public struct DriveHardware: Codable, Sendable, Equatable {
+    /// How the device connects. Raw values are stable (persisted inside the JSON blob).
+    public enum Bus: String, Codable, Sendable {
+        case usb, thunderbolt, sata, pcie, sd, virtual, unknown
+    }
+    /// Recording medium. `.unknown` when the OS doesn't expose it (common behind USB bridges).
+    public enum Medium: String, Codable, Sendable {
+        case ssd, hdd, unknown
+    }
+
+    public var bus: Bus
+    public var isInternal: Bool?
+    public var medium: Medium?
+    public var vendor: String?
+    public var model: String?
+    public var linkSpeedMbps: Int?      // negotiated speed, raw (480 = USB2, 5000, 10000, 40000 = TB3…)
+    public var capturedAt: Date         // as of the last time the drive was connected
+
+    public init(bus: Bus = .unknown, isInternal: Bool? = nil, medium: Medium? = nil,
+                vendor: String? = nil, model: String? = nil, linkSpeedMbps: Int? = nil,
+                capturedAt: Date) {
+        self.bus = bus
+        self.isInternal = isInternal
+        self.medium = medium
+        self.vendor = vendor
+        self.model = model
+        self.linkSpeedMbps = linkSpeedMbps
+        self.capturedAt = capturedAt
+    }
+}
+
+/// A user-created, named group of drives in the sidebar. Drives reference a group via
+/// `Volume.groupId`; deleting a group orphans its drives back to ungrouped (never deletes them).
+public struct DriveGroup: Codable, Sendable, Identifiable, Hashable, FetchableRecord, MutablePersistableRecord {
+    public static let databaseTableName = "driveGroup"
+
+    public var id: Int64?
+    public var name: String
+    public var sortIndex: Int           // order of the group section
+    public var isCollapsed: Bool
+
+    public init(id: Int64? = nil, name: String, sortIndex: Int, isCollapsed: Bool = false) {
+        self.id = id
+        self.name = name
+        self.sortIndex = sortIndex
+        self.isCollapsed = isCollapsed
+    }
+
+    public mutating func didInsert(_ inserted: InsertionSuccess) {
+        id = inserted.rowID
+    }
+}
+
 /// A physical drive, identified by volume UUID (falling back to name when the
 /// filesystem exposes no UUID, e.g. some exFAT volumes).
 public struct Volume: Codable, Sendable, Identifiable, FetchableRecord, MutablePersistableRecord {
@@ -82,13 +139,21 @@ public struct Volume: Codable, Sendable, Identifiable, FetchableRecord, MutableP
     public var name: String
     public var bookmark: Data?          // reserved for a future sandboxed build
     public var createdAt: Date
+    public var groupId: Int64?          // nil = ungrouped
+    public var sortIndex: Int           // order within its group (or within ungrouped)
+    public var hardware: DriveHardware? // best-effort device facts, captured on scan/connect
 
-    public init(id: Int64? = nil, uuid: String?, name: String, bookmark: Data? = nil, createdAt: Date) {
+    public init(id: Int64? = nil, uuid: String?, name: String, bookmark: Data? = nil,
+                createdAt: Date, groupId: Int64? = nil, sortIndex: Int = 0,
+                hardware: DriveHardware? = nil) {
         self.id = id
         self.uuid = uuid
         self.name = name
         self.bookmark = bookmark
         self.createdAt = createdAt
+        self.groupId = groupId
+        self.sortIndex = sortIndex
+        self.hardware = hardware
     }
 
     public mutating func didInsert(_ inserted: InsertionSuccess) {

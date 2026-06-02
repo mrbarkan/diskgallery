@@ -15,11 +15,15 @@ public struct VolumeSummary: Codable, Sendable, Identifiable, FetchableRecord {
     public var totalLogical: Int64?
     public var rootEntryId: Int64?
     public var latestSnapshotComplete: Bool?
+    public var groupId: Int64?           // nil = ungrouped
+    public var sortIndex: Int            // order within its group (or within ungrouped)
+    public var hardware: DriveHardware?  // best-effort device facts (bus, medium, speed…)
 
     public init(id: Int64, uuid: String?, name: String, latestSnapshotId: Int64?,
                 scannedAt: Date?, totalCapacity: Int64?, freeCapacity: Int64?,
                 fsType: String?, fileCount: Int64?, totalLogical: Int64?,
-                rootEntryId: Int64?, latestSnapshotComplete: Bool?) {
+                rootEntryId: Int64?, latestSnapshotComplete: Bool?,
+                groupId: Int64? = nil, sortIndex: Int = 0, hardware: DriveHardware? = nil) {
         self.id = id
         self.uuid = uuid
         self.name = name
@@ -32,6 +36,9 @@ public struct VolumeSummary: Codable, Sendable, Identifiable, FetchableRecord {
         self.totalLogical = totalLogical
         self.rootEntryId = rootEntryId
         self.latestSnapshotComplete = latestSnapshotComplete
+        self.groupId = groupId
+        self.sortIndex = sortIndex
+        self.hardware = hardware
     }
 }
 
@@ -44,17 +51,102 @@ public struct LibraryService: Sendable {
                s.id AS latestSnapshotId, s.scannedAt AS scannedAt,
                s.totalCapacity AS totalCapacity, s.freeCapacity AS freeCapacity,
                s.fsType AS fsType, s.fileCount AS fileCount, s.totalLogical AS totalLogical,
-               s.rootEntryId AS rootEntryId, s.isComplete AS latestSnapshotComplete
+               s.rootEntryId AS rootEntryId, s.isComplete AS latestSnapshotComplete,
+               v.groupId AS groupId, v.sortIndex AS sortIndex, v.hardware AS hardware
         FROM volume v
         LEFT JOIN snapshot s ON s.id = (
             SELECT id FROM snapshot s2 WHERE s2.volumeId = v.id
             ORDER BY s2.scannedAt DESC, s2.id DESC LIMIT 1
         )
+        LEFT JOIN driveGroup g ON g.id = v.groupId
+        """
+
+    /// User-defined manual order: named groups first (by the group's order), then ungrouped,
+    /// drives ordered within each by their `sortIndex`; name breaks ties for stability.
+    private static let volumeOrderSQL = """
+         ORDER BY CASE WHEN v.groupId IS NULL THEN 1 ELSE 0 END,
+                  g.sortIndex, v.sortIndex, v.name COLLATE NOCASE
         """
 
     public func volumes() async throws -> [VolumeSummary] {
         try await db.writer.read { db in
-            try VolumeSummary.fetchAll(db, sql: Self.volumeSummarySQL + " ORDER BY v.name COLLATE NOCASE")
+            try VolumeSummary.fetchAll(db, sql: Self.volumeSummarySQL + Self.volumeOrderSQL)
+        }
+    }
+
+    // MARK: Groups & ordering
+
+    public func groups() async throws -> [DriveGroup] {
+        try await db.writer.read { db in
+            try DriveGroup.fetchAll(db, sql: "SELECT * FROM driveGroup ORDER BY sortIndex, id")
+        }
+    }
+
+    @discardableResult
+    public func createGroup(name: String) async throws -> DriveGroup {
+        try await db.writer.write { db in
+            let next = try Int.fetchOne(db, sql: "SELECT IFNULL(MAX(sortIndex), -1) + 1 FROM driveGroup") ?? 0
+            var group = DriveGroup(name: name, sortIndex: next)
+            try group.insert(db)
+            return group
+        }
+    }
+
+    public func renameGroup(id: Int64, name: String) async throws {
+        try await db.writer.write { db in
+            try db.execute(sql: "UPDATE driveGroup SET name = ? WHERE id = ?", arguments: [name, id])
+        }
+    }
+
+    public func setGroupCollapsed(id: Int64, collapsed: Bool) async throws {
+        try await db.writer.write { db in
+            try db.execute(sql: "UPDATE driveGroup SET isCollapsed = ? WHERE id = ?", arguments: [collapsed, id])
+        }
+    }
+
+    /// Deletes a group; its drives move to the end of ungrouped, keeping their relative order.
+    public func deleteGroup(id: Int64) async throws {
+        try await db.writer.write { db in
+            let members = try Int64.fetchAll(db, sql:
+                "SELECT id FROM volume WHERE groupId = ? ORDER BY sortIndex, name COLLATE NOCASE",
+                arguments: [id])
+            var next = try Int.fetchOne(db,
+                sql: "SELECT IFNULL(MAX(sortIndex), -1) + 1 FROM volume WHERE groupId IS NULL") ?? 0
+            for vid in members {
+                try db.execute(sql: "UPDATE volume SET groupId = NULL, sortIndex = ? WHERE id = ?",
+                               arguments: [next, vid])
+                next += 1
+            }
+            try DriveGroup.deleteOne(db, key: id)
+        }
+    }
+
+    public func reorderGroups(orderedIds: [Int64]) async throws {
+        try await db.writer.write { db in
+            for (index, gid) in orderedIds.enumerated() {
+                try db.execute(sql: "UPDATE driveGroup SET sortIndex = ? WHERE id = ?",
+                               arguments: [index, gid])
+            }
+        }
+    }
+
+    /// The single primitive for both move and reorder: assigns each listed drive to `groupId`
+    /// (nil = ungrouped) and sets its `sortIndex` to its position in the list.
+    public func reorderDrives(orderedVolumeIds: [Int64], inGroup groupId: Int64?) async throws {
+        try await db.writer.write { db in
+            for (index, vid) in orderedVolumeIds.enumerated() {
+                try db.execute(sql: "UPDATE volume SET groupId = ?, sortIndex = ? WHERE id = ?",
+                               arguments: [groupId, index, vid])
+            }
+        }
+    }
+
+    public func updateHardware(volumeId: Int64, hardware: DriveHardware) async throws {
+        try await db.writer.write { db in
+            guard var volume = try Volume.fetchOne(db, key: volumeId) else { return }
+            guard volume.hardware != hardware else { return }
+            volume.hardware = hardware
+            try volume.update(db, columns: ["hardware"])
         }
     }
 
