@@ -24,6 +24,7 @@ public struct SearchResult: Codable, Sendable, Identifiable, FetchableRecord {
     public var logicalSize: Int64
     public var subtreeLogicalSize: Int64?
     public var volumeName: String
+    public var volumeUuid: String?
 
     public var id: Int64 { entryId }
     public var displaySize: Int64 { isDir ? (subtreeLogicalSize ?? 0) : logicalSize }
@@ -60,7 +61,7 @@ public struct SearchService: Sendable {
         let selectCols = """
             SELECT e.id AS entryId, e.snapshotId AS snapshotId, e.name AS name, e.relPath AS relPath,
                    e.isDir AS isDir, e.logicalSize AS logicalSize, e.subtreeLogicalSize AS subtreeLogicalSize,
-                   v.name AS volumeName
+                   v.name AS volumeName, v.uuid AS volumeUuid
             """
 
         var arguments: [(any DatabaseValueConvertible)?] = []
