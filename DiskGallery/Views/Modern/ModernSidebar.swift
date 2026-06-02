@@ -141,10 +141,10 @@ struct ModernSidebar: View {
         ModernDriveRow(summary: summary, selected: env.selection == .volume(summary.id), accent: accent)
             .contentShape(Rectangle())
             .onTapGesture { env.selection = .volume(summary.id) }
-            .draggable(DriveDragPayload(volumeId: summary.id))
-            .dropDestination(for: DriveDragPayload.self) { items, _ in
-                guard let dragged = items.first else { return false }
-                Task { await env.dropDrive(dragged.volumeId, before: summary.id) }
+            .draggable(DriveDragID.drive(summary.id))
+            .dropDestination(for: String.self) { items, _ in
+                guard let item = items.first, let dragged = DriveDragID.parseDrive(item) else { return false }
+                Task { await env.dropDrive(dragged, before: summary.id) }
                 return true
             }
             .contextMenu { driveContextMenu(summary) }
@@ -201,16 +201,18 @@ struct ModernSidebar: View {
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { beginRename(group) }
         .onTapGesture { if let id = group.id { Task { await env.setGroupCollapsed(id: id, collapsed: !group.isCollapsed) } } }
-        .draggable(GroupDragPayload(groupId: group.id ?? -1))
-        .dropDestination(for: GroupDragPayload.self) { items, _ in
-            guard let dragged = items.first, let id = group.id else { return false }
-            Task { await env.dropGroup(dragged.groupId, before: id) }
-            return true
-        }
-        .dropDestination(for: DriveDragPayload.self) { items, _ in
-            guard let dragged = items.first else { return false }
-            Task { await env.moveDrive(dragged.volumeId, toGroup: group.id) }
-            return true
+        .draggable(DriveDragID.group(group.id ?? -1))
+        .dropDestination(for: String.self) { items, _ in
+            guard let item = items.first, let id = group.id else { return false }
+            if let draggedGroup = DriveDragID.parseGroup(item) {
+                Task { await env.dropGroup(draggedGroup, before: id) }
+                return true
+            }
+            if let draggedDrive = DriveDragID.parseDrive(item) {
+                Task { await env.moveDrive(draggedDrive, toGroup: id) }
+                return true
+            }
+            return false
         }
         .contextMenu {
             Button("Rename") { beginRename(group) }
@@ -228,9 +230,9 @@ struct ModernSidebar: View {
         }
         .padding(.horizontal, 10).padding(.top, 9).padding(.bottom, 4)
         .contentShape(Rectangle())
-        .dropDestination(for: DriveDragPayload.self) { items, _ in
-            guard let dragged = items.first else { return false }
-            Task { await env.moveDrive(dragged.volumeId, toGroup: nil) }
+        .dropDestination(for: String.self) { items, _ in
+            guard let item = items.first, let dragged = DriveDragID.parseDrive(item) else { return false }
+            Task { await env.moveDrive(dragged, toGroup: nil) }
             return true
         }
     }
