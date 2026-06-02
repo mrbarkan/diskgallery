@@ -34,7 +34,6 @@ struct ModernBrowserCard: View {
         List(selection: $selection) {
             ForEach(children) { entry in
                 ModernFrow(entry: entry, annotation: annotations[entry.relPath], accent: accent)
-                    .revealInFinder(volumeKey: env.selectedVolumeKey, relPath: entry.relPath, isDir: entry.isDir)
                     .tag(entry.id)
                     .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 18))
                     .listRowSeparator(.hidden)
@@ -81,6 +80,15 @@ struct ModernBrowserCard: View {
 
     @ViewBuilder private func tagMenu(for targets: [Entry]) -> some View {
         if !targets.isEmpty {
+            if let single = targets.first, targets.count == 1, !single.isDir,
+               env.canReveal(volumeKey: env.selectedVolumeKey) {
+                Button {
+                    env.revealInFinder(volumeKey: env.selectedVolumeKey, relPath: single.relPath)
+                } label: {
+                    Label("Show in Finder", systemImage: "folder")
+                }
+                Divider()
+            }
             ForEach(Tag.actionTags) { tag in
                 Button(tag.label) { Task { await env.applyDecision(tag, to: targets) } }
             }
