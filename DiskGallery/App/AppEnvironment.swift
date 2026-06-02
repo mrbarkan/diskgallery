@@ -99,6 +99,25 @@ final class AppEnvironment {
         return volumes.isConnected(key: key)
     }
 
+    /// Is the drive holding this file currently connected? Drives the enabled state of
+    /// the "Show in Finder" controls.
+    func canReveal(volumeKey: String?) -> Bool {
+        guard let volumeKey else { return false }
+        return volumes.mountURL(forKey: volumeKey) != nil
+    }
+
+    /// Reveals a catalogued file in Finder (selected, not just its folder). No-op when the
+    /// drive is offline or the file no longer exists — the app never modifies files.
+    func revealInFinder(volumeKey: String?, relPath: String) {
+        guard let volumeKey else { return }
+        let mountURL = volumes.mountURL(forKey: volumeKey)
+        guard let url = RevealTarget.url(mountURL: mountURL, relPath: relPath) else {
+            errorMessage = "That file isn't available — its drive may be disconnected or the file was moved."
+            return
+        }
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
     func refresh() async {
         do {
             volumeSummaries = try await catalog.library.volumes()
