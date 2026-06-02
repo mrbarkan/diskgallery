@@ -5,6 +5,10 @@ import DiskGalleryCore
 struct LibrarySidebarView: View {
     @Environment(AppEnvironment.self) private var env
 
+    @State private var editingGroupId: Int64?
+    @State private var editingName = ""
+    @FocusState private var renameFocused: Bool
+
     private var modern: Bool { env.theme.skin == .modern }
 
     var body: some View {
@@ -44,28 +48,25 @@ struct LibrarySidebarView: View {
                 }
             } header: { sectionHeader("Action Tags") }
 
-            Section {
-                if env.volumeSummaries.isEmpty {
-                    Text("No drives cataloged yet")
-                        .foregroundStyle(.secondary)
-                        .font(.callout)
-                }
-                ForEach(env.volumeSummaries) { summary in
-                    DriveRow(summary: summary)
-                        .tag(SidebarItem.volume(summary.id))
-                        .listRowBackground(modern ? AnyView(modernRowBackground(for: .volume(summary.id))) : nil)
-                        .contextMenu {
-                            if summary.latestSnapshotComplete == false {
-                                Button("Resume Scan") { env.resumeScan(volume: summary) }
-                                    .disabled(!env.volumes.isConnected(key: summary.uuid ?? summary.name))
-                                Divider()
+            if env.volumeSummaries.isEmpty && env.driveGroups.isEmpty {
+                Section {
+                    Text("No drives cataloged yet").foregroundStyle(.secondary).font(.callout)
+                } header: { sectionHeader("Drives") }
+            } else {
+                ForEach(env.driveSections) { section in
+                    if let group = section.group {
+                        Section {
+                            if !group.isCollapsed {
+                                ForEach(section.drives) { driveRow($0) }
                             }
-                            Button("Remove from Library", role: .destructive) {
-                                Task { await env.deleteVolume(id: summary.id) }
-                            }
-                        }
+                        } header: { groupHeader(group, count: section.drives.count) }
+                    } else {
+                        Section {
+                            ForEach(section.drives) { driveRow($0) }
+                        } header: { ungroupedHeader(hasGroups: !env.driveGroups.isEmpty) }
+                    }
                 }
-            } header: { sectionHeader("Drives") }
+            }
         }
         .modernListChrome(modern)
         .navigationTitle("DiskGallery")
@@ -75,6 +76,12 @@ struct LibrarySidebarView: View {
                     Label("Scan…", systemImage: "externaldrive.badge.plus")
                 }
                 .help("Catalog a drive or folder (read-only)")
+            }
+            ToolbarItem(placement: .automatic) {
+                Button { Task { await addGroup() } } label: {
+                    Label("New Group", systemImage: "folder.badge.plus")
+                }
+                .help("Create a drive group")
             }
             ToolbarItem(placement: .automatic) {
                 Menu {
@@ -136,6 +143,122 @@ struct LibrarySidebarView: View {
             env.startScan(url: url)
         }
     }
+
+    // MARK: Drives — grouping, drag & drop
+
+    private func driveRow(_ summary: VolumeSummary) -> some View {
+        DriveRow(summary: summary)
+            .tag(SidebarItem.volume(summary.id))
+            .listRowBackground(modern ? AnyView(modernRowBackground(for: .volume(summary.id))) : nil)
+            .draggable(DriveDragPayload(volumeId: summary.id))
+            .dropDestination(for: DriveDragPayload.self) { items, _ in
+                guard let dragged = items.first else { return false }
+                Task { await env.dropDrive(dragged.volumeId, before: summary.id) }
+                return true
+            }
+            .contextMenu { driveContextMenu(summary) }
+    }
+
+    @ViewBuilder private func driveContextMenu(_ summary: VolumeSummary) -> some View {
+        if summary.latestSnapshotComplete == false {
+            Button("Resume Scan") { env.resumeScan(volume: summary) }
+                .disabled(!env.volumes.isConnected(key: summary.uuid ?? summary.name))
+            Divider()
+        }
+        Menu("Move to") {
+            Button("New Group…") { Task { await env.createGroup(name: "New Group", withDrive: summary.id) } }
+            if !env.driveGroups.isEmpty {
+                Divider()
+                ForEach(env.driveGroups) { group in
+                    Button(group.name) { Task { await env.moveDrive(summary.id, toGroup: group.id) } }
+                        .disabled(summary.groupId == group.id)
+                }
+            }
+            if summary.groupId != nil {
+                Divider()
+                Button("Ungrouped") { Task { await env.moveDrive(summary.id, toGroup: nil) } }
+            }
+        }
+        Divider()
+        Button("Remove from Library", role: .destructive) {
+            Task { await env.deleteVolume(id: summary.id) }
+        }
+    }
+
+    @ViewBuilder private func groupHeader(_ group: DriveGroup, count: Int) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: group.isCollapsed ? "chevron.right" : "chevron.down")
+                .font(.caption2).foregroundStyle(.secondary).frame(width: 10)
+            if editingGroupId == group.id {
+                TextField("Group", text: $editingName)
+                    .textFieldStyle(.roundedBorder)
+                    .focused($renameFocused)
+                    .onSubmit { commitRename(group) }
+                    .onExitCommand { editingGroupId = nil }
+            } else {
+                sectionHeader(group.name)
+                Spacer()
+                Text("\(count)").font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) { beginRename(group) }
+        .onTapGesture { toggleCollapse(group) }
+        .draggable(GroupDragPayload(groupId: group.id ?? -1))
+        .dropDestination(for: GroupDragPayload.self) { items, _ in
+            guard let dragged = items.first, let id = group.id else { return false }
+            Task { await env.dropGroup(dragged.groupId, before: id) }
+            return true
+        }
+        .dropDestination(for: DriveDragPayload.self) { items, _ in
+            guard let dragged = items.first else { return false }
+            Task { await env.moveDrive(dragged.volumeId, toGroup: group.id) }
+            return true
+        }
+        .contextMenu {
+            Button("Rename") { beginRename(group) }
+            Button("Delete Group", role: .destructive) {
+                if let id = group.id { Task { await env.deleteGroup(id: id) } }
+            }
+        }
+    }
+
+    private func ungroupedHeader(hasGroups: Bool) -> some View {
+        HStack {
+            sectionHeader(hasGroups ? "Ungrouped" : "Drives")
+            Spacer()
+        }
+        .contentShape(Rectangle())
+        .dropDestination(for: DriveDragPayload.self) { items, _ in
+            guard let dragged = items.first else { return false }
+            Task { await env.moveDrive(dragged.volumeId, toGroup: nil) }
+            return true
+        }
+    }
+
+    private func toggleCollapse(_ group: DriveGroup) {
+        if let id = group.id { Task { await env.setGroupCollapsed(id: id, collapsed: !group.isCollapsed) } }
+    }
+
+    private func addGroup() async {
+        if let id = await env.createGroup(name: "New Group") {
+            editingGroupId = id
+            editingName = "New Group"
+            renameFocused = true
+        }
+    }
+
+    private func beginRename(_ group: DriveGroup) {
+        editingGroupId = group.id
+        editingName = group.name
+        renameFocused = true
+    }
+
+    private func commitRename(_ group: DriveGroup) {
+        let name = editingName
+        editingGroupId = nil
+        if let id = group.id { Task { await env.renameGroup(id: id, to: name) } }
+    }
 }
 
 struct DriveRow: View {
@@ -160,6 +283,7 @@ struct DriveRow: View {
                     }
                 }
                 Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                hardwareBadge
                 if summary.latestSnapshotComplete != false, summary.scannedAt != nil {
                     Text("scanned \(Format.relativeDate(summary.scannedAt))")
                         .font(.caption2).foregroundStyle(.secondary)
@@ -181,6 +305,27 @@ struct DriveRow: View {
             return "\(Format.bytes(total)) · \(Format.count(files)) files"
         }
         return "Not scanned"
+    }
+
+    @ViewBuilder private var hardwareBadge: some View {
+        if let hw = summary.hardware.map(DriveHardwareDisplay.init), hw.hasRowBadge {
+            HStack(spacing: 4) {
+                badgePill(icon: hw.busIcon, text: hw.busShort)
+                if let speed = hw.speedText { badgePill(text: speed) }
+                if let medium = hw.mediumText { badgePill(text: medium) }
+            }
+            .help(hw.badgeText)
+        }
+    }
+
+    private func badgePill(icon: String? = nil, text: String) -> some View {
+        HStack(spacing: 3) {
+            if let icon { Image(systemName: icon).font(.system(size: 8)) }
+            Text(text).font(.system(size: 9, weight: .medium))
+        }
+        .padding(.horizontal, 5).padding(.vertical, 1)
+        .background(Color.secondary.opacity(0.15), in: Capsule())
+        .foregroundStyle(.secondary)
     }
 }
 
