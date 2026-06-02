@@ -70,6 +70,7 @@ public struct Scanner: Sendable {
             throw ScanError.notADirectory
         }
         let scanRoot = volumeURL.resolvingSymlinksInPath()
+        let isBootVolume = scanRoot.path == "/"
         let now = Date()
 
         // Create (or locate, when resuming) the snapshot + its root + initial queue.
@@ -150,6 +151,7 @@ public struct Scanner: Sendable {
                     let logical = Int64(values?.fileSize ?? 0)
                     let alloc = Int64(values?.totalFileAllocatedSize ?? 0)
                     let rel = pdir.relPath.isEmpty ? name : pdir.relPath + "/" + name
+                    if ScanExclusion.isExcluded(relPath: rel, isBootVolume: isBootVolume) { continue }
                     let id = nextId
                     nextId += 1
                     let ext = child.pathExtension.lowercased()
