@@ -292,6 +292,7 @@ private struct ResolveSetCard: View {
             VStack(spacing: 8) {
                 ForEach(members) { m in
                     CopyRow(drive: m.volumeName, path: m.relPath, keep: m.entryId == keptID)
+                        .revealInFinder(volumeKey: m.volumeUuid ?? m.volumeName, relPath: m.relPath, isDir: false)
                 }
             }
         }

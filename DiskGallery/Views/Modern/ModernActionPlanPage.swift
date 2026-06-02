@@ -144,6 +144,7 @@ private struct PlanItemRow: View {
         }
         .padding(.vertical, 9).padding(.horizontal, 12)
         .contentShape(Rectangle())
+        .revealInFinder(volumeKey: item.volumeUuid, relPath: item.relPath, isDir: isDir)
     }
 }
 

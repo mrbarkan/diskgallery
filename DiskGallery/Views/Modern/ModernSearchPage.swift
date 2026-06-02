@@ -221,5 +221,6 @@ private struct SearchResultRow: View {
         }
         .padding(.vertical, 9).padding(.horizontal, 12)
         .contentShape(Rectangle())
+        .revealInFinder(volumeKey: result.volumeUuid ?? result.volumeName, relPath: result.relPath, isDir: result.isDir)
     }
 }

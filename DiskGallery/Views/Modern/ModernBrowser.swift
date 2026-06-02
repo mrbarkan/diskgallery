@@ -34,6 +34,7 @@ struct ModernBrowserCard: View {
         List(selection: $selection) {
             ForEach(children) { entry in
                 ModernFrow(entry: entry, annotation: annotations[entry.relPath], accent: accent)
+                    .revealInFinder(volumeKey: env.selectedVolumeKey, relPath: entry.relPath, isDir: entry.isDir)
                     .tag(entry.id)
                     .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 18))
                     .listRowSeparator(.hidden)
