@@ -95,4 +95,17 @@ final class SearchTests: XCTestCase {
         let none = try await catalog.search.search("", filter: .none)
         XCTAssertEqual(none.count, 0)
     }
+
+    func testResultIncludesVolumeUuid() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let root = try Fixture.makeTree()
+        defer { try? FileManager.default.removeItem(at: root.deletingLastPathComponent()) }
+        try await Fixture.scan(catalog, root)
+
+        let results = try await catalog.search.search("a")
+        XCTAssertFalse(results.isEmpty)
+        // The fixture volume has no UUID (temp dir), so volumeUuid is nil but the
+        // property must exist and decode without error.
+        _ = results.first?.volumeUuid
+    }
 }
