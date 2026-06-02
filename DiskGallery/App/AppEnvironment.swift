@@ -210,6 +210,30 @@ final class AppEnvironment {
         await reorderDrives(orderedVolumeIds: existing + [volumeId], inGroup: groupId)
     }
 
+    /// Drag drop: place `draggedId` immediately before `targetId`, joining the target's group.
+    func dropDrive(_ draggedId: Int64, before targetId: Int64) async {
+        guard draggedId != targetId,
+              let target = volumeSummaries.first(where: { $0.id == targetId }) else { return }
+        let groupId = target.groupId
+        var ids = volumeSummaries
+            .filter { $0.groupId == groupId && $0.id != draggedId }
+            .sorted { $0.sortIndex < $1.sortIndex }
+            .map(\.id)
+        guard let index = ids.firstIndex(of: targetId) else { return }
+        ids.insert(draggedId, at: index)
+        await reorderDrives(orderedVolumeIds: ids, inGroup: groupId)
+    }
+
+    /// Drag drop: reorder group sections, placing `draggedId` immediately before `targetId`.
+    func dropGroup(_ draggedId: Int64, before targetId: Int64) async {
+        guard draggedId != targetId else { return }
+        var ids = driveGroups.sorted { $0.sortIndex < $1.sortIndex }.compactMap(\.id)
+        ids.removeAll { $0 == draggedId }
+        guard let index = ids.firstIndex(of: targetId) else { return }
+        ids.insert(draggedId, at: index)
+        await reorderGroups(orderedIds: ids)
+    }
+
     private func run(_ work: @escaping () async throws -> Void) async {
         do { try await work(); dataVersion += 1; await refresh() }
         catch { errorMessage = error.localizedDescription }
