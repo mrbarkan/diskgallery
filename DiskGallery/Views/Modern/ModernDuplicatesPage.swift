@@ -97,7 +97,10 @@ private struct DupSetsCard: View {
     /// Sets narrowed to the selected file-type chip (`.all` → everything).
     private var visibleSets: [DuplicateSet] {
         let category = FileCategory(rawValue: filter) ?? .all
-        return sets.filter { category.matches(filename: $0.name) }
+        return sets.filter {
+            category.matches(filename: $0.name)
+                && !(env.viewPrefs.hideHidden && PathVisibility.isHidden(relPath: $0.name))
+        }
     }
     private var visibleReclaimable: Int64 { visibleSets.reduce(0) { $0 + $1.reclaimable } }
 

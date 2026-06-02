@@ -30,17 +30,22 @@ struct ModernBrowserCard: View {
         .onAppear { if selection.isEmpty { env.selectedEntries = [folder] } }
     }
 
+    private var visibleChildren: [Entry] {
+        env.viewPrefs.hideHidden ? children.filter { !PathVisibility.isHidden(relPath: $0.name) } : children
+    }
+
     private var list: some View {
         List(selection: $selection) {
-            ForEach(children) { entry in
+            ForEach(visibleChildren) { entry in
                 ModernFrow(entry: entry, annotation: annotations[entry.relPath], accent: accent)
                     .tag(entry.id)
                     .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 18))
                     .listRowSeparator(.hidden)
                     .listRowBackground(rowBackground(for: entry))
             }
-            if children.isEmpty {
-                Text("Empty folder").font(.system(size: 13)).foregroundStyle(DGToken.ink3(scheme))
+            if visibleChildren.isEmpty {
+                Text(children.isEmpty ? "Empty folder" : "Only hidden items")
+                    .font(.system(size: 13)).foregroundStyle(DGToken.ink3(scheme))
                     .listRowSeparator(.hidden).listRowBackground(Color.clear)
             }
         }

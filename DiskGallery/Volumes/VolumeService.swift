@@ -57,7 +57,8 @@ final class VolumeService {
     /// Blocking work — must run off the main thread.
     nonisolated private static func enumerateVolumes() -> Snapshot {
         let keys: [URLResourceKey] = [
-            .volumeIsRemovableKey, .volumeIsEjectableKey, .volumeIsInternalKey, .volumeNameKey,
+            .volumeIsRemovableKey, .volumeIsEjectableKey, .volumeIsInternalKey,
+            .volumeIsLocalKey, .volumeNameKey,
         ]
         let urls = FileManager.default.mountedVolumeURLs(
             includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]) ?? []
@@ -71,7 +72,8 @@ final class VolumeService {
 
             let removable = (values?.volumeIsRemovable ?? false) || (values?.volumeIsEjectable ?? false)
             let isInternal = values?.volumeIsInternal ?? true
-            if removable || !isInternal {
+            let isLocal = values?.volumeIsLocal ?? true
+            if VolumeFilter.shouldList(isLocal: isLocal, isRemovable: removable, isInternal: isInternal) {
                 mounted.append(Mounted(url: url, info: info))
             }
         }
