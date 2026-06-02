@@ -9,6 +9,8 @@ struct SettingsView: View {
                 .tabItem { Label("Appearance", systemImage: "paintpalette") }
             ShortcutSettings()
                 .tabItem { Label("Shortcuts", systemImage: "keyboard") }
+            FilesSettings()
+                .tabItem { Label("Files", systemImage: "doc") }
             LicenseSettings()
                 .tabItem { Label("License", systemImage: "checkmark.seal") }
         }
@@ -61,6 +63,23 @@ struct LicenseSettings: View {
             Label("DiskGallery Pro — licensed to \(email)", systemImage: "checkmark.seal.fill")
                 .foregroundStyle(.green)
         }
+    }
+}
+
+struct FilesSettings: View {
+    @Environment(AppEnvironment.self) private var env
+
+    var body: some View {
+        @Bindable var prefs = env.viewPrefs
+        Form {
+            Section {
+                Toggle("Hide hidden files and folders", isOn: $prefs.hideHidden)
+            } footer: {
+                Text("Hides dotfiles (names starting with “.”) such as .DS_Store and .Trashes from the browser, search, and duplicates. Files are still catalogued — only hidden from view.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
     }
 }
 

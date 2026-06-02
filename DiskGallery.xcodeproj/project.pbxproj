@@ -87,6 +87,7 @@
 		B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146D1C1E98B588853D9D5BB8 /* SearchResultsView.swift */; };
 		B4DBC5A1263F638B10DDD6C6 /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79E7150F9FAC9E3145394AE1 /* AppDatabase.swift */; };
 		B93FF80C8F6B70C808A42529 /* UpgradeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC621BD96C2E755F0715EB35 /* UpgradeSheet.swift */; };
+		BC89B034D857756B1E5259C2 /* ViewPrefsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C913A9C2F1DEA3A2577ADB71 /* ViewPrefsStore.swift */; };
 		C008A1A21F408B78714FCF84 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6069A75F596EED173763F9A6 /* AboutView.swift */; };
 		C5A6E538914E1290442AEC7A /* ShortcutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */; };
 		C723B2681D13ADAD6B82B080 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E79766C18BB7460C63E09866 /* SettingsView.swift */; };
@@ -244,6 +245,7 @@
 		C1827D6C9D202B74DE91FDA3 /* BetaGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaGate.swift; sourceTree = "<group>"; };
 		C54ECFB382AC39796AC01E43 /* ModernWorkspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernWorkspace.swift; sourceTree = "<group>"; };
 		C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicatesView.swift; sourceTree = "<group>"; };
+		C913A9C2F1DEA3A2577ADB71 /* ViewPrefsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPrefsStore.swift; sourceTree = "<group>"; };
 		CCF22A1C2A8F1DF0BB410211 /* BetaWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaWindow.swift; sourceTree = "<group>"; };
 		CED125E86EB977B732F55F62 /* KeepRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepRule.swift; sourceTree = "<group>"; };
 		CF52A4E49B04053DEEC78B56 /* PlanningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningService.swift; sourceTree = "<group>"; };
@@ -483,6 +485,7 @@
 				3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */,
 				7D93D14E859992536494962C /* SystemAppearance.swift */,
 				ECBA2AE40DDF4B70537C8F4F /* ThemeStore.swift */,
+				C913A9C2F1DEA3A2577ADB71 /* ViewPrefsStore.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -834,6 +837,7 @@
 				95871C43166ACC0954915B1D /* ThemeStore.swift in Sources */,
 				8E21B24409BF7A7A1D5FE6E2 /* TransferPlannerView.swift in Sources */,
 				B93FF80C8F6B70C808A42529 /* UpgradeSheet.swift in Sources */,
+				BC89B034D857756B1E5259C2 /* ViewPrefsStore.swift in Sources */,
 				8E2F47EDF2184A0D97425283 /* VolumeBrowserView.swift in Sources */,
 				3F89243663D3FAF7DEFED70A /* VolumeService.swift in Sources */,
 				651A53463C2C338865A84E37 /* WindowAccessor.swift in Sources */,

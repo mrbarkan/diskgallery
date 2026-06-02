@@ -40,6 +40,7 @@ final class AppEnvironment {
     let theme = ThemeStore()
     let license = LicenseStore()
     let recentSearches = RecentSearchStore()
+    let viewPrefs = ViewPrefsStore()
 
     var volumeSummaries: [VolumeSummary] = []
     var tagCounts: [Tag: Int] = [:]

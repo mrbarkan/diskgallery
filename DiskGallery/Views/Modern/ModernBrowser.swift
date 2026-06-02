@@ -30,9 +30,13 @@ struct ModernBrowserCard: View {
         .onAppear { if selection.isEmpty { env.selectedEntries = [folder] } }
     }
 
+    private var visibleChildren: [Entry] {
+        env.viewPrefs.hideHidden ? children.filter { !PathVisibility.isHidden(relPath: $0.name) } : children
+    }
+
     private var list: some View {
         List(selection: $selection) {
-            ForEach(children) { entry in
+            ForEach(visibleChildren) { entry in
                 ModernFrow(entry: entry, annotation: annotations[entry.relPath], accent: accent)
                     .tag(entry.id)
                     .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 18))

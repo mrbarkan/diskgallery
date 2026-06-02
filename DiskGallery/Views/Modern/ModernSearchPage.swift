@@ -20,6 +20,10 @@ struct ModernSearchPage: View {
     private var trimmed: String { query.trimmingCharacters(in: .whitespaces) }
     private var showResults: Bool { trimmed.count >= 2 || filter != .none }
 
+    private var visibleResults: [SearchResult] {
+        env.viewPrefs.hideHidden ? results.filter { !PathVisibility.isHidden(relPath: $0.relPath) } : results
+    }
+
     var body: some View {
         ModernPageScaffold(leadingIcon: "magnifyingglass", crumbs: ["Search"]) {
             Group {
@@ -152,14 +156,14 @@ struct ModernSearchPage: View {
         GlassCard {
             VStack(spacing: 0) {
                 ModernCardHeader(systemImage: "magnifyingglass", title: "Results",
-                                 meta: "\(Format.count(results.count)) match\(results.count == 1 ? "" : "es")", accent: accent)
+                                 meta: "\(Format.count(visibleResults.count)) match\(visibleResults.count == 1 ? "" : "es")", accent: accent)
                 List {
-                    ForEach(results) { r in
+                    ForEach(visibleResults) { r in
                         SearchResultRow(result: r, accent: accent)
                             .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 18))
                             .listRowSeparator(.hidden).listRowBackground(Color.clear)
                     }
-                    if results.isEmpty {
+                    if visibleResults.isEmpty {
                         Text("No matches for “\(trimmed)”").font(.system(size: 13)).foregroundStyle(DGToken.ink3(scheme))
                             .listRowSeparator(.hidden).listRowBackground(Color.clear)
                     }
