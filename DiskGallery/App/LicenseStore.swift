@@ -17,8 +17,9 @@ enum LicenseConfig {
     static let buyURL = URL(string: "https://diskgallery.app")!
     /// Where the expired-beta "Check for update" button sends people (Sparkle-ready later).
     static let updatesURL = URL(string: "https://diskgallery.app/download")!
-    /// Where the expired-beta "Send feedback" button sends people.
-    static let feedbackURL = URL(string: "https://diskgallery.app/feedback")!
+    /// Where the expired-beta "Send feedback" button sends people. A mailto: during the
+    /// beta so tester feedback reaches the developer directly (no site yet).
+    static let feedbackURL = URL(string: "mailto:dbarkan@gmail.com?subject=DiskGallery%20Beta%20Feedback")!
 }
 
 /// Tracks freemium license state. Verification is fully offline via `LicenseVerifier`.
