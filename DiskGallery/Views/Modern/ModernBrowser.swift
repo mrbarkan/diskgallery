@@ -43,8 +43,9 @@ struct ModernBrowserCard: View {
                     .listRowSeparator(.hidden)
                     .listRowBackground(rowBackground(for: entry))
             }
-            if children.isEmpty {
-                Text("Empty folder").font(.system(size: 13)).foregroundStyle(DGToken.ink3(scheme))
+            if visibleChildren.isEmpty {
+                Text(children.isEmpty ? "Empty folder" : "Only hidden items")
+                    .font(.system(size: 13)).foregroundStyle(DGToken.ink3(scheme))
                     .listRowSeparator(.hidden).listRowBackground(Color.clear)
             }
         }
