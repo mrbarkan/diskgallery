@@ -9,7 +9,13 @@ struct LibrarySidebarView: View {
     @State private var editingName = ""
     @FocusState private var renameFocused: Bool
 
+    // Live drag-target feedback (where a drop will land).
+    @State private var dropTargetVolumeId: Int64?
+    @State private var dropTargetGroupId: Int64?
+    @State private var ungroupedTargeted = false
+
     private var modern: Bool { env.theme.skin == .modern }
+    private var accent: Color { env.theme.accent.palette.accent }
 
     var body: some View {
         @Bindable var env = env
@@ -148,15 +154,37 @@ struct LibrarySidebarView: View {
 
     private func driveRow(_ summary: VolumeSummary) -> some View {
         DriveRow(summary: summary)
+            .overlay(alignment: .top) {
+                Capsule().fill(accent)
+                    .frame(height: 2.5).offset(y: -3)
+                    .shadow(color: accent.opacity(0.6), radius: 3)
+                    .opacity(dropTargetVolumeId == summary.id ? 1 : 0)
+            }
             .tag(SidebarItem.volume(summary.id))
             .listRowBackground(modern ? AnyView(modernRowBackground(for: .volume(summary.id))) : nil)
-            .draggable(DriveDragID.drive(summary.id))
+            .draggable(DriveDragID.drive(summary.id)) { dragPreview(icon: "externaldrive.fill", name: summary.name) }
             .dropDestination(for: String.self) { items, _ in
+                dropTargetVolumeId = nil
                 guard let item = items.first, let dragged = DriveDragID.parseDrive(item) else { return false }
                 Task { await env.dropDrive(dragged, before: summary.id) }
                 return true
+            } isTargeted: { hovering in
+                if hovering { dropTargetVolumeId = summary.id }
+                else if dropTargetVolumeId == summary.id { dropTargetVolumeId = nil }
             }
+            .animation(.easeOut(duration: 0.13), value: dropTargetVolumeId)
             .contextMenu { driveContextMenu(summary) }
+    }
+
+    private func dragPreview(icon: String, name: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+            Text(name).fontWeight(.semibold).lineLimit(1)
+        }
+        .font(.callout)
+        .padding(.horizontal, 10).padding(.vertical, 5)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(accent.opacity(0.6), lineWidth: 1))
     }
 
     @ViewBuilder private func driveContextMenu(_ summary: VolumeSummary) -> some View {
@@ -201,11 +229,17 @@ struct LibrarySidebarView: View {
                 Text("\(count)").font(.caption2).foregroundStyle(.secondary)
             }
         }
+        .padding(.vertical, 2)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(accent.opacity(dropTargetGroupId == group.id ? 0.18 : 0))
+        )
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { beginRename(group) }
         .onTapGesture { toggleCollapse(group) }
-        .draggable(DriveDragID.group(group.id ?? -1))
+        .draggable(DriveDragID.group(group.id ?? -1)) { dragPreview(icon: "folder.fill", name: group.name) }
         .dropDestination(for: String.self) { items, _ in
+            dropTargetGroupId = nil
             guard let item = items.first, let id = group.id else { return false }
             if let draggedGroup = DriveDragID.parseGroup(item) {
                 Task { await env.dropGroup(draggedGroup, before: id) }
@@ -216,7 +250,11 @@ struct LibrarySidebarView: View {
                 return true
             }
             return false
+        } isTargeted: { hovering in
+            if hovering { dropTargetGroupId = group.id }
+            else if dropTargetGroupId == group.id { dropTargetGroupId = nil }
         }
+        .animation(.easeOut(duration: 0.13), value: dropTargetGroupId)
         .contextMenu {
             Button("Rename") { beginRename(group) }
             Button("Delete Group", role: .destructive) {
@@ -230,12 +268,19 @@ struct LibrarySidebarView: View {
             sectionHeader(hasGroups ? "Ungrouped" : "Drives")
             Spacer()
         }
+        .padding(.vertical, 2)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(accent.opacity(ungroupedTargeted ? 0.18 : 0))
+        )
         .contentShape(Rectangle())
         .dropDestination(for: String.self) { items, _ in
+            ungroupedTargeted = false
             guard let item = items.first, let dragged = DriveDragID.parseDrive(item) else { return false }
             Task { await env.moveDrive(dragged, toGroup: nil) }
             return true
-        }
+        } isTargeted: { ungroupedTargeted = $0 }
+        .animation(.easeOut(duration: 0.13), value: ungroupedTargeted)
     }
 
     private func toggleCollapse(_ group: DriveGroup) {

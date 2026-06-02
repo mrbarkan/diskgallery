@@ -12,6 +12,16 @@ struct ModernSidebar: View {
     @State private var editingName = ""
     @FocusState private var renameFocused: Bool
 
+    // Live drag-target feedback (where a drop will land).
+    @State private var dropTargetVolumeId: Int64?
+    @State private var dropTargetGroupId: Int64?
+    @State private var ungroupedTargeted = false
+
+    /// Identity of the current drive arrangement — animates reflow when an order/group changes.
+    private var orderSignature: [Int64] {
+        env.driveSections.flatMap { [$0.id] + $0.drives.map(\.id) }
+    }
+
     private var palette: AccentPalette { env.theme.accent.palette }
     private var accent: Color { palette.accent }
 
@@ -104,6 +114,10 @@ struct ModernSidebar: View {
                 driveSection(section)
             }
         }
+        .animation(.snappy(duration: 0.24), value: orderSignature)
+        .animation(.easeOut(duration: 0.13), value: dropTargetVolumeId)
+        .animation(.easeOut(duration: 0.13), value: dropTargetGroupId)
+        .animation(.easeOut(duration: 0.13), value: ungroupedTargeted)
     }
 
     private var drivesHeader: some View {
@@ -139,15 +153,40 @@ struct ModernSidebar: View {
 
     private func driveRow(_ summary: VolumeSummary) -> some View {
         ModernDriveRow(summary: summary, selected: env.selection == .volume(summary.id), accent: accent)
+            .overlay(alignment: .top) { insertionLine(visible: dropTargetVolumeId == summary.id) }
             .contentShape(Rectangle())
             .onTapGesture { env.selection = .volume(summary.id) }
-            .draggable(DriveDragID.drive(summary.id))
+            .draggable(DriveDragID.drive(summary.id)) { dragPreview(summary) }
             .dropDestination(for: String.self) { items, _ in
+                dropTargetVolumeId = nil
                 guard let item = items.first, let dragged = DriveDragID.parseDrive(item) else { return false }
                 Task { await env.dropDrive(dragged, before: summary.id) }
                 return true
+            } isTargeted: { hovering in
+                if hovering { dropTargetVolumeId = summary.id }
+                else if dropTargetVolumeId == summary.id { dropTargetVolumeId = nil }
             }
             .contextMenu { driveContextMenu(summary) }
+    }
+
+    /// Accent insertion bar shown in the gap above the row a drop will land before.
+    @ViewBuilder private func insertionLine(visible: Bool) -> some View {
+        Capsule().fill(accent)
+            .frame(height: 2.5).padding(.horizontal, 8).offset(y: -1.5)
+            .shadow(color: accent.opacity(visible ? 0.7 : 0), radius: 4)
+            .opacity(visible ? 1 : 0)
+    }
+
+    /// A light pill preview so the drag feels snappy (avoids snapshotting the full glass row).
+    private func dragPreview(_ summary: VolumeSummary) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "externaldrive.fill").font(.system(size: 11, weight: .semibold))
+            Text(summary.name).font(.system(size: 12, weight: .semibold)).lineLimit(1)
+        }
+        .foregroundStyle(DGToken.ink(scheme))
+        .padding(.horizontal, 11).padding(.vertical, 6)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(accent.opacity(0.6), lineWidth: 1))
     }
 
     @ViewBuilder private func driveContextMenu(_ summary: VolumeSummary) -> some View {
@@ -198,11 +237,20 @@ struct ModernSidebar: View {
                 .foregroundStyle(DGToken.ink4(scheme))
         }
         .padding(.horizontal, 10).padding(.top, 9).padding(.bottom, 4)
+        .background(alignment: .center) {
+            let targeted = dropTargetGroupId == group.id
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(accent.opacity(targeted ? 0.16 : 0))
+                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(accent.opacity(targeted ? 0.5 : 0), lineWidth: 1))
+                .padding(.horizontal, 4)
+        }
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { beginRename(group) }
         .onTapGesture { if let id = group.id { Task { await env.setGroupCollapsed(id: id, collapsed: !group.isCollapsed) } } }
-        .draggable(DriveDragID.group(group.id ?? -1))
+        .draggable(DriveDragID.group(group.id ?? -1)) { groupDragPreview(group) }
         .dropDestination(for: String.self) { items, _ in
+            dropTargetGroupId = nil
             guard let item = items.first, let id = group.id else { return false }
             if let draggedGroup = DriveDragID.parseGroup(item) {
                 Task { await env.dropGroup(draggedGroup, before: id) }
@@ -213,6 +261,9 @@ struct ModernSidebar: View {
                 return true
             }
             return false
+        } isTargeted: { hovering in
+            if hovering { dropTargetGroupId = group.id }
+            else if dropTargetGroupId == group.id { dropTargetGroupId = nil }
         }
         .contextMenu {
             Button("Rename") { beginRename(group) }
@@ -229,12 +280,31 @@ struct ModernSidebar: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 10).padding(.top, 9).padding(.bottom, 4)
+        .background(alignment: .center) {
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(accent.opacity(ungroupedTargeted ? 0.16 : 0))
+                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(accent.opacity(ungroupedTargeted ? 0.5 : 0), lineWidth: 1))
+                .padding(.horizontal, 4)
+        }
         .contentShape(Rectangle())
         .dropDestination(for: String.self) { items, _ in
+            ungroupedTargeted = false
             guard let item = items.first, let dragged = DriveDragID.parseDrive(item) else { return false }
             Task { await env.moveDrive(dragged, toGroup: nil) }
             return true
+        } isTargeted: { ungroupedTargeted = $0 }
+    }
+
+    private func groupDragPreview(_ group: DriveGroup) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "folder.fill").font(.system(size: 11, weight: .semibold))
+            Text(group.name).font(.system(size: 12, weight: .semibold)).lineLimit(1)
         }
+        .foregroundStyle(DGToken.ink(scheme))
+        .padding(.horizontal, 11).padding(.vertical, 6)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(accent.opacity(0.6), lineWidth: 1))
     }
 
     // MARK: Group editing
