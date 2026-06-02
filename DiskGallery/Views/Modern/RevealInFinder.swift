@@ -16,7 +16,7 @@ private struct RevealInFinderModifier: ViewModifier {
             Button {
                 env.revealInFinder(volumeKey: volumeKey, relPath: relPath)
             } label: {
-                Label("Show in Finder", systemImage: "magnifyingglass")
+                Label("Show in Finder", systemImage: "folder")
             }
             .disabled(!enabled)
         }
