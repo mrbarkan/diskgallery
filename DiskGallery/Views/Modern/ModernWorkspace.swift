@@ -80,6 +80,9 @@ struct VolumeBentoWorkspace: View {
                                 palette: env.theme.accent.palette)
                     .frame(height: 216)
             }
+            if let hardware = summary.hardware.map(DriveHardwareDisplay.init) {
+                ModernHardwareStrip(display: hardware)
+            }
             if summary.latestSnapshotComplete == false {
                 IncompleteBanner(summary: summary).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }

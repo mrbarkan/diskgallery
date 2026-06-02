@@ -117,6 +117,7 @@
 		F4798D76A8EBE58BB98FC812 /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */; };
 		F59567BB049A3F13DB80FB2A /* OLEDDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FAB06D51560916D60F1560F /* OLEDDisplayView.swift */; };
 		F6C371633BD9F87A479F3BA7 /* GroupingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286934E837CA4025B46E82A5 /* GroupingTests.swift */; };
+		F7BF1E5B11E7321C4299C4CE /* ModernHardwareStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AE9B25E99278DD1A701E85B /* ModernHardwareStrip.swift */; };
 		F8D9199F3503262624C78237 /* ModernTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835B501A45322390BEEF4345 /* ModernTokens.swift */; };
 		FF798E13607B774E1C65EE27 /* KeepRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED125E86EB977B732F55F62 /* KeepRule.swift */; };
 /* End PBXBuildFile section */
@@ -195,6 +196,7 @@
 		3737FA4398BB56E6850F2A40 /* VolumeFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeFilterTests.swift; sourceTree = "<group>"; };
 		37759AE691004539E555EF69 /* PathVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathVisibility.swift; sourceTree = "<group>"; };
 		395CB1FD1B89F2B19088F80B /* ScanProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProgress.swift; sourceTree = "<group>"; };
+		3AE9B25E99278DD1A701E85B /* ModernHardwareStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernHardwareStrip.swift; sourceTree = "<group>"; };
 		3B52932E7BD947A7097C9085 /* BetaWindowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaWindowTests.swift; sourceTree = "<group>"; };
 		3C8DCECD169ABFB6FA93CFA2 /* PlanningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningTests.swift; sourceTree = "<group>"; };
 		3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutStore.swift; sourceTree = "<group>"; };
@@ -420,6 +422,7 @@
 				4641768447517CCF35814381 /* ModernControls.swift */,
 				8A178B3604C1960353B91A16 /* ModernDuplicatesPage.swift */,
 				239E19F08DFE1282FEAB493B /* ModernGlass.swift */,
+				3AE9B25E99278DD1A701E85B /* ModernHardwareStrip.swift */,
 				D564B66BBB945852BB905402 /* ModernInspector.swift */,
 				5FCABD541E93D6633673E775 /* ModernSearchPage.swift */,
 				10269A217E263D34BEDFBA60 /* ModernSidebar.swift */,
@@ -837,6 +840,7 @@
 				CD719B56A1B4188454864BB9 /* ModernControls.swift in Sources */,
 				7D1F55325120238833DCEEF6 /* ModernDuplicatesPage.swift in Sources */,
 				67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */,
+				F7BF1E5B11E7321C4299C4CE /* ModernHardwareStrip.swift in Sources */,
 				A706A33776F445979BAFE087 /* ModernInspector.swift in Sources */,
 				6A6419F7AFFC25E69DC3D00F /* ModernSearchPage.swift in Sources */,
 				85A5A04FD5595BFF8E9A5C15 /* ModernSidebar.swift in Sources */,
