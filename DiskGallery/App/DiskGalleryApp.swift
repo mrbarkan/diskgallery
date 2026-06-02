@@ -62,6 +62,7 @@ struct DiskGalleryApp: App {
                 if let env {
                     env.installKeyboardMonitor()
                     await env.refresh()
+                    env.startHardwareCapture()
                     if env.selection == nil {
                         env.selection = env.volumeSummaries.first.map { SidebarItem.volume($0.id) }
                     }

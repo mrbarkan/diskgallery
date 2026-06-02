@@ -14,6 +14,15 @@ enum SidebarItem: Hashable {
     case transfer      // Transfer planner: will it fit?
 }
 
+/// One sidebar section of drives: a named group (or the ungrouped catch-all when `group == nil`)
+/// with its drives in manual order. Computed from `volumeSummaries` + the loaded `driveGroups`.
+struct DriveGroupSection: Identifiable {
+    let group: DriveGroup?          // nil == ungrouped
+    var drives: [VolumeSummary]
+    var id: Int64 { group?.id ?? -1 }
+    var isUngrouped: Bool { group == nil }
+}
+
 struct ScanState {
     var volumeName: String
     var progress: ScanProgress
@@ -43,6 +52,7 @@ final class AppEnvironment {
     let viewPrefs = ViewPrefsStore()
 
     var volumeSummaries: [VolumeSummary] = []
+    var driveGroups: [DriveGroup] = []
     var tagCounts: [Tag: Int] = [:]
     var totalReclaimable: Int64 = 0
 
@@ -60,6 +70,7 @@ final class AppEnvironment {
     @ObservationIgnored private var currentScanSnapshotId: Int64?
     @ObservationIgnored private var currentScanURL: URL?
     @ObservationIgnored private var keyMonitor: Any?
+    @ObservationIgnored private var mountObserver: Any?
 
     init() throws {
         catalog = try Catalog.makeDefault()
@@ -122,11 +133,160 @@ final class AppEnvironment {
     func refresh() async {
         do {
             volumeSummaries = try await catalog.library.volumes()
+            driveGroups = try await catalog.library.groups()
             tagCounts = try await catalog.annotations.counts()
             totalReclaimable = try await catalog.duplicates.totalReclaimable()
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    // MARK: Drive groups & ordering
+
+    /// Named group sections (in their manual order) followed by the ungrouped catch-all.
+    /// Drives within each are in manual order. Consumed identically by both sidebars.
+    var driveSections: [DriveGroupSection] {
+        let byGroup = Dictionary(grouping: volumeSummaries, by: { $0.groupId })
+        func ordered(_ drives: [VolumeSummary]?) -> [VolumeSummary] {
+            (drives ?? []).sorted { $0.sortIndex < $1.sortIndex }
+        }
+        var sections = driveGroups
+            .sorted { $0.sortIndex < $1.sortIndex }
+            .map { DriveGroupSection(group: $0, drives: ordered(byGroup[$0.id])) }
+        sections.append(DriveGroupSection(group: nil, drives: ordered(byGroup[nil])))
+        return sections
+    }
+
+    /// Creates a group and returns its id (so the UI can start an inline rename).
+    @discardableResult
+    func createGroup(name: String) async -> Int64? {
+        do {
+            let group = try await catalog.library.createGroup(name: name)
+            dataVersion += 1
+            await refresh()
+            return group.id
+        } catch { errorMessage = error.localizedDescription; return nil }
+    }
+
+    /// Creates a new group containing just `volumeId` (the "New Group from Drive" action).
+    func createGroup(name: String, withDrive volumeId: Int64) async {
+        do {
+            let group = try await catalog.library.createGroup(name: name)
+            try await catalog.library.reorderDrives(orderedVolumeIds: [volumeId], inGroup: group.id)
+            dataVersion += 1
+            await refresh()
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    func renameGroup(id: Int64, to name: String) async {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        await run { try await self.catalog.library.renameGroup(id: id, name: trimmed) }
+    }
+
+    func deleteGroup(id: Int64) async {
+        await run { try await self.catalog.library.deleteGroup(id: id) }
+    }
+
+    func setGroupCollapsed(id: Int64, collapsed: Bool) async {
+        await run { try await self.catalog.library.setGroupCollapsed(id: id, collapsed: collapsed) }
+    }
+
+    func reorderGroups(orderedIds: [Int64]) async {
+        await run { try await self.catalog.library.reorderGroups(orderedIds: orderedIds) }
+    }
+
+    /// Applies a fully-resolved drive order for one group (the drag primitive both sidebars call).
+    func reorderDrives(orderedVolumeIds: [Int64], inGroup groupId: Int64?) async {
+        await run { try await self.catalog.library.reorderDrives(orderedVolumeIds: orderedVolumeIds, inGroup: groupId) }
+    }
+
+    /// Appends `volumeId` to the end of `groupId` (nil = ungrouped) — the context-menu "Move to" action.
+    func moveDrive(_ volumeId: Int64, toGroup groupId: Int64?) async {
+        let existing = volumeSummaries
+            .filter { $0.groupId == groupId && $0.id != volumeId }
+            .sorted { $0.sortIndex < $1.sortIndex }
+            .map(\.id)
+        await reorderDrives(orderedVolumeIds: existing + [volumeId], inGroup: groupId)
+    }
+
+    /// Drag drop: place `draggedId` immediately before `targetId`, joining the target's group.
+    func dropDrive(_ draggedId: Int64, before targetId: Int64) async {
+        guard draggedId != targetId,
+              let target = volumeSummaries.first(where: { $0.id == targetId }) else { return }
+        let groupId = target.groupId
+        var ids = volumeSummaries
+            .filter { $0.groupId == groupId && $0.id != draggedId }
+            .sorted { $0.sortIndex < $1.sortIndex }
+            .map(\.id)
+        guard let index = ids.firstIndex(of: targetId) else { return }
+        ids.insert(draggedId, at: index)
+        await reorderDrives(orderedVolumeIds: ids, inGroup: groupId)
+    }
+
+    /// Drag drop: reorder group sections, placing `draggedId` immediately before `targetId`.
+    func dropGroup(_ draggedId: Int64, before targetId: Int64) async {
+        guard draggedId != targetId else { return }
+        var ids = driveGroups.sorted { $0.sortIndex < $1.sortIndex }.compactMap(\.id)
+        ids.removeAll { $0 == draggedId }
+        guard let index = ids.firstIndex(of: targetId) else { return }
+        ids.insert(draggedId, at: index)
+        await reorderGroups(orderedIds: ids)
+    }
+
+    private func run(_ work: @escaping () async throws -> Void) async {
+        do { try await work(); dataVersion += 1; await refresh() }
+        catch { errorMessage = error.localizedDescription }
+    }
+
+    // MARK: Hardware capture (on connect)
+
+    private struct HardwareTarget: Sendable { let id: Int64; let url: URL }
+    private struct HardwareProbeResult: Sendable { let id: Int64; let hardware: DriveHardware }
+
+    /// Starts watching for drive connections so a cataloged drive's hardware facts are detected
+    /// and refreshed whenever it's plugged in. Also backfills already-connected drives once.
+    func startHardwareCapture() {
+        guard mountObserver == nil else { return }
+        mountObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { await self?.handleVolumeMounted() }
+        }
+        Task { await captureConnectedHardware() }
+    }
+
+    private func handleVolumeMounted() async {
+        await volumes.refresh()             // make sure mount URLs are current first
+        await captureConnectedHardware()
+    }
+
+    /// Probes every currently-connected cataloged drive (off the main thread) and persists any
+    /// changed hardware facts. No-ops when nothing changed, so it won't loop on mount events.
+    func captureConnectedHardware() async {
+        let targets: [HardwareTarget] = volumeSummaries.compactMap { summary in
+            let key = summary.uuid ?? summary.name
+            guard let url = volumes.mountURL(forKey: key) else { return nil }
+            return HardwareTarget(id: summary.id, url: url)
+        }
+        guard !targets.isEmpty else { return }
+
+        let probed: [HardwareProbeResult] = await Task.detached(priority: .utility) {
+            targets.compactMap { target in
+                guard let hardware = DriveHardwareProbe.read(target.url) else { return nil }
+                return HardwareProbeResult(id: target.id, hardware: hardware)
+            }
+        }.value
+
+        var changed = false
+        for result in probed {
+            let current = volumeSummaries.first { $0.id == result.id }?.hardware
+            guard current != result.hardware else { continue }
+            do {
+                try await catalog.library.updateHardware(volumeId: result.id, hardware: result.hardware)
+                changed = true
+            } catch { errorMessage = error.localizedDescription }
+        }
+        if changed { await refresh() }
     }
 
     // MARK: Scanning

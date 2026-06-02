@@ -8,6 +8,20 @@ struct ModernSidebar: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.colorScheme) private var scheme
 
+    @State private var editingGroupId: Int64?
+    @State private var editingName = ""
+    @FocusState private var renameFocused: Bool
+
+    // Live drag-target feedback (where a drop will land).
+    @State private var dropTargetVolumeId: Int64?
+    @State private var dropTargetGroupId: Int64?
+    @State private var ungroupedTargeted = false
+
+    /// Identity of the current drive arrangement — animates reflow when an order/group changes.
+    private var orderSignature: [Int64] {
+        env.driveSections.flatMap { [$0.id] + $0.drives.map(\.id) }
+    }
+
     private var palette: AccentPalette { env.theme.accent.palette }
     private var accent: Color { palette.accent }
 
@@ -83,28 +97,236 @@ struct ModernSidebar: View {
                             badge: Format.count(env.tagCounts[tag] ?? 0), item: .tagged(tag))
                 }
             }
-            section("Drives", trailing: "\(connectedCount) / \(env.volumeSummaries.count)") {
-                if env.volumeSummaries.isEmpty {
-                    Text("No drives cataloged yet").font(.system(size: 12)).foregroundStyle(DGToken.ink3(scheme))
-                        .padding(.horizontal, 11).padding(.vertical, 6)
-                }
-                ForEach(env.volumeSummaries) { summary in
-                    ModernDriveRow(summary: summary, selected: env.selection == .volume(summary.id), accent: accent)
-                        .contentShape(Rectangle())
-                        .onTapGesture { env.selection = .volume(summary.id) }
-                        .contextMenu {
-                            if summary.latestSnapshotComplete == false {
-                                Button("Resume Scan") { env.resumeScan(volume: summary) }
-                                    .disabled(!env.volumes.isConnected(key: summary.uuid ?? summary.name))
-                                Divider()
-                            }
-                            Button("Remove from Library", role: .destructive) {
-                                Task { await env.deleteVolume(id: summary.id) }
-                            }
-                        }
-                }
+            drivesArea
+        }
+    }
+
+    // MARK: Drives (groups + manual order + hardware badges)
+
+    @ViewBuilder private var drivesArea: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            drivesHeader
+            if env.volumeSummaries.isEmpty && env.driveGroups.isEmpty {
+                Text("No drives cataloged yet").font(.system(size: 12)).foregroundStyle(DGToken.ink3(scheme))
+                    .padding(.horizontal, 11).padding(.vertical, 6)
+            }
+            ForEach(env.driveSections) { section in
+                driveSection(section)
             }
         }
+        .animation(.snappy(duration: 0.24), value: orderSignature)
+        .animation(.easeOut(duration: 0.13), value: dropTargetVolumeId)
+        .animation(.easeOut(duration: 0.13), value: dropTargetGroupId)
+        .animation(.easeOut(duration: 0.13), value: ungroupedTargeted)
+    }
+
+    private var drivesHeader: some View {
+        HStack(spacing: 4) {
+            Text("DRIVES").font(.system(size: 8.5, weight: .semibold, design: .monospaced))
+                .tracking(1.8).foregroundStyle(DGToken.ink4(scheme))
+            Spacer(minLength: 4)
+            Text("\(connectedCount) / \(env.volumeSummaries.count)")
+                .font(.system(size: 8.5, weight: .semibold, design: .monospaced))
+                .tracking(1.0).foregroundStyle(DGToken.ink3(scheme))
+            Button { Task { await addGroup() } } label: {
+                Image(systemName: "folder.badge.plus").font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(DGToken.ink3(scheme))
+            }
+            .buttonStyle(.plain).help("New group")
+        }
+        .padding(.horizontal, 10).padding(.top, 8).padding(.bottom, 6)
+    }
+
+    @ViewBuilder private func driveSection(_ section: DriveGroupSection) -> some View {
+        if let group = section.group {
+            groupHeader(group, count: section.drives.count)
+            if !group.isCollapsed {
+                ForEach(section.drives) { driveRow($0) }
+            }
+        } else if env.driveGroups.isEmpty {
+            ForEach(section.drives) { driveRow($0) }       // flat list, no header
+        } else {
+            ungroupedHeader                                 // drop target to leave a group
+            ForEach(section.drives) { driveRow($0) }
+        }
+    }
+
+    private func driveRow(_ summary: VolumeSummary) -> some View {
+        ModernDriveRow(summary: summary, selected: env.selection == .volume(summary.id), accent: accent)
+            .overlay(alignment: .top) { insertionLine(visible: dropTargetVolumeId == summary.id) }
+            .contentShape(Rectangle())
+            .onTapGesture { env.selection = .volume(summary.id) }
+            .draggable(DriveDragID.drive(summary.id)) { dragPreview(summary) }
+            .dropDestination(for: String.self) { items, _ in
+                dropTargetVolumeId = nil
+                guard let item = items.first, let dragged = DriveDragID.parseDrive(item) else { return false }
+                Task { await env.dropDrive(dragged, before: summary.id) }
+                return true
+            } isTargeted: { hovering in
+                if hovering { dropTargetVolumeId = summary.id }
+                else if dropTargetVolumeId == summary.id { dropTargetVolumeId = nil }
+            }
+            .contextMenu { driveContextMenu(summary) }
+    }
+
+    /// Accent insertion bar shown in the gap above the row a drop will land before.
+    @ViewBuilder private func insertionLine(visible: Bool) -> some View {
+        Capsule().fill(accent)
+            .frame(height: 2.5).padding(.horizontal, 8).offset(y: -1.5)
+            .shadow(color: accent.opacity(visible ? 0.7 : 0), radius: 4)
+            .opacity(visible ? 1 : 0)
+    }
+
+    /// A light pill preview so the drag feels snappy (avoids snapshotting the full glass row).
+    private func dragPreview(_ summary: VolumeSummary) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "externaldrive.fill").font(.system(size: 11, weight: .semibold))
+            Text(summary.name).font(.system(size: 12, weight: .semibold)).lineLimit(1)
+        }
+        .foregroundStyle(DGToken.ink(scheme))
+        .padding(.horizontal, 11).padding(.vertical, 6)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(accent.opacity(0.6), lineWidth: 1))
+    }
+
+    @ViewBuilder private func driveContextMenu(_ summary: VolumeSummary) -> some View {
+        if summary.latestSnapshotComplete == false {
+            Button("Resume Scan") { env.resumeScan(volume: summary) }
+                .disabled(!env.volumes.isConnected(key: summary.uuid ?? summary.name))
+            Divider()
+        }
+        Menu("Move to") {
+            Button("New Group…") { Task { await env.createGroup(name: "New Group", withDrive: summary.id) } }
+            if !env.driveGroups.isEmpty {
+                Divider()
+                ForEach(env.driveGroups) { group in
+                    Button(group.name) { Task { await env.moveDrive(summary.id, toGroup: group.id) } }
+                        .disabled(summary.groupId == group.id)
+                }
+            }
+            if summary.groupId != nil {
+                Divider()
+                Button("Ungrouped") { Task { await env.moveDrive(summary.id, toGroup: nil) } }
+            }
+        }
+        Divider()
+        Button("Remove from Library", role: .destructive) {
+            Task { await env.deleteVolume(id: summary.id) }
+        }
+    }
+
+    @ViewBuilder private func groupHeader(_ group: DriveGroup, count: Int) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: group.isCollapsed ? "chevron.right" : "chevron.down")
+                .font(.system(size: 9, weight: .bold)).foregroundStyle(DGToken.ink3(scheme)).frame(width: 10)
+            if editingGroupId == group.id {
+                TextField("Group", text: $editingName)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1.0)
+                    .foregroundStyle(DGToken.ink(scheme))
+                    .focused($renameFocused)
+                    .onSubmit { commitRename(group) }
+                    .onExitCommand { editingGroupId = nil }
+            } else {
+                Text(group.name.uppercased())
+                    .font(.system(size: 8.5, weight: .semibold, design: .monospaced)).tracking(1.5)
+                    .foregroundStyle(DGToken.ink3(scheme)).lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            Text("\(count)").font(.system(size: 8.5, weight: .semibold, design: .monospaced))
+                .foregroundStyle(DGToken.ink4(scheme))
+        }
+        .padding(.horizontal, 10).padding(.top, 9).padding(.bottom, 4)
+        .background(alignment: .center) {
+            let targeted = dropTargetGroupId == group.id
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(accent.opacity(targeted ? 0.16 : 0))
+                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(accent.opacity(targeted ? 0.5 : 0), lineWidth: 1))
+                .padding(.horizontal, 4)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) { beginRename(group) }
+        .onTapGesture { if let id = group.id { Task { await env.setGroupCollapsed(id: id, collapsed: !group.isCollapsed) } } }
+        .draggable(DriveDragID.group(group.id ?? -1)) { groupDragPreview(group) }
+        .dropDestination(for: String.self) { items, _ in
+            dropTargetGroupId = nil
+            guard let item = items.first, let id = group.id else { return false }
+            if let draggedGroup = DriveDragID.parseGroup(item) {
+                Task { await env.dropGroup(draggedGroup, before: id) }
+                return true
+            }
+            if let draggedDrive = DriveDragID.parseDrive(item) {
+                Task { await env.moveDrive(draggedDrive, toGroup: id) }
+                return true
+            }
+            return false
+        } isTargeted: { hovering in
+            if hovering { dropTargetGroupId = group.id }
+            else if dropTargetGroupId == group.id { dropTargetGroupId = nil }
+        }
+        .contextMenu {
+            Button("Rename") { beginRename(group) }
+            Button("Delete Group", role: .destructive) {
+                if let id = group.id { Task { await env.deleteGroup(id: id) } }
+            }
+        }
+    }
+
+    private var ungroupedHeader: some View {
+        HStack {
+            Text("UNGROUPED").font(.system(size: 8.5, weight: .semibold, design: .monospaced))
+                .tracking(1.5).foregroundStyle(DGToken.ink4(scheme))
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10).padding(.top, 9).padding(.bottom, 4)
+        .background(alignment: .center) {
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(accent.opacity(ungroupedTargeted ? 0.16 : 0))
+                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(accent.opacity(ungroupedTargeted ? 0.5 : 0), lineWidth: 1))
+                .padding(.horizontal, 4)
+        }
+        .contentShape(Rectangle())
+        .dropDestination(for: String.self) { items, _ in
+            ungroupedTargeted = false
+            guard let item = items.first, let dragged = DriveDragID.parseDrive(item) else { return false }
+            Task { await env.moveDrive(dragged, toGroup: nil) }
+            return true
+        } isTargeted: { ungroupedTargeted = $0 }
+    }
+
+    private func groupDragPreview(_ group: DriveGroup) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "folder.fill").font(.system(size: 11, weight: .semibold))
+            Text(group.name).font(.system(size: 12, weight: .semibold)).lineLimit(1)
+        }
+        .foregroundStyle(DGToken.ink(scheme))
+        .padding(.horizontal, 11).padding(.vertical, 6)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(accent.opacity(0.6), lineWidth: 1))
+    }
+
+    // MARK: Group editing
+
+    private func addGroup() async {
+        if let id = await env.createGroup(name: "New Group") {
+            editingGroupId = id
+            editingName = "New Group"
+            renameFocused = true
+        }
+    }
+
+    private func beginRename(_ group: DriveGroup) {
+        editingGroupId = group.id
+        editingName = group.name
+        renameFocused = true
+    }
+
+    private func commitRename(_ group: DriveGroup) {
+        let name = editingName
+        editingGroupId = nil
+        if let id = group.id { Task { await env.renameGroup(id: id, to: name) } }
     }
 
     @ViewBuilder private func section<Content: View>(_ title: String, trailing: String = "",
@@ -230,6 +452,7 @@ private struct ModernDriveRow: View {
                 }
                 Spacer(minLength: 0)
             }
+            hardwareBadge
             Text(subtitle).font(.system(size: 9, design: .monospaced))
                 .foregroundStyle(summary.latestSnapshotComplete == false ? DGToken.warn : DGToken.ink3(scheme))
                 .lineLimit(1).padding(.top, 5).padding(.bottom, 6)
@@ -240,6 +463,29 @@ private struct ModernDriveRow: View {
                     in: RoundedRectangle(cornerRadius: 9, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
             .strokeBorder(selected ? DGToken.hair2(scheme) : .clear, lineWidth: 1))
+    }
+
+    @ViewBuilder private var hardwareBadge: some View {
+        if let hw = summary.hardware.map(DriveHardwareDisplay.init), hw.hasRowBadge {
+            HStack(spacing: 4) {
+                pill(icon: hw.busIcon, text: hw.busShort)
+                if let speed = hw.speedText { pill(text: speed) }
+                if let medium = hw.mediumText { pill(text: medium) }
+                Spacer(minLength: 0)
+            }
+            .padding(.top, 5)
+            .help(hw.badgeText)
+        }
+    }
+
+    private func pill(icon: String? = nil, text: String) -> some View {
+        HStack(spacing: 3) {
+            if let icon { Image(systemName: icon).font(.system(size: 7.5, weight: .semibold)) }
+            Text(text).font(.system(size: 8.5, weight: .semibold, design: .monospaced))
+        }
+        .padding(.horizontal, 5).padding(.vertical, 1.5)
+        .background(DGToken.glass2(scheme), in: Capsule())
+        .foregroundStyle(DGToken.ink3(scheme))
     }
 
     private var minibar: some View {

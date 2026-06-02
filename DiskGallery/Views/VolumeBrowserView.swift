@@ -63,6 +63,15 @@ struct DriveHeaderBar: View {
                 }
                 Text(infoLine).font(.caption).foregroundStyle(.secondary)
                     .help(summary.scannedAt.map { "Last scanned \(Format.date($0))" } ?? "")
+                if let hw = summary.hardware.map(DriveHardwareDisplay.init) {
+                    HStack(spacing: 5) {
+                        Image(systemName: hw.busIcon).font(.system(size: 9))
+                        Text(hw.badgeText).lineLimit(1)
+                        if let brandModel = hw.brandModel { Text("· \(brandModel)").lineLimit(1) }
+                    }
+                    .font(.caption2).foregroundStyle(.secondary)
+                    .help("Detected \(Format.relativeDate(hw.hardware.capturedAt))")
+                }
             }
             Spacer()
             if summary.totalCapacity != nil {

@@ -102,6 +102,31 @@ enum Migrations {
             try db.create(index: "idx_entry_snapshot_relpath", on: "entry", columns: ["snapshotId", "relPath"])
         }
 
+        // Drive grouping + manual ordering + captured hardware facts.
+        migrator.registerMigration("v5") { db in
+            try db.create(table: "driveGroup") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("name", .text).notNull()
+                t.column("sortIndex", .integer).notNull().defaults(to: 0)
+                t.column("isCollapsed", .boolean).notNull().defaults(to: false)
+            }
+            try db.alter(table: "volume") { t in
+                t.add(column: "groupId", .integer).references("driveGroup", onDelete: .setNull)
+                t.add(column: "sortIndex", .integer).notNull().defaults(to: 0)
+                t.add(column: "hardware", .text)        // JSON-encoded DriveHardware
+            }
+            try db.create(index: "idx_volume_group", on: "volume", columns: ["groupId"])
+            // Seed manual order from the current alphabetical order so existing drives keep
+            // their present position on first launch (0-based rank by name, ties broken by id).
+            try db.execute(sql: """
+                UPDATE volume SET sortIndex = (
+                    SELECT COUNT(*) FROM volume AS v2
+                    WHERE v2.name < volume.name COLLATE NOCASE
+                       OR (v2.name = volume.name COLLATE NOCASE AND v2.id < volume.id)
+                )
+                """)
+        }
+
         return migrator
     }
 }

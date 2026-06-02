@@ -36,7 +36,10 @@ final class ChromeNSView: NSView {
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
             window.titlebarSeparatorStyle = .none
-            window.isMovableByWindowBackground = true
+            // Must stay false: when the window is movable by its background, macOS treats a
+            // mouse-down on a sidebar drive row as "move the window" and the drag-to-reorder
+            // never starts. The window is still movable via the transparent title-bar strip.
+            window.isMovableByWindowBackground = false
             window.styleMask.insert(.fullSizeContentView)
             window.toolbar?.isVisible = false   // hide the empty unified toolbar strip
             placeIfNeeded(window)

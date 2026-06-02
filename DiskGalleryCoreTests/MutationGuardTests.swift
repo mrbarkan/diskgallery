@@ -14,6 +14,7 @@ final class MutationGuardTests: XCTestCase {
         let sources = [
             "DiskGalleryCore/Scanning/Scanner.swift",
             "DiskGalleryCore/Scanning/VolumeMetadata.swift",
+            "DiskGalleryCore/Scanning/DriveHardwareProbe.swift",
             "DiskGalleryCore/Scanning/ScanProgress.swift",
             "DiskGalleryCore/Duplicates/HashVerifier.swift",
         ]
