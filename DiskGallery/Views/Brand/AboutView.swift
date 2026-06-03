@@ -49,13 +49,22 @@ struct AboutView: View {
             }
             .padding(.top, 22)
 
+            Button { open(AppInfo.agencyURL.absoluteString) } label: {
+                Text("Crafted by ").foregroundStyle(ink4)
+                    + Text(AppInfo.agencyName).foregroundStyle(ink2).underline()
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 10, design: .monospaced)).tracking(0.6)
+            .help("smash.mrbarkan.com — the studio behind DiskGallery")
+            .padding(.top, 20)
+
             VStack(spacing: 3) {
                 Text(AppInfo.copyright)
                 Text(AppInfo.readOnlyNote).multilineTextAlignment(.center)
             }
             .font(.system(size: 9, design: .monospaced)).tracking(0.6)
             .foregroundStyle(ink4).lineSpacing(3)
-            .padding(.top, 22)
+            .padding(.top, 12)
         }
         .padding(.horizontal, 34).padding(.top, 34).padding(.bottom, 26)
         .frame(width: 420)
