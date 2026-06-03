@@ -10,14 +10,25 @@ enum AppInfo {
     static let catalogPath = "~/Library/…/DiskGallery/catalog.sqlite"
     static let website = URL(string: "https://diskgallery.app")!
 
+    /// The studio behind DiskGallery.
+    static let agencyName = "Smash"
+    static let agencyURL = URL(string: "https://smash.mrbarkan.com")!
+
     static var shortVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }
     static var build: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
     }
-    /// "Version 1.0 (1)"
-    static var versionLine: String { "Version \(shortVersion) (\(build))" }
-    /// "Version 1.0 (1) · macOS 15+ · Read-only"
+    /// Beta builds (`DG_BETA`) read "Version 1.0 — Beta 5"; release builds read "Version 1.0 (5)".
+    /// The beta number is the build (`CURRENT_PROJECT_VERSION`), bumped each beta.
+    static var versionLine: String {
+        #if BETA
+        "Version \(shortVersion) — Beta \(build)"
+        #else
+        "Version \(shortVersion) (\(build))"
+        #endif
+    }
+    /// "Version 1.0 — Beta 5 · macOS 15+ · Read-only"
     static var splashVersionLine: String { "\(versionLine) · macOS 15+ · Read-only" }
 }
