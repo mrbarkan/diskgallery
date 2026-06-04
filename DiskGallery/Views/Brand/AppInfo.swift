@@ -10,6 +10,13 @@ enum AppInfo {
     static let catalogPath = "~/Library/…/DiskGallery/catalog.sqlite"
     static let website = URL(string: "https://diskgallery.app")!
 
+    /// The marketing site (`diskgallery.app`) isn't online yet. While this is `false`,
+    /// the app hides every affordance that would open it — About's site links, the
+    /// "Buy" buttons, the beta "Check for update" — so testers never hit a dead page.
+    /// Flip to `true` once the site ships. (The `mailto:` feedback link and the live
+    /// `smash.mrbarkan.com` studio link are unaffected.)
+    static let websiteIsLive = false
+
     /// The studio behind DiskGallery.
     static let agencyName = "Smash"
     static let agencyURL = URL(string: "https://smash.mrbarkan.com")!

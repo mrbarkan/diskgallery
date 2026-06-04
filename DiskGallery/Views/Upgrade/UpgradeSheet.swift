@@ -37,15 +37,17 @@ struct UpgradeSheet: View {
             }
             .font(.callout)
 
-            Button {
-                NSWorkspace.shared.open(LicenseConfig.buyURL)
-            } label: {
-                Text("Buy Pro — \(LicenseConfig.proPrice)").frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            if AppInfo.websiteIsLive {
+                Button {
+                    NSWorkspace.shared.open(LicenseConfig.buyURL)
+                } label: {
+                    Text("Buy Pro — \(LicenseConfig.proPrice)").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
 
-            Divider()
+                Divider()
+            }
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Already have a license key?").font(.callout.weight(.medium))

@@ -16,14 +16,16 @@ struct BetaExpiredView: View {
                 .multilineTextAlignment(.center).foregroundStyle(.secondary)
                 .frame(maxWidth: 380)
             HStack(spacing: 10) {
-                Button {
-                    NSWorkspace.shared.open(LicenseConfig.updatesURL)
-                } label: { Text("Check for update").frame(minWidth: 130) }
-                .buttonStyle(.borderedProminent).controlSize(.large)
+                if AppInfo.websiteIsLive {
+                    Button {
+                        NSWorkspace.shared.open(LicenseConfig.updatesURL)
+                    } label: { Text("Check for update").frame(minWidth: 130) }
+                    .buttonStyle(.borderedProminent).controlSize(.large)
+                }
                 Button {
                     NSWorkspace.shared.open(LicenseConfig.feedbackURL)
                 } label: { Text("Send feedback").frame(minWidth: 130) }
-                .controlSize(.large)
+                .buttonStyle(.borderedProminent).controlSize(.large)
             }
         }
         .padding(40)

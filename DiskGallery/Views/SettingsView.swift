@@ -42,11 +42,13 @@ struct LicenseSettings: View {
                 }
                 if let error { Text(error).font(.caption).foregroundStyle(.red) }
             }
-            Section {
-                Button("Buy DiskGallery…") { NSWorkspace.shared.open(LicenseConfig.buyURL) }
-            } footer: {
-                Text("DiskGallery will be available on the Mac App Store and direct from \(LicenseConfig.buyURL.host ?? "our site"). License keys are verified on your Mac — no internet required.")
-                    .font(.caption).foregroundStyle(.secondary)
+            if AppInfo.websiteIsLive {
+                Section {
+                    Button("Buy DiskGallery…") { NSWorkspace.shared.open(LicenseConfig.buyURL) }
+                } footer: {
+                    Text("DiskGallery will be available on the Mac App Store and direct from \(LicenseConfig.buyURL.host ?? "our site"). License keys are verified on your Mac — no internet required.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
         }
         .formStyle(.grouped)

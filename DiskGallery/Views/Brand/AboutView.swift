@@ -42,12 +42,14 @@ struct AboutView: View {
             }
             .padding(.top, 22)
 
-            HStack(spacing: 9) {
-                button("Visit Website", primary: true) { open("https://diskgallery.app") }
-                button("Acknowledgements") { open("https://diskgallery.app/acknowledgements") }
-                button("Privacy") { open("https://diskgallery.app/privacy") }
+            if AppInfo.websiteIsLive {
+                HStack(spacing: 9) {
+                    button("Visit Website", primary: true) { open("https://diskgallery.app") }
+                    button("Acknowledgements") { open("https://diskgallery.app/acknowledgements") }
+                    button("Privacy") { open("https://diskgallery.app/privacy") }
+                }
+                .padding(.top, 22)
             }
-            .padding(.top, 22)
 
             Button { open(AppInfo.agencyURL.absoluteString) } label: {
                 Text("Crafted by ").foregroundStyle(ink4)
