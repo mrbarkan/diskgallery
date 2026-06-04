@@ -137,8 +137,16 @@ final class AppEnvironment {
             tagCounts = try await catalog.annotations.counts()
             totalReclaimable = try await catalog.duplicates.totalReclaimable()
         } catch {
-            errorMessage = error.localizedDescription
+            report(error)
         }
+    }
+
+    /// Surfaces an error to the user — but never a `CancellationError`, which is the
+    /// normal, expected outcome of a superseded or stopped operation (a new scan, a
+    /// cancelled `.task`), not a failure worth an alert.
+    private func report(_ error: Error) {
+        guard !(error is CancellationError) else { return }
+        errorMessage = error.localizedDescription
     }
 
     // MARK: Drive groups & ordering
@@ -165,7 +173,7 @@ final class AppEnvironment {
             dataVersion += 1
             await refresh()
             return group.id
-        } catch { errorMessage = error.localizedDescription; return nil }
+        } catch { report(error); return nil }
     }
 
     /// Creates a new group containing just `volumeId` (the "New Group from Drive" action).
@@ -175,7 +183,7 @@ final class AppEnvironment {
             try await catalog.library.reorderDrives(orderedVolumeIds: [volumeId], inGroup: group.id)
             dataVersion += 1
             await refresh()
-        } catch { errorMessage = error.localizedDescription }
+        } catch { report(error) }
     }
 
     func renameGroup(id: Int64, to name: String) async {
@@ -236,7 +244,7 @@ final class AppEnvironment {
 
     private func run(_ work: @escaping () async throws -> Void) async {
         do { try await work(); dataVersion += 1; await refresh() }
-        catch { errorMessage = error.localizedDescription }
+        catch { report(error) }
     }
 
     // MARK: Hardware capture (on connect)
@@ -284,7 +292,7 @@ final class AppEnvironment {
             do {
                 try await catalog.library.updateHardware(volumeId: result.id, hardware: result.hardware)
                 changed = true
-            } catch { errorMessage = error.localizedDescription }
+            } catch { report(error) }
         }
         if changed { await refresh() }
     }
@@ -364,8 +372,15 @@ final class AppEnvironment {
         } catch is CancellationError {
             return   // halted by Stop, or superseded — leave the UI to the prompt / new task
         } catch {
-            errorMessage = error.localizedDescription
+            report(error)
         }
+
+        // A cancelled AsyncThrowingStream finishes *without* throwing, so the
+        // `catch is CancellationError` above never fires on Stop/supersede. Detect the
+        // cancellation here: this task no longer owns the UI (a new scan or the Stop
+        // prompt does), so bail before clearing its progress or running a refresh that
+        // would itself throw CancellationError from the database.
+        if Task.isCancelled { return }
 
         if completed {
             let snapshotId = currentScanSnapshotId
@@ -593,7 +608,7 @@ final class AppEnvironment {
             dataVersion += 1
             await refresh()
         } catch {
-            errorMessage = error.localizedDescription
+            report(error)
         }
     }
 
@@ -622,7 +637,7 @@ final class AppEnvironment {
             }
             dataVersion += 1
         } catch {
-            errorMessage = error.localizedDescription
+            report(error)
         }
     }
 }
