@@ -6,11 +6,11 @@ struct ModernTopbar: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.colorScheme) private var scheme
 
-    var leadingIcon: String = "externaldrive"
-    let crumbs: [String]
-    var onCrumb: (Int) -> Void = { _ in }
     var showVolumeActions: Bool = false
     var rescanEnabled: Bool = false
+    /// The layout the OLED is actually rendering (may be a per-page override, e.g.
+    /// `.actionDetail` on Organize). Drives the Display badge so it matches the hero.
+    var displayedLayout: OLEDLayout? = nil
     var onDisplay: () -> Void = {}
     var onChanges: () -> Void = {}
     var onRescan: () -> Void = {}
@@ -20,31 +20,12 @@ struct ModernTopbar: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            crumbBar
-            Spacer(minLength: 8)
+            Spacer(minLength: 0)
             searchPill
             if showVolumeActions { cluster }
         }
         .padding(.horizontal, 2).padding(.top, 2)
         .frame(height: 40)
-    }
-
-    // MARK: Breadcrumbs
-    private var crumbBar: some View {
-        HStack(spacing: 7) {
-            Image(systemName: leadingIcon).font(.system(size: 15)).foregroundStyle(DGToken.ink3(scheme))
-            ForEach(Array(crumbs.enumerated()), id: \.offset) { i, seg in
-                if i > 0 { Text("/").font(.system(size: 13)).foregroundStyle(DGToken.ink4(scheme)) }
-                let isCurrent = (i == crumbs.count - 1)
-                Button { if !isCurrent { onCrumb(i) } } label: {
-                    Text(seg).font(.system(size: 13, weight: isCurrent ? .semibold : .regular))
-                        .foregroundStyle(isCurrent ? DGToken.ink(scheme) : DGToken.ink3(scheme))
-                        .lineLimit(1)
-                }
-                .buttonStyle(.plain).disabled(isCurrent)
-            }
-        }
-        .lineLimit(1)
     }
 
     // MARK: Search pill (⌘K)
@@ -74,7 +55,7 @@ struct ModernTopbar: View {
                 HStack(spacing: 8) {
                     Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 16))
                     Text("Display")
-                    Text(env.theme.oledLayout.rawValue.uppercased())
+                    Text((displayedLayout ?? env.theme.oledLayout).name.uppercased())
                         .font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.0)
                         .padding(.horizontal, 7).padding(.vertical, 3)
                         .background(accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 7, style: .continuous))

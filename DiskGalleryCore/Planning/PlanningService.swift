@@ -186,6 +186,37 @@ public struct PlanningService: Sendable {
             .sorted { $0.sizeBytes > $1.sizeBytes }
     }
 
+    /// Inputs for the Organize planner: per-drive capacity stats plus the de-duplicated
+    /// top-level Move/Backup/Delete items across every drive, each tagged with its source.
+    public func organizationInputs() async throws -> ([DriveStats], [PlanItemSource]) {
+        let stats = try await driveStats()
+        let keyByVolume = Dictionary(uniqueKeysWithValues:
+            stats.map { ($0.id, (key: $0.volumeKey, name: $0.name)) })
+        let rows = try await db.writer.read { db in
+            try TaggedRow.fetchAll(db, sql: Self.taggedSQL)
+        }
+        let actionable: Set<Tag> = [.move, .backup, .delete]
+        var byVolumeTag: [Int64: [Tag: [TaggedRow]]] = [:]
+        for row in rows {
+            guard let tag = Tag(rawValue: row.tag), actionable.contains(tag) else { continue }
+            byVolumeTag[row.volumeId, default: [:]][tag, default: []].append(row)
+        }
+        var items: [PlanItemSource] = []
+        for (volumeId, byTag) in byVolumeTag {
+            guard let info = keyByVolume[volumeId] else { continue }
+            for (tag, rows) in byTag {
+                for row in Self.topLevel(rows) {
+                    items.append(PlanItemSource(
+                        volumeKey: info.key, volumeName: info.name,
+                        relPath: row.relPath,
+                        name: row.name ?? (row.relPath as NSString).lastPathComponent,
+                        isDir: row.isDir ?? false, tag: tag, sizeBytes: row.displaySize))
+                }
+            }
+        }
+        return (stats, items)
+    }
+
     /// Keeps only items with no tagged ancestor in the same set, so a tagged folder
     /// and a tagged file inside it aren't summed twice.
     private static func topLevel(_ rows: [TaggedRow]) -> [TaggedRow] {

@@ -64,7 +64,7 @@ struct DiskGalleryApp: App {
                     await env.refresh()
                     env.startHardwareCapture()
                     if env.selection == nil {
-                        env.selection = env.volumeSummaries.first.map { SidebarItem.volume($0.id) }
+                        env.selection = env.restoredLaunchSelection()
                     }
                 }
                 try? await Task.sleep(for: .milliseconds(550))
@@ -225,6 +225,8 @@ struct ContentColumn: View {
             ActionPlanView()
         case .transfer:
             TransferPlannerView()
+        case .organize:
+            OrganizeView()
         case nil:
             ContentUnavailableView("Select a drive",
                                    systemImage: "sidebar.left",

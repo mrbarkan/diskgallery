@@ -22,7 +22,12 @@ final class ThemeModelTests: XCTestCase {
         XCTAssertEqual(Skin.allCases.map(\.rawValue), ["classic", "modern"])
         XCTAssertEqual(Accent.allCases.map(\.rawValue),
                        ["graphite", "violet", "blue", "green", "amber", "coral"])
-        XCTAssertEqual(OLEDLayout.allCases.map(\.rawValue), ["telemetry", "gauge", "minimal"])
+        XCTAssertEqual(OLEDLayout.allCases.map(\.rawValue),
+                       ["telemetry", "minimal", "actionDetail"])
+    }
+
+    func testGaugeLayoutRemoved() {
+        XCTAssertNil(OLEDLayout(rawValue: "gauge"))
     }
 
     func testDisplayNames() {
@@ -30,5 +35,6 @@ final class ThemeModelTests: XCTestCase {
         XCTAssertEqual(Skin.modern.name, "Modern")
         XCTAssertEqual(Accent.violet.name, "Violet")
         XCTAssertEqual(OLEDLayout.telemetry.name, "Telemetry")
+        XCTAssertEqual(OLEDLayout.actionDetail.name, "Action")
     }
 }

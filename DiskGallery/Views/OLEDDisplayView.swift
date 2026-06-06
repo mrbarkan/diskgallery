@@ -8,8 +8,25 @@ struct OLEDDisplayView: View {
     let connected: Bool
     var browsePath: String? = nil
     var reclaimable: Int64? = nil
+    /// Drive hardware facts (bus · speed · medium · brand). Rendered as a bare line
+    /// under the volume bar in the Telemetry layout — no card, "simple OLED" styling.
+    var hardware: DriveHardwareDisplay? = nil
     let layout: OLEDLayout
     let palette: AccentPalette
+    /// Present only on the Organize page — drives the `.actionDetail` layout. When nil,
+    /// `.actionDetail` falls back to `.telemetry` so the layout is safe on every page.
+    var plan: PlanSummary? = nil
+
+    /// The Organize plan's headline numbers, for the OLED action-detail readout.
+    struct PlanSummary: Equatable {
+        var operationCount: Int
+        var bytesToMove: Int64
+        var bytesToCopy: Int64
+        var bytesToFree: Int64
+        var estDuration: TimeInterval
+        var isFeasible: Bool
+        var drivesToConnect: [String]
+    }
 
     private var fraction: Double { Capacity.fractionUsed(total: summary.totalCapacity, free: summary.freeCapacity) }
     private var over: Bool { Capacity.isOverCapacity(total: summary.totalCapacity, free: summary.freeCapacity) }
@@ -41,8 +58,45 @@ struct OLEDDisplayView: View {
     @ViewBuilder private var content: some View {
         switch layout {
         case .telemetry: telemetry
-        case .gauge:     gauge
         case .minimal:   minimal
+        case .actionDetail:
+            if let plan { actionDetail(plan) } else { telemetry }
+        }
+    }
+
+    // MARK: Layout D — Action detail (Organize plan)
+
+    private func actionDetail(_ plan: PlanSummary) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                OLEDTag(text: "Organize Plan", palette: palette)
+                Spacer(minLength: 8)
+                OLEDPill(text: plan.isFeasible ? "Feasible" : "Won’t fit", live: plan.isFeasible)
+                if !plan.drivesToConnect.isEmpty {
+                    OLEDPill(text: "\(plan.drivesToConnect.count) to connect")
+                }
+            }
+            HStack(alignment: .top, spacing: 0) {
+                OLEDStatCell(k: "Operations", value: "\(plan.operationCount)", sub: "to run", valueSize: 30)
+                cellDivider
+                OLEDStatCell(k: "To move", value: Format.bytes(plan.bytesToMove),
+                             tint: palette.accent, valueSize: 30)
+                cellDivider
+                OLEDStatCell(k: "To back up", value: Format.bytes(plan.bytesToCopy), valueSize: 30)
+                cellDivider
+                OLEDStatCell(k: "Frees", value: Format.bytes(plan.bytesToFree),
+                             tint: OLEDColor.ok, valueSize: 30)
+            }
+            HStack(spacing: 14) {
+                OLEDKey(plan.estDuration > 0 ? "EST \(Format.duration(plan.estDuration))" : "READY")
+                Rectangle().fill(OLEDColor.ink.opacity(0.10)).frame(height: 1)
+                Text(plan.drivesToConnect.isEmpty
+                     ? "Non-destructive playbook"
+                     : "Connect: \(plan.drivesToConnect.joined(separator: ", "))")
+                    .font(.system(size: 10, design: .monospaced)).foregroundStyle(OLEDColor.ink2)
+                    .lineLimit(1).truncationMode(.tail).frame(maxWidth: 300, alignment: .trailing)
+            }
+            .padding(.top, 4)
         }
     }
 
@@ -78,57 +132,34 @@ struct OLEDDisplayView: View {
                 }
             }
             OLEDBottomBar(uuid: summary.uuid, fraction: fraction, over: over, path: browsePath, palette: palette)
+            if let hardware { hardwareRow(hardware) }
         }
+    }
+
+    /// Bare hardware line under the volume bar — a thin hairline, then monospace facts.
+    private func hardwareRow(_ hw: DriveHardwareDisplay) -> some View {
+        var parts = [hw.generationLabel]
+        for p in [hw.speedText, hw.mediumText, hw.connectionText, hw.brandModel] { if let p { parts.append(p) } }
+        return VStack(spacing: 7) {
+            Rectangle().fill(OLEDColor.ink.opacity(0.10)).frame(height: 1)
+            HStack(spacing: 8) {
+                Image(systemName: hw.busIcon).font(.system(size: 10)).foregroundStyle(OLEDColor.ink3)
+                Text(parts.joined(separator: "  ·  "))
+                    .font(.system(size: 10, design: .monospaced)).foregroundStyle(OLEDColor.ink2)
+                    .lineLimit(1).truncationMode(.tail)
+                Spacer(minLength: 8)
+                Text("detected \(Format.relativeDate(hw.hardware.capturedAt))")
+                    .font(.system(size: 9, design: .monospaced)).foregroundStyle(OLEDColor.ink3)
+            }
+        }
+        .padding(.top, 2)
     }
 
     private var cellDivider: some View {
         Rectangle().fill(OLEDColor.ink.opacity(0.10)).frame(width: 1, height: 44).padding(.horizontal, 18)
     }
 
-    // MARK: Layout B — Gauge
-
-    private var gauge: some View {
-        HStack(spacing: 28) {
-            ZStack {
-                Circle().stroke(OLEDColor.ink.opacity(0.10), lineWidth: 13)
-                if fraction > 0 {
-                    Circle().trim(from: 0, to: fraction)
-                        .stroke(over ? OLEDColor.bad : palette.accent, style: StrokeStyle(lineWidth: 13, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                }
-                VStack(spacing: 2) {
-                    HStack(alignment: .firstTextBaseline, spacing: 1) {
-                        Text("\(percent)").font(.system(size: 38, weight: .bold, design: .monospaced)).foregroundStyle(OLEDColor.ink)
-                        Text("%").font(.system(size: 16, weight: .bold, design: .monospaced)).foregroundStyle(OLEDColor.ink2)
-                    }
-                    OLEDKey("Used")
-                }
-            }
-            .frame(width: 150, height: 150)
-
-            VStack(alignment: .leading, spacing: 10) {
-                OLEDTag(text: "Selected Drive", palette: palette)
-                Text(summary.name).font(.system(size: 24, weight: .bold)).foregroundStyle(OLEDColor.ink).lineLimit(1)
-                Text(gaugeSubtitle).font(.system(size: 11, design: .monospaced)).foregroundStyle(OLEDColor.ink2)
-                HStack(spacing: 24) {
-                    OLEDStatCell(k: "Capacity", value: Format.bytes(summary.totalCapacity))
-                    OLEDStatCell(k: "Used", value: Format.bytes(usedBytes), tint: palette.accent)
-                    OLEDStatCell(k: "Files", value: Format.count(summary.fileCount))
-                }
-            }
-            Spacer(minLength: 0)
-        }
-    }
-
-    private var gaugeSubtitle: String {
-        var parts: [String] = []
-        if let free = summary.freeCapacity { parts.append("\(Format.bytes(free)) free") }
-        if let fs = summary.fsType, !fs.isEmpty { parts.append(fs) }
-        parts.append(connected ? "connected" : "disconnected")
-        return parts.joined(separator: " · ")
-    }
-
-    // MARK: Layout C — Minimal
+    // MARK: Layout B — Minimal
 
     private var minimal: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -277,16 +308,12 @@ private extension VolumeSummary {
                     layout: .telemetry, palette: Accent.violet.palette)
         .padding(24).frame(width: 860).background(.black)
 }
-#Preview("Gauge · Blue") {
-    OLEDDisplayView(summary: .preview, connected: true, layout: .gauge, palette: Accent.blue.palette)
-        .padding(24).frame(width: 860).background(.black)
-}
 #Preview("Minimal · Green") {
     OLEDDisplayView(summary: .preview, connected: false, layout: .minimal, palette: Accent.green.palette)
         .padding(24).frame(width: 860).background(.black)
 }
-#Preview("Gauge · Unscanned/empty") {
-    OLEDDisplayView(summary: .previewEmpty, connected: false, layout: .gauge, palette: Accent.amber.palette)
+#Preview("Minimal · Unscanned/empty") {
+    OLEDDisplayView(summary: .previewEmpty, connected: false, layout: .minimal, palette: Accent.amber.palette)
         .padding(24).frame(width: 860).background(.black)
 }
 #endif

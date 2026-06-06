@@ -20,4 +20,16 @@ final class CapacityTests: XCTestCase {
         XCTAssertTrue(Capacity.isOverCapacity(total: 100, free: 0))   // 100%
         XCTAssertFalse(Capacity.isOverCapacity(total: nil, free: nil))
     }
+
+    func testUsedBytes() {
+        XCTAssertEqual(Capacity.usedBytes(total: 100, free: 30, logicalFallback: nil), 70)
+        XCTAssertEqual(Capacity.usedBytes(total: nil, free: nil, logicalFallback: 40), 40)
+        XCTAssertEqual(Capacity.usedBytes(total: 100, free: 150, logicalFallback: nil), 0) // clamps
+    }
+
+    func testFreeBytes() {
+        XCTAssertEqual(Capacity.freeBytes(total: 100, free: 30, logicalFallback: nil), 30)
+        XCTAssertEqual(Capacity.freeBytes(total: 100, free: nil, logicalFallback: 40), 60)
+        XCTAssertEqual(Capacity.freeBytes(total: nil, free: nil, logicalFallback: nil), 0)
+    }
 }

@@ -17,9 +17,21 @@ public enum Accent: String, CaseIterable, Identifiable, Sendable {
 
 /// Which OLED hero layout the Modern skin shows.
 public enum OLEDLayout: String, CaseIterable, Identifiable, Sendable {
-    case telemetry, gauge, minimal
+    case telemetry, minimal
+    case actionDetail        // Organize-plan telemetry (falls back to telemetry without a plan)
     public var id: String { rawValue }
-    public var name: String { rawValue.capitalized }
+
+    /// Layouts the user can pick/cycle on a drive page. `.actionDetail` is auto-applied
+    /// only on the Organize page (as a per-page override), never persisted or cycled.
+    public static var userSelectable: [OLEDLayout] { [.telemetry, .minimal] }
+
+    public var name: String {
+        switch self {
+        case .telemetry:    return "Telemetry"
+        case .minimal:      return "Minimal"
+        case .actionDetail: return "Action"
+        }
+    }
 }
 
 /// One-time migration from the pre-redesign `theme` accent names to the unified set.

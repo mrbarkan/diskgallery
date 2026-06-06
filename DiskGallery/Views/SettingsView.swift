@@ -9,6 +9,8 @@ struct SettingsView: View {
                 .tabItem { Label("Appearance", systemImage: "paintpalette") }
             ShortcutSettings()
                 .tabItem { Label("Shortcuts", systemImage: "keyboard") }
+            DrivesSettings()
+                .tabItem { Label("Drives", systemImage: "externaldrive.badge.checkmark") }
             FilesSettings()
                 .tabItem { Label("Files", systemImage: "doc") }
             LicenseSettings()
@@ -80,6 +82,12 @@ struct FilesSettings: View {
                 Text("Hides dotfiles (names starting with “.”) such as .DS_Store and .Trashes from the browser, search, and duplicates. Files are still catalogued — only hidden from view.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section {
+                Toggle("Restore last view on launch", isOn: $prefs.restoreLastView)
+            } footer: {
+                Text("Reopen DiskGallery on whatever view you had selected last time. Turn off to always open on the first drive.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
     }
@@ -126,7 +134,7 @@ struct AppearanceSettings: View {
             }
             Section {
                 Picker("Layout", selection: $theme.oledLayout) {
-                    ForEach(OLEDLayout.allCases) { Text($0.name).tag($0) }
+                    ForEach(OLEDLayout.userSelectable) { Text($0.name).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
@@ -158,6 +166,29 @@ struct ShortcutSettings: View {
             }
             Section("Finder Colors") {
                 ForEach(ShortcutAction.colorActions) { ShortcutRow(action: $0) }
+            }
+            Section {
+                HStack {
+                    Image(systemName: "sidebar.right").foregroundStyle(.secondary).frame(width: 14)
+                    Text("Toggle side panes")
+                    Spacer()
+                    Button("Tab") { env.shortcuts.setPaneToggleToTab() }
+                        .buttonStyle(.borderless)
+                        .foregroundStyle(env.shortcuts.paneToggleKey == "tab" ? Color.secondary : Color.accentColor)
+                    TextField("", text: Binding(
+                        get: { env.shortcuts.paneToggleDisplay },
+                        set: { newValue in
+                            if let ch = newValue.last, ch.isLetter || ch.isNumber {
+                                env.shortcuts.setPaneToggleKey(String(ch))
+                            }
+                        }))
+                    .frame(width: 48).multilineTextAlignment(.center).textFieldStyle(.roundedBorder)
+                }
+            } header: {
+                Text("View")
+            } footer: {
+                Text("Collapses the Reclaimable, Action plan and Inspector panes to enlarge the browser (Modern skin). Type a letter to rebind, or click Tab.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section {
                 Button("Reset to Defaults") { env.shortcuts.resetToDefaults() }

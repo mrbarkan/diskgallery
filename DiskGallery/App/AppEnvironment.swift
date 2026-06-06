@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 import DiskGalleryCore
@@ -12,6 +13,39 @@ enum SidebarItem: Hashable {
     case search
     case plan          // Action plan: everything tagged, grouped by drive
     case transfer      // Transfer planner: will it fit?
+    case organize      // Organize: cross-drive, ordered, non-destructive transfer plan
+
+    /// A stable string for persisting the selection across launches.
+    var token: String {
+        switch self {
+        case .volume(let id): "volume:\(id)"
+        case .duplicates:     "duplicates"
+        case .tagged(let t):  "tagged:\(t.rawValue)"
+        case .search:         "search"
+        case .plan:           "plan"
+        case .transfer:       "transfer"
+        case .organize:       "organize"
+        }
+    }
+
+    init?(token: String) {
+        switch token {
+        case "duplicates": self = .duplicates
+        case "search":     self = .search
+        case "plan":       self = .plan
+        case "transfer":   self = .transfer
+        case "organize":   self = .organize
+        default:
+            if token.hasPrefix("volume:"), let id = Int64(token.dropFirst("volume:".count)) {
+                self = .volume(id)
+            } else if token.hasPrefix("tagged:"), let raw = Int(token.dropFirst("tagged:".count)),
+                      let tag = Tag(rawValue: raw) {
+                self = .tagged(tag)
+            } else {
+                return nil
+            }
+        }
+    }
 }
 
 /// One sidebar section of drives: a named group (or the ungrouped catch-all when `group == nil`)
@@ -50,13 +84,20 @@ final class AppEnvironment {
     let license = LicenseStore()
     let recentSearches = RecentSearchStore()
     let viewPrefs = ViewPrefsStore()
+    let roleLabels = DriveRoleLabelsStore()
 
     var volumeSummaries: [VolumeSummary] = []
     var driveGroups: [DriveGroup] = []
     var tagCounts: [Tag: Int] = [:]
     var totalReclaimable: Int64 = 0
+    /// Per-drive role assignments, keyed by volume key (uuid ?? name). Loaded on refresh;
+    /// updated optimistically by the role setters. Drives absent here are `.neutral`
+    /// (or `.localSystem` for the boot disk — see `role(forKey:)`).
+    var driveRoleAssignments: [String: DriveRoleAssignment] = [:]
 
-    var selection: SidebarItem?
+    var selection: SidebarItem? {
+        didSet { if let selection { viewPrefs.lastSelection = selection.token } }
+    }
     var selectedEntries: [Entry] = []
     var selectedVolumeKey: String?
 
@@ -87,9 +128,22 @@ final class AppEnvironment {
             if !event.modifierFlags.intersection([.command, .control, .option]).isEmpty { return event }
             guard let characters = event.charactersIgnoringModifiers else { return event }
             // Extract only Sendable data before hopping to the main actor.
-            let consumed = MainActor.assumeIsolated { self.handleShortcut(characters: characters) }
+            let consumed = MainActor.assumeIsolated {
+                self.handlePaneToggle(characters: characters) || self.handleShortcut(characters: characters)
+            }
             return consumed ? nil : event
         }
+    }
+
+    /// Tab (or the user's bound key) toggles the Modern bento focus mode — collapse the
+    /// Reclaimable / Action plan / Inspector panes to enlarge the browser. Modern volume
+    /// pages only, and never while typing in a text field.
+    private func handlePaneToggle(characters: String) -> Bool {
+        guard theme.skin == .modern, case .volume = selection else { return false }
+        if let responder = NSApp.keyWindow?.firstResponder, responder is NSText { return false }
+        guard shortcuts.matchesPaneToggle(characters) else { return false }
+        withAnimation(.easeInOut(duration: 0.25)) { viewPrefs.toggleFocusMode() }
+        return true
     }
 
     /// Runs the tagging shortcut bound to `characters` on the current selection.
@@ -105,6 +159,21 @@ final class AppEnvironment {
     }
 
     func requestUpgrade(_ feature: Feature) { upgradeFeature = feature }
+
+    /// The view to open on launch: the last-selected one (when "Restore last view" is on
+    /// and it still resolves), otherwise the first cataloged drive.
+    func restoredLaunchSelection() -> SidebarItem? {
+        if viewPrefs.restoreLastView,
+           let token = viewPrefs.lastSelection,
+           let item = SidebarItem(token: token) {
+            if case .volume(let id) = item,
+               !volumeSummaries.contains(where: { $0.id == id }) {
+                return volumeSummaries.first.map { SidebarItem.volume($0.id) }   // drive gone
+            }
+            return item
+        }
+        return volumeSummaries.first.map { SidebarItem.volume($0.id) }
+    }
 
     var isSelectedVolumeConnected: Bool {
         guard let key = selectedVolumeKey else { return false }
@@ -136,9 +205,45 @@ final class AppEnvironment {
             driveGroups = try await catalog.library.groups()
             tagCounts = try await catalog.annotations.counts()
             totalReclaimable = try await catalog.duplicates.totalReclaimable()
+            driveRoleAssignments = try await catalog.driveRoles.all()
         } catch {
             report(error)
         }
+    }
+
+    // MARK: Drive roles (item 5)
+
+    /// Is this drive the Mac's internal boot disk? (Mounted at "/".)
+    func isBootVolume(key: String) -> Bool {
+        volumes.mountURL(forKey: key)?.path == "/"
+    }
+
+    /// The effective role for a drive: an explicit assignment, else Local/System for the
+    /// boot disk, else Neutral.
+    func role(forKey key: String) -> DriveRole {
+        if let assigned = driveRoleAssignments[key] { return assigned.role }
+        return isBootVolume(key: key) ? .localSystem : .neutral
+    }
+
+    func priority(forKey key: String) -> Int {
+        driveRoleAssignments[key]?.priority ?? 0
+    }
+
+    /// Assigns a role (optimistic cache update + persist + reload dependent views).
+    /// Persists the full effective record so an implicit default (e.g. the boot disk's
+    /// `.localSystem`) is never lost when only one dimension changes.
+    func setDriveRole(_ role: DriveRole, forKey key: String) {
+        let priority = priority(forKey: key)
+        driveRoleAssignments[key] = DriveRoleAssignment(role: role, priority: priority)
+        dataVersion += 1
+        Task { try? await catalog.driveRoles.set(role: role, priority: priority, forKey: key) }
+    }
+
+    func setDrivePriority(_ priority: Int, forKey key: String) {
+        let role = role(forKey: key)
+        driveRoleAssignments[key] = DriveRoleAssignment(role: role, priority: priority)
+        dataVersion += 1
+        Task { try? await catalog.driveRoles.set(role: role, priority: priority, forKey: key) }
     }
 
     /// Surfaces an error to the user — but never a `CancellationError`, which is the
@@ -597,6 +702,70 @@ final class AppEnvironment {
             result.filesWritten += group.count - failures
         }
         return result
+    }
+
+    // MARK: Organize (cross-drive transfer plan)
+
+    /// The planner's inputs, gathered from the catalog: every drive as a `PlanDrive`
+    /// (capacity + hardware + live connection) and the de-duplicated Move/Backup/Delete
+    /// items across all drives. The Modern page caches these so destination overrides
+    /// re-plan instantly (the planner itself is pure and synchronous).
+    func organizationPlanInputs() async -> (drives: [PlanDrive], items: [PlanItemSource]) {
+        do {
+            let (stats, items) = try await catalog.planning.organizationInputs()
+            let summaryByKey = Dictionary(volumeSummaries.map { ($0.uuid ?? $0.name, $0) },
+                                          uniquingKeysWith: { first, _ in first })
+            let drives = stats.map { stat in
+                PlanDrive(id: stat.id, key: stat.volumeKey, name: stat.name,
+                          totalCapacity: stat.totalCapacity, freeCapacity: stat.freeCapacity,
+                          usedLogical: stat.usedLogical,
+                          isConnected: volumes.isConnected(key: stat.volumeKey),
+                          hardware: summaryByKey[stat.volumeKey]?.hardware,
+                          role: role(forKey: stat.volumeKey),
+                          priority: priority(forKey: stat.volumeKey))
+            }
+            return (drives, items)
+        } catch {
+            report(error)
+            return ([], [])
+        }
+    }
+
+    /// Builds the non-destructive organization plan from every drive's tagged items.
+    /// Pure planning — nothing is moved. `overrides` maps an item id to a chosen
+    /// destination drive key, letting the user steer the auto-suggested assignments.
+    func organizationPlan(overrides: [String: String] = [:]) async -> OrganizationPlan {
+        let (drives, items) = await organizationPlanInputs()
+        return OrganizationPlanner.plan(drives: drives, items: items, overrides: overrides)
+    }
+
+    /// All drives that could receive a Move/Backup (everything except `sourceKey`),
+    /// for the per-item destination override picker.
+    func destinationChoices(excluding sourceKey: String) -> [VolumeSummary] {
+        volumeSummaries.filter { ($0.uuid ?? $0.name) != sourceKey }
+    }
+
+    /// Saves the plan's step-by-step playbook as a Markdown file (non-destructive).
+    func exportOrganizationReport(_ plan: OrganizationPlan) {
+        let panel = NSSavePanel()
+        panel.title = "Export Organization Plan"
+        panel.message = "Save the step-by-step transfer plan as a Markdown file. Nothing is moved — this is your playbook."
+        panel.nameFieldStringValue = "DiskGallery Organization Plan.md"
+        panel.canCreateDirectories = true
+        if let type = UTType(filenameExtension: "md") { panel.allowedContentTypes = [type] }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try Data(plan.reportMarkdown().utf8).write(to: url)
+        } catch {
+            errorMessage = "Couldn’t export the plan: \(error.localizedDescription)"
+        }
+    }
+
+    /// Copies the plain-text playbook to the clipboard.
+    func copyOrganizationReport(_ plan: OrganizationPlan) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(plan.reportText(), forType: .string)
     }
 
     // MARK: Catalog management

@@ -75,12 +75,38 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
 final class ShortcutStore {
     private let defaults = UserDefaults.standard
     private let prefix = "shortcut."
+    private let paneToggleKeyKey = "shortcut.paneToggle"
     private(set) var bindings: [ShortcutAction: String] = [:]
 
+    /// Key that toggles the Modern bento focus mode (collapse all side panes).
+    /// Stored as the token `"tab"` (default) or a single lowercased character.
+    var paneToggleKey: String {
+        didSet { defaults.set(paneToggleKey, forKey: paneToggleKeyKey) }
+    }
+
     init() {
+        paneToggleKey = defaults.string(forKey: paneToggleKeyKey) ?? "tab"
         for action in ShortcutAction.allCases {
             bindings[action] = defaults.string(forKey: prefix + action.rawValue) ?? action.defaultKey
         }
+    }
+
+    /// Display label for the pane-toggle binding (e.g. "TAB" or "F").
+    var paneToggleDisplay: String { paneToggleKey == "tab" ? "TAB" : paneToggleKey.uppercased() }
+
+    func setPaneToggleKey(_ key: String) {
+        let normalized = String(key.prefix(1)).lowercased()
+        guard !normalized.isEmpty else { return }
+        // Don't silently shadow a tagging shortcut (the monitor checks pane-toggle first).
+        guard action(forKey: normalized) == nil else { return }
+        paneToggleKey = normalized
+    }
+
+    func setPaneToggleToTab() { paneToggleKey = "tab" }
+
+    /// Does the typed `characters` match the pane-toggle binding? Tab arrives as "\t".
+    func matchesPaneToggle(_ characters: String) -> Bool {
+        paneToggleKey == "tab" ? (characters == "\t") : (characters.lowercased() == paneToggleKey)
     }
 
     func key(for action: ShortcutAction) -> String { bindings[action] ?? action.defaultKey }
@@ -97,6 +123,7 @@ final class ShortcutStore {
             bindings[action] = action.defaultKey
             defaults.removeObject(forKey: prefix + action.rawValue)
         }
+        paneToggleKey = "tab"
     }
 
     /// The action bound to a typed character, if any.

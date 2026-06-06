@@ -89,6 +89,8 @@ struct ModernSidebar: View {
                 navItem("checklist", "Action Plan",
                         badge: plannedCount > 0 ? Format.count(plannedCount) : nil, item: .plan)
                 navItem("arrow.left.arrow.right", "Transfer Planner", item: .transfer)
+                navItem("wand.and.stars", "Organize",
+                        badge: organizeCount > 0 ? Format.count(organizeCount) : nil, item: .organize)
             }
             section("Action Tags") {
                 // Mockup order (not Tag.actionTags order).
@@ -195,6 +197,7 @@ struct ModernSidebar: View {
                 .disabled(!env.volumes.isConnected(key: summary.uuid ?? summary.name))
             Divider()
         }
+        DriveRoleMenu(key: summary.uuid ?? summary.name)
         Menu("Move to") {
             Button("New Group…") { Task { await env.createGroup(name: "New Group", withDrive: summary.id) } }
             if !env.driveGroups.isEmpty {
@@ -345,6 +348,10 @@ struct ModernSidebar: View {
     }
 
     private var plannedCount: Int { Tag.actionTags.reduce(0) { $0 + (env.tagCounts[$1] ?? 0) } }
+    /// Items the Organize plan acts on: everything Move / Backup / Delete.
+    private var organizeCount: Int {
+        [Tag.move, .backup, .delete].reduce(0) { $0 + (env.tagCounts[$1] ?? 0) }
+    }
     private var connectedCount: Int {
         env.volumeSummaries.filter { env.volumes.isConnected(key: $0.uuid ?? $0.name) }.count
     }

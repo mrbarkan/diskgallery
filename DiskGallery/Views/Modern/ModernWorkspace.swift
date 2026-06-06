@@ -23,6 +23,8 @@ struct ModernWorkspace: View {
             ModernActionPlanPage(initialFilter: tag).id("tagged-\(tag.rawValue)")
         case .transfer:
             ModernTransferPage()
+        case .organize:
+            ModernOrganizePage()
         case .search:
             ModernSearchPage()
         case nil:
@@ -63,9 +65,6 @@ struct VolumeBentoWorkspace: View {
     var body: some View {
         VStack(spacing: 14) {
             ModernTopbar(
-                leadingIcon: "externaldrive",
-                crumbs: crumbs,
-                onCrumb: { i in nav.path = Array(nav.path.prefix(i)) },
                 showVolumeActions: scanned,
                 rescanEnabled: connected,
                 onDisplay: { withAnimation { env.theme.cycleOLEDLayout() } },
@@ -76,15 +75,18 @@ struct VolumeBentoWorkspace: View {
 
             if scanned {
                 OLEDDisplayView(summary: summary, connected: connected, browsePath: browsePath,
-                                reclaimable: env.totalReclaimable, layout: env.theme.oledLayout,
+                                reclaimable: env.totalReclaimable,
+                                hardware: summary.hardware.map(DriveHardwareDisplay.init),
+                                layout: env.theme.oledLayout,
                                 palette: env.theme.accent.palette)
-                    .frame(height: 216)
-            }
-            if let hardware = summary.hardware.map(DriveHardwareDisplay.init) {
-                ModernHardwareStrip(display: hardware)
+                    .frame(height: summary.hardware != nil && env.theme.oledLayout == .telemetry ? 244 : 216)
             }
             if summary.latestSnapshotComplete == false {
                 IncompleteBanner(summary: summary).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+
+            if scanned {
+                ModernPathBar(crumbs: crumbs, onCrumb: { i in nav.path = Array(nav.path.prefix(i)) })
             }
 
             bento
@@ -98,20 +100,38 @@ struct VolumeBentoWorkspace: View {
         if scanned {
             GeometryReader { geo in
                 let gap: CGFloat = 14
-                let leftW = (geo.size.width - gap) * (1.55 / 2.55)
-                let rightW = (geo.size.width - gap) - leftW
-                let topH = (geo.size.height - gap) * (1.12 / 2.0)
+                let prefs = env.viewPrefs
+                let showBottom = prefs.showReclaimable || prefs.showActionPlan
+                let baseLeftW = (geo.size.width - gap) * (1.55 / 2.55)
+                let leftW = prefs.showInspector ? baseLeftW : geo.size.width
+                let rightW = (geo.size.width - gap) - baseLeftW
+                let topH = showBottom ? (geo.size.height - gap) * (1.12 / 2.0) : geo.size.height
                 let botH = (geo.size.height - gap) - topH
                 HStack(spacing: gap) {
                     VStack(spacing: gap) {
                         browserSlot.frame(width: leftW, height: topH)
-                        HStack(spacing: gap) {
-                            ReclaimableTile()
-                            ActionPlanTile()
+                        if showBottom {
+                            HStack(spacing: gap) {
+                                if prefs.showReclaimable {
+                                    ReclaimableTile()
+                                        .overlay(alignment: .topTrailing) { collapseChevron("chevron.down") { prefs.showReclaimable = false } }
+                                }
+                                if prefs.showActionPlan {
+                                    ActionPlanTile()
+                                        .overlay(alignment: .topTrailing) { collapseChevron("chevron.down") { prefs.showActionPlan = false } }
+                                }
+                            }
+                            .frame(width: leftW, height: botH)
                         }
-                        .frame(width: leftW, height: botH)
                     }
-                    ModernInspectorCard().frame(width: rightW, height: geo.size.height)
+                    if prefs.showInspector {
+                        ModernInspectorCard()
+                            .overlay(alignment: .topTrailing) { collapseChevron("chevron.right") { prefs.showInspector = false } }
+                            .frame(width: rightW, height: geo.size.height)
+                    }
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    if !prefs.allPanesVisible { showPanesPill }
                 }
             }
         } else {
@@ -121,6 +141,29 @@ struct VolumeBentoWorkspace: View {
                                        description: Text("Connect this drive and scan it to browse its contents."))
             }
         }
+    }
+
+    /// Small floating control to collapse one bento pane.
+    private func collapseChevron(_ icon: String, _ hide: @escaping () -> Void) -> some View {
+        Button { withAnimation(.easeInOut(duration: 0.25)) { hide() } } label: {
+            Image(systemName: icon).font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.secondary)
+                .padding(6).background(.regularMaterial, in: Circle())
+        }
+        .buttonStyle(.plain).padding(8).help("Hide this panel · press Tab to toggle all")
+    }
+
+    /// Restore control shown whenever any pane is collapsed.
+    private var showPanesPill: some View {
+        Button { withAnimation(.easeInOut(duration: 0.25)) { env.viewPrefs.showAllPanes() } } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "sidebar.right").font(.system(size: 11, weight: .semibold))
+                Text("Show panes").font(.system(size: 11, weight: .semibold))
+            }
+            .padding(.horizontal, 10).padding(.vertical, 6)
+            .background(.regularMaterial, in: Capsule())
+        }
+        .buttonStyle(.plain).padding(10).help("Show all panes (Tab)")
     }
 
     @ViewBuilder private var browserSlot: some View {

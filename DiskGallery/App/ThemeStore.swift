@@ -40,10 +40,11 @@ final class ThemeStore {
         }
     }
 
-    /// Advance the OLED layout Telemetry → Gauge → Minimal → Telemetry (the Display button).
+    /// Advance the OLED layout Telemetry → Minimal → Telemetry (the Display button).
+    /// `.actionDetail` is auto-selected on the Organize page and isn't part of the cycle.
     func cycleOLEDLayout() {
-        let all = OLEDLayout.allCases
-        guard let i = all.firstIndex(of: oledLayout) else { return }
-        oledLayout = all[(i + 1) % all.count]
+        let cyclable = OLEDLayout.userSelectable
+        guard let i = cyclable.firstIndex(of: oledLayout) else { oledLayout = .telemetry; return }
+        oledLayout = cyclable[(i + 1) % cyclable.count]
     }
 }

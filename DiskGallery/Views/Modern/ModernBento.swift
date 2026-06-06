@@ -33,6 +33,11 @@ struct ModernPageScaffold<Content: View>: View {
     @Environment(AppEnvironment.self) private var env
     var leadingIcon: String
     let crumbs: [String]
+    /// Only the Organize page passes this — it drives the OLED's `.actionDetail` layout.
+    var oledPlan: OLEDDisplayView.PlanSummary? = nil
+    /// Per-page OLED layout override (Organize uses `.actionDetail`). When nil, the
+    /// user's persisted layout is used. Avoids mutating the shared persisted layout.
+    var oledLayoutOverride: OLEDLayout? = nil
     @ViewBuilder var content: Content
 
     private var currentDrive: VolumeSummary? {
@@ -45,12 +50,12 @@ struct ModernPageScaffold<Content: View>: View {
 
     var body: some View {
         let drive = currentDrive
+        let layout = oledLayoutOverride ?? env.theme.oledLayout
         VStack(spacing: 14) {
             ModernTopbar(
-                leadingIcon: leadingIcon,
-                crumbs: crumbs,
                 showVolumeActions: drive != nil,
                 rescanEnabled: drive.map { env.volumes.isConnected(key: $0.uuid ?? $0.name) } ?? false,
+                displayedLayout: layout,
                 onDisplay: { withAnimation { env.theme.cycleOLEDLayout() } },
                 onChanges: {},
                 onRescan: { if let drive { env.rescan(volume: drive) } },
@@ -60,10 +65,13 @@ struct ModernPageScaffold<Content: View>: View {
                 OLEDDisplayView(summary: drive,
                                 connected: env.volumes.isConnected(key: drive.uuid ?? drive.name),
                                 reclaimable: env.totalReclaimable,
-                                layout: env.theme.oledLayout,
-                                palette: env.theme.accent.palette)
-                    .frame(height: 216)
+                                hardware: drive.hardware.map(DriveHardwareDisplay.init),
+                                layout: layout,
+                                palette: env.theme.accent.palette,
+                                plan: oledPlan)
+                    .frame(height: drive.hardware != nil && layout == .telemetry ? 244 : 216)
             }
+            ModernPathBar(leadingIcon: leadingIcon, crumbs: crumbs)
             content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

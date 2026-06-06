@@ -42,6 +42,11 @@ struct LibrarySidebarView: View {
                     .modernRowTint(modern, selected: env.selection == .transfer, accent: env.theme.accent.palette.accent)
                     .tag(SidebarItem.transfer)
                     .listRowBackground(modern ? AnyView(modernRowBackground(for: .transfer)) : nil)
+                Label("Organize", systemImage: "wand.and.stars")
+                    .badge(organizeItemCount)
+                    .modernRowTint(modern, selected: env.selection == .organize, accent: env.theme.accent.palette.accent)
+                    .tag(SidebarItem.organize)
+                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .organize)) : nil)
             } header: { sectionHeader("Plan") }
 
             Section {
@@ -103,6 +108,10 @@ struct LibrarySidebarView: View {
 
     private var plannedItemCount: Int {
         Tag.actionTags.reduce(0) { $0 + (env.tagCounts[$1] ?? 0) }
+    }
+
+    private var organizeItemCount: Int {
+        [Tag.move, .backup, .delete].reduce(0) { $0 + (env.tagCounts[$1] ?? 0) }
     }
 
     /// Modern only: an accent-soft rounded fill behind the currently-selected nav row
@@ -193,6 +202,7 @@ struct LibrarySidebarView: View {
                 .disabled(!env.volumes.isConnected(key: summary.uuid ?? summary.name))
             Divider()
         }
+        DriveRoleMenu(key: summary.uuid ?? summary.name)
         Menu("Move to") {
             Button("New Group…") { Task { await env.createGroup(name: "New Group", withDrive: summary.id) } }
             if !env.driveGroups.isEmpty {

@@ -36,4 +36,14 @@ enum Format {
     static func percent(_ fraction: Double) -> String {
         fraction.formatted(.percent.precision(.fractionLength(0)))
     }
+
+    /// "2h 40m" — a coarse transfer-time estimate. Floors at a minute.
+    static func duration(_ seconds: TimeInterval) -> String {
+        guard seconds > 0 else { return "—" }
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.day, .hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        formatter.maximumUnitCount = 2
+        return formatter.string(from: max(seconds, 60)) ?? "<1m"
+    }
 }

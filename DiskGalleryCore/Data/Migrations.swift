@@ -127,6 +127,16 @@ enum Migrations {
                 """)
         }
 
+        // User-assigned drive roles + priority (item 5). Keyed by the stable volume key
+        // (uuid ?? name), like annotations — survives re-scanning the same drive.
+        migrator.registerMigration("v6") { db in
+            try db.create(table: "driveRole") { t in
+                t.column("volumeKey", .text).primaryKey()
+                t.column("role", .text).notNull()
+                t.column("priority", .integer).notNull().defaults(to: 0)
+            }
+        }
+
         return migrator
     }
 }
