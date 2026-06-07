@@ -8,6 +8,7 @@ import DiskGalleryCore
 /// What the sidebar selection points at.
 enum SidebarItem: Hashable {
     case volume(Int64)
+    case allDrives     // All Drives: merged cross-drive browser with coverage + comparison
     case duplicates
     case tagged(Tag)
     case search
@@ -19,6 +20,7 @@ enum SidebarItem: Hashable {
     var token: String {
         switch self {
         case .volume(let id): "volume:\(id)"
+        case .allDrives:      "allDrives"
         case .duplicates:     "duplicates"
         case .tagged(let t):  "tagged:\(t.rawValue)"
         case .search:         "search"
@@ -30,6 +32,7 @@ enum SidebarItem: Hashable {
 
     init?(token: String) {
         switch token {
+        case "allDrives":  self = .allDrives
         case "duplicates": self = .duplicates
         case "search":     self = .search
         case "plan":       self = .plan
@@ -94,6 +97,11 @@ final class AppEnvironment {
     /// updated optimistically by the role setters. Drives absent here are `.neutral`
     /// (or `.localSystem` for the boot disk — see `role(forKey:)`).
     var driveRoleAssignments: [String: DriveRoleAssignment] = [:]
+    /// Cross-drive backup-coverage headline, for the All Drives OLED + sidebar badge.
+    var coverageSummary: CoverageSummary = .empty
+    /// The node selected in the All Drives outline — drives the comparison panel
+    /// (Modern right pane / Classic detail column).
+    var selectedUnifiedNode: UnifiedNode?
 
     var selection: SidebarItem? {
         didSet { if let selection { viewPrefs.lastSelection = selection.token } }
@@ -206,8 +214,31 @@ final class AppEnvironment {
             tagCounts = try await catalog.annotations.counts()
             totalReclaimable = try await catalog.duplicates.totalReclaimable()
             driveRoleAssignments = try await catalog.driveRoles.all()
+            coverageSummary = try await catalog.unified.summary(hideHidden: viewPrefs.hideHidden)
         } catch {
             report(error)
+        }
+    }
+
+    // MARK: All Drives (unified cross-drive browser)
+
+    func unifiedChildren(path: String) async -> [UnifiedNode] {
+        do { return try await catalog.unified.children(ofPath: path, hideHidden: viewPrefs.hideHidden) }
+        catch { report(error); return [] }
+    }
+
+    func unifiedCoverage() async -> CoverageSummary {
+        do { return try await catalog.unified.summary(hideHidden: viewPrefs.hideHidden) }
+        catch { report(error); return .empty }
+    }
+
+    /// Tags a specific drive's copy (feeds the Organize plan). Non-destructive.
+    /// Refreshes so the sidebar Tagged/Reclaimable counts and Organize plan stay in sync.
+    func tagCopy(_ tag: Tag, copy: UnifiedCopy) {
+        Task {
+            try? await catalog.annotations.setDecision(tag, volumeKey: copy.volumeKey, relPath: copy.relPath)
+            dataVersion += 1
+            await refresh()
         }
     }
 

@@ -25,6 +25,8 @@ struct ModernWorkspace: View {
             ModernTransferPage()
         case .organize:
             ModernOrganizePage()
+        case .allDrives:
+            ModernAllDrivesPage()
         case .search:
             ModernSearchPage()
         case nil:

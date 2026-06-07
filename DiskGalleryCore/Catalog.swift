@@ -18,6 +18,7 @@ public final class Catalog: Sendable {
     public let changes: ChangeService
     public let backup: BackupService
     public let driveRoles: DriveRolesService
+    public let unified: UnifiedBrowserService
 
     public init(databaseURL: URL) throws {
         let pool = try AppDatabase.makePool(at: databaseURL)
@@ -34,6 +35,7 @@ public final class Catalog: Sendable {
         self.changes = ChangeService(db: db)
         self.backup = BackupService(db: db)
         self.driveRoles = DriveRolesService(db: db)
+        self.unified = UnifiedBrowserService(db: db)
     }
 
     /// Opens (creating if needed) the catalog at the default Application Support path.

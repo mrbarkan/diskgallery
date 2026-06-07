@@ -79,6 +79,9 @@ struct ModernSidebar: View {
     // MARK: Nav
     private var nav: some View {
         VStack(alignment: .leading, spacing: 14) {
+            navItem("square.stack.3d.up.fill", "All Drives",
+                    badge: env.coverageSummary.atRiskCount > 0 ? Format.count(env.coverageSummary.atRiskCount) : nil,
+                    item: .allDrives)
             section("Library") {
                 navItem("square.on.square", "Duplicates",
                         badge: env.totalReclaimable > 0 ? Format.bytes(env.totalReclaimable) : nil,

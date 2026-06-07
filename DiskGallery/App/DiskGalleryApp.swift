@@ -73,6 +73,7 @@ struct DiskGalleryApp: App {
         }
         .windowToolbarStyle(.unified)
         .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentMinSize)   // let the window grow to fill the screen / maximize
         .defaultSize(width: 1320, height: 860)
         .commands {
             CommandGroup(replacing: .appInfo) {
@@ -180,8 +181,23 @@ struct ContentView: View {
             ContentColumn()
                 .navigationSplitViewColumnWidth(min: 360, ideal: 480)
         } detail: {
-            EntryDetailView()
+            detailColumn
                 .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+        }
+    }
+
+    /// The detail column shows the All Drives copy-comparison when that view is active,
+    /// otherwise the standard entry detail.
+    @ViewBuilder private var detailColumn: some View {
+        if case .allDrives = env.selection {
+            if let node = env.selectedUnifiedNode {
+                ScrollView { UnifiedComparePanel(node: node) }
+            } else {
+                ContentUnavailableView("Compare copies", systemImage: "rectangle.on.rectangle",
+                                       description: Text("Select an item to compare its copies across drives."))
+            }
+        } else {
+            EntryDetailView()
         }
     }
 
@@ -227,6 +243,8 @@ struct ContentColumn: View {
             TransferPlannerView()
         case .organize:
             OrganizeView()
+        case .allDrives:
+            AllDrivesView()
         case nil:
             ContentUnavailableView("Select a drive",
                                    systemImage: "sidebar.left",

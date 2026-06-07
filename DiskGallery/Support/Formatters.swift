@@ -6,6 +6,19 @@ enum Format {
         return value.formatted(.byteCount(style: .file))
     }
 
+    /// Consistent-precision size (always 2 decimals for KB and up), so a column of
+    /// sizes lines up cleanly — e.g. "1.00 TB", "1.59 TB", "644.66 GB", "48 B".
+    static func size2(_ value: Int64?) -> String {
+        guard let value else { return "—" }
+        guard value > 0 else { return "0 B" }
+        let units = ["B", "KB", "MB", "GB", "TB", "PB"]
+        var n = Double(value)
+        var i = 0
+        while n >= 1000 && i < units.count - 1 { n /= 1000; i += 1 }
+        let digits = i == 0 ? 0 : 2
+        return n.formatted(.number.precision(.fractionLength(digits))) + " " + units[i]
+    }
+
     /// Signed byte count, e.g. "+1.2 GB" / "−400 MB" — for change reports.
     static func signedBytes(_ value: Int64) -> String {
         let sign = value < 0 ? "−" : "+"

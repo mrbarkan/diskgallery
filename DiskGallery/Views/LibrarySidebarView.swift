@@ -21,6 +21,14 @@ struct LibrarySidebarView: View {
         @Bindable var env = env
         List(selection: $env.selection) {
             Section {
+                Label("All Drives", systemImage: "square.stack.3d.up.fill")
+                    .badge(env.coverageSummary.atRiskCount > 0 ? Text("\(env.coverageSummary.atRiskCount) at risk") : nil)
+                    .modernRowTint(modern, selected: env.selection == .allDrives, accent: env.theme.accent.palette.accent)
+                    .tag(SidebarItem.allDrives)
+                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .allDrives)) : nil)
+            }
+
+            Section {
                 Label("Duplicates", systemImage: "doc.on.doc")
                     .badge(env.totalReclaimable > 0 ? Text(Format.bytes(env.totalReclaimable)) : nil)
                     .modernRowTint(modern, selected: env.selection == .duplicates, accent: env.theme.accent.palette.accent)
