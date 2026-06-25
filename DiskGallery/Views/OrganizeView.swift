@@ -5,7 +5,7 @@ import DiskGalleryCore
 /// `Plan` = the auto run-order list; `By drive` = pending decisions grouped per drive.
 struct OrganizeHomeView: View {
     enum Mode: String, CaseIterable, Identifiable {
-        case plan = "Plan", byDrive = "By drive"
+        case plan = "Plan", byDrive = "By drive", activity = "Activity"
         var id: String { rawValue }
     }
 
@@ -26,6 +26,7 @@ struct OrganizeHomeView: View {
             switch mode {
             case .plan:    OrganizePlanList(plan: plan, loaded: loaded)
             case .byDrive: OrganizeByDriveList()
+            case .activity: ExecutionActivityList()
             }
         }
         .navigationTitle("Organize")
@@ -177,5 +178,56 @@ private struct OrganizeStepRow: View {
 
     private var subtitleColor: Color {
         step.feasibility == .ok || step.operation == .verify || step.operation == .delete ? .secondary : .orange
+    }
+}
+
+/// History of execution operations (newest first) — the audit log.
+struct ExecutionActivityList: View {
+    @Environment(AppEnvironment.self) private var env
+    @State private var ops: [FileOperation] = []
+
+    var body: some View {
+        Group {
+            if ops.isEmpty {
+                ContentUnavailableView("No activity yet", systemImage: "clock.arrow.circlepath",
+                                       description: Text("When you run a backup from the reconnect prompt, each operation appears here."))
+            } else {
+                List(ops) { op in
+                    HStack(spacing: 10) {
+                        Image(systemName: icon(op.status)).foregroundStyle(tint(op.status)).frame(width: 18)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text((op.destRelPath ?? op.sourceRelPath as String)).lineLimit(1)
+                            Text(detail(op)).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        Spacer()
+                        Text(Format.bytes(op.bytes)).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .task(id: env.dataVersion) { ops = (try? await env.catalog.execution.history()) ?? [] }
+    }
+
+    private func icon(_ s: OpStatus) -> String {
+        switch s {
+        case .done: "checkmark.circle.fill"
+        case .failed: "xmark.octagon.fill"
+        case .skipped: "minus.circle"
+        case .running: "arrow.triangle.2.circlepath"
+        case .pending, .verified: "clock"
+        }
+    }
+    private func tint(_ s: OpStatus) -> Color {
+        switch s {
+        case .done: .green
+        case .failed: .red
+        case .skipped: .orange
+        default: .secondary
+        }
+    }
+    private func detail(_ op: FileOperation) -> String {
+        let where_ = "\(op.sourceVolumeKey) → \(op.destVolumeKey ?? "—")"
+        if let r = op.failureReason ?? op.skipReason { return "\(where_) · \(r)" }
+        return where_
     }
 }
