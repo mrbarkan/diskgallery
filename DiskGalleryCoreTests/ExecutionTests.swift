@@ -71,4 +71,47 @@ final class ExecutionTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: dst), Data(repeating: 0x42, count: 1000),
                        "destination must NOT be overwritten on conflict")
     }
+
+    func testExecutorRunsCopyDraftsEndToEnd() async throws {
+        let catalog = try Fixture.makeCatalog()
+        // Two temp dirs act as the source and destination "drives".
+        let driveA = try tempDir(), driveB = try tempDir()
+        try Data(repeating: 0x53, count: 2048).write(to: driveA.appendingPathComponent("a.bin"))
+
+        // One copy step: A/a.bin -> B (mirrors relPath).
+        let step = PlanStep(id: "s1", orderIndex: 1, operation: .copy, name: "a.bin",
+                            sourceDriveKey: "A", sourceDriveName: "A", sourcePath: "a.bin",
+                            destinationDriveKey: "B", destinationDriveName: "B", bytes: 2048,
+                            estDuration: 0, feasibility: .ok, dependsOn: [], isOverride: false)
+
+        let drafts = ExecutorService.copyDrafts(from: [step], isConnected: { _ in true }, now: Date())
+        XCTAssertEqual(drafts.count, 1)
+        XCTAssertEqual(drafts.first?.destRelPath, "a.bin")
+
+        let enqueued = try await catalog.execution.enqueue(drafts)
+        let pending = try await catalog.execution.pendingCopies()
+        XCTAssertEqual(pending.count, 1)
+
+        let mounts = ["A": driveA, "B": driveB]
+        await catalog.execution.run(enqueued, resolve: { key, rel in
+            mounts[key]?.appendingPathComponent(rel)
+        }, progress: { _ in })
+
+        // The file was copied + verified to drive B, and the op is done.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: driveB.appendingPathComponent("a.bin").path))
+        let after = try await catalog.execution.history()
+        XCTAssertEqual(after.first?.status, .done)
+        XCTAssertNotNil(after.first?.destHash)
+    }
+
+    func testExecutorSkipsWhenDriveNotConnected() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let op = FileOperation(type: .copy, sourceVolumeKey: "A", sourceRelPath: "a.bin",
+                           destVolumeKey: "B", destRelPath: "a.bin", bytes: 1,
+                           status: .pending, createdAt: Date())
+        let enqueued = try await catalog.execution.enqueue([op])
+        await catalog.execution.run(enqueued, resolve: { _, _ in nil }, progress: { _ in })
+        let after = try await catalog.execution.history()
+        XCTAssertEqual(after.first?.status, .skipped)
+    }
 }

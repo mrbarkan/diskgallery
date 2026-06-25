@@ -60,6 +60,7 @@
 		62746B122DC33A65521D0348 /* ModernBento.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2742B4151BF9CB8157D04F6 /* ModernBento.swift */; };
 		651A53463C2C338865A84E37 /* WindowAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB0E106C7984E3911A8244E /* WindowAccessor.swift */; };
 		656C5629B8D927DFB5320AF1 /* ActionPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C72B112CB1A19D091849CB /* ActionPlanView.swift */; };
+		66E9ADC5BE56A17636BDE2AD /* ExecutorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94039570E648916C922F9B01 /* ExecutorService.swift */; };
 		67323EEE8B45509D17E7AFA7 /* ModernGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239E19F08DFE1282FEAB493B /* ModernGlass.swift */; };
 		675EA47A2AEBA04940BC35A8 /* AnnotationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8541EFC2B903B51A3A69F365 /* AnnotationStore.swift */; };
 		67A61E43F56FE7C41BF5B13C /* ModernWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54ECFB382AC39796AC01E43 /* ModernWorkspace.swift */; };
@@ -272,6 +273,7 @@
 		8A1AB135A155CCCEEA849D97 /* ModernBackdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernBackdrop.swift; sourceTree = "<group>"; };
 		93B2DFD8332DA70FF37376FB /* VolumeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeService.swift; sourceTree = "<group>"; };
 		93C152BBBD265C9056CDBD00 /* DriveHardwareDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveHardwareDisplay.swift; sourceTree = "<group>"; };
+		94039570E648916C922F9B01 /* ExecutorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutorService.swift; sourceTree = "<group>"; };
 		94C4F8F623F40582C783D808 /* DriveRole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveRole.swift; sourceTree = "<group>"; };
 		970327FB4C59803D34408AB0 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
 		97084FB885F63B7AB7363CAB /* BrowserNav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserNav.swift; sourceTree = "<group>"; };
@@ -555,6 +557,7 @@
 		625AE92E80BA82D6DD89D856 /* Execution */ = {
 			isa = PBXGroup;
 			children = (
+				94039570E648916C922F9B01 /* ExecutorService.swift */,
 				BF9D07CA34FE8810CF5FF634 /* FileCopier.swift */,
 				FE0290245E00880A68D2336F /* FileOperation.swift */,
 			);
@@ -985,6 +988,7 @@
 				91F7B57248C5A2E1E756FD12 /* DriveRole.swift in Sources */,
 				835BDBC39549142FEA668CEA /* DriveRolesService.swift in Sources */,
 				60595B0C3850E9835F789891 /* DuplicateEngine.swift in Sources */,
+				66E9ADC5BE56A17636BDE2AD /* ExecutorService.swift in Sources */,
 				189DEFA7EE56C537E421F1A0 /* Feature.swift in Sources */,
 				C7A6E53217D0526EBAE323DE /* FileCategory.swift in Sources */,
 				1DBA5EE04B1863B824646DD5 /* FileCopier.swift in Sources */,
