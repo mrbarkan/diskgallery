@@ -117,7 +117,16 @@ public struct AnnotationStore: Sendable {
     }
 
     public func taggedEntries(_ tag: Tag) async throws -> [TaggedEntry] {
-        try await db.writer.read { db in
+        try await taggedEntries(in: [tag])
+    }
+
+    /// Annotated entries whose decision tag is any of `tags` (for the combined Tagged
+    /// list). Same resolution as the single-tag path: joins each volume's latest snapshot
+    /// so the row can show the file's current name/size. Empty `tags` → no rows.
+    public func taggedEntries(in tags: [Tag]) async throws -> [TaggedEntry] {
+        guard !tags.isEmpty else { return [] }
+        let placeholders = Array(repeating: "?", count: tags.count).joined(separator: ",")
+        return try await db.writer.read { db in
             try TaggedEntry.fetchAll(db, sql: """
                 WITH latest AS (
                     SELECT s.id, s.volumeId FROM snapshot s
@@ -136,9 +145,9 @@ public struct AnnotationStore: Sendable {
                     ON (v.uuid = a.volumeUuid OR (v.uuid IS NULL AND v.name = a.volumeUuid))
                 LEFT JOIN latest l ON l.volumeId = v.id
                 LEFT JOIN entry e ON e.snapshotId = l.id AND e.relPath = a.relPath
-                WHERE a.tag = ?
+                WHERE a.tag IN (\(placeholders))
                 ORDER BY v.name COLLATE NOCASE, a.relPath COLLATE NOCASE
-                """, arguments: [tag.rawValue])
+                """, arguments: StatementArguments(tags.map(\.rawValue)))
         }
     }
 
