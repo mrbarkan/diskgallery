@@ -35,8 +35,9 @@ enum SidebarItem: Hashable {
         case "allDrives":  self = .allDrives
         case "duplicates": self = .duplicates
         case "search":     self = .search
-        case "plan":       self = .plan
-        case "transfer":   self = .transfer
+        // Merged into Organize — restore old selections onto the Organize home.
+        case "plan":       self = .organize
+        case "transfer":   self = .organize
         case "organize":   self = .organize
         default:
             if token.hasPrefix("volume:"), let id = Int64(token.dropFirst("volume:".count)) {
@@ -49,6 +50,12 @@ enum SidebarItem: Hashable {
             }
         }
     }
+}
+
+extension SidebarItem {
+    /// The single "Tagged" sidebar destination = all action tags. Encoded as
+    /// `.tagged(.none)` so no new enum case is needed (keeps Modern's switch compiling).
+    static var taggedAll: SidebarItem { .tagged(.none) }
 }
 
 /// One sidebar section of drives: a named group (or the ungrouped catch-all when `group == nil`)
