@@ -811,8 +811,7 @@ final class AppEnvironment {
         executionProgress = ExecutionProgress(completed: 0, total: prompt.drafts.count, currentName: "")
         // Snapshot mount URLs on the main actor now (VolumeService is @MainActor-isolated;
         // the resolve closure must be nonisolated/Sendable, so we can't call it directly from there).
-        let mountSnapshot: [String: URL] = Dictionary(
-            volumes.external.map { ($0.key, $0.url) }, uniquingKeysWith: { first, _ in first })
+        let mountSnapshot = volumes.mountSnapshot()
         executionTask = Task { [weak self] in
             guard let self else { return }
             let enqueued = (try? await self.catalog.execution.enqueue(prompt.drafts)) ?? []

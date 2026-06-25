@@ -28,6 +28,8 @@ final class VolumeService {
 
     func isConnected(key: String) -> Bool { urlByKey[key] != nil }
     func mountURL(forKey key: String) -> URL? { urlByKey[key] }
+    /// The full key→mountURL registry (same one `isConnected`/`mountURL` consult).
+    func mountSnapshot() -> [String: URL] { urlByKey }
 
     /// Probes volumes on a background task, then publishes results on the main actor.
     func refresh() async {
