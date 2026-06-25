@@ -39,7 +39,7 @@
 
 ## File Structure
 
-- Create `DiskGalleryCore/Execution/Operation.swift` — the `Operation` record + `OpType`/`OpStatus` enums. One responsibility: the persisted op model.
+- Create `DiskGalleryCore/Execution/FileOperation.swift` — the `FileOperation` record + `OpType`/`OpStatus` enums. One responsibility: the persisted op model.
 - Create `DiskGalleryCore/Execution/FileCopier.swift` — pure verified-copy primitive (FileManager + HashVerifier). No DB.
 - Create `DiskGalleryCore/Execution/ExecutorService.swift` — materialize-from-plan, persist, query, run. The Core facade (`catalog.execution`).
 - Modify `DiskGalleryCore/Data/Migrations.swift` — add migration `v7` (operation table).
@@ -52,15 +52,15 @@
 
 ---
 
-## Task 1: `Operation` model + migration v7
+## Task 1: `FileOperation` model + migration v7
 
 **Files:**
-- Create: `DiskGalleryCore/Execution/Operation.swift`
+- Create: `DiskGalleryCore/Execution/FileOperation.swift`
 - Modify: `DiskGalleryCore/Data/Migrations.swift` (add `v7` after the `v6` block, before `return migrator`)
 - Test: `DiskGalleryCoreTests/ExecutionTests.swift` (new)
 
 **Interfaces:**
-- Produces: `Operation` (record), `enum OpType: String { copy, move, delete }`,
+- Produces: `FileOperation` (record), `enum OpType: String { copy, move, delete }`,
   `enum OpStatus: String { pending, running, verified, done, failed, skipped }`. The
   `operation` table with columns equal to the record's properties.
 
@@ -77,14 +77,14 @@ final class ExecutionTests: XCTestCase {
 
     func testOperationRoundTripsThroughTheDatabase() async throws {
         let catalog = try Fixture.makeCatalog()   // runs migrations incl. v7
-        var op = Operation(type: .copy, sourceVolumeKey: "A", sourceRelPath: "shoot/a.cr2",
+        var op = FileOperation(type: .copy, sourceVolumeKey: "A", sourceRelPath: "shoot/a.cr2",
                            destVolumeKey: "B", destRelPath: "shoot/a.cr2", bytes: 1234,
                            status: .pending, createdAt: Date())
         try await catalog.database.writer.write { db in try op.insert(db) }
         XCTAssertNotNil(op.id)
 
         let fetched = try await catalog.database.writer.read { db in
-            try Operation.fetchAll(db)
+            try FileOperation.fetchAll(db)
         }
         XCTAssertEqual(fetched.count, 1)
         XCTAssertEqual(fetched.first?.type, .copy)
@@ -97,12 +97,12 @@ final class ExecutionTests: XCTestCase {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `xcodebuild -project DiskGallery.xcodeproj -scheme DiskGalleryCore -configuration Debug -destination 'platform=macOS,arch=arm64' test 2>&1 | grep -E "cannot find 'Operation'|error:" | head`
-Expected: FAIL — `cannot find 'Operation' in scope`.
+Run: `xcodebuild -project DiskGallery.xcodeproj -scheme DiskGalleryCore -configuration Debug -destination 'platform=macOS,arch=arm64' test 2>&1 | grep -E "cannot find 'FileOperation'|error:" | head`
+Expected: FAIL — `cannot find 'FileOperation' in scope`.
 
-- [ ] **Step 3: Create the `Operation` record**
+- [ ] **Step 3: Create the `FileOperation` record**
 
-Create `DiskGalleryCore/Execution/Operation.swift`:
+Create `DiskGalleryCore/Execution/FileOperation.swift`:
 
 ```swift
 import Foundation
@@ -120,7 +120,7 @@ public enum OpStatus: String, Codable, Sendable {
 /// One file operation, materialized from the Organize plan and tracked through
 /// execution so a run is resumable and auditable. Keyed by the stable volume key
 /// (`uuid ?? name`), like annotations — survives re-scans and reconnects.
-public struct Operation: Codable, Sendable, Identifiable, FetchableRecord, MutablePersistableRecord {
+public struct FileOperation: Codable, Sendable, Identifiable, FetchableRecord, MutablePersistableRecord {
     public static let databaseTableName = "operation"
 
     public var id: Int64?
@@ -211,7 +211,7 @@ Expected: `** TEST SUCCEEDED **`, 154 tests, 0 failures.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add DiskGalleryCore/Execution/Operation.swift DiskGalleryCore/Data/Migrations.swift DiskGalleryCoreTests/ExecutionTests.swift DiskGallery.xcodeproj
+git add DiskGalleryCore/Execution/FileOperation.swift DiskGalleryCore/Data/Migrations.swift DiskGalleryCoreTests/ExecutionTests.swift DiskGallery.xcodeproj
 git commit -m "feat(core): operation record + migration v7 for the execution engine
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
@@ -368,14 +368,14 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 - Test: `DiskGalleryCoreTests/ExecutionTests.swift` (append)
 
 **Interfaces:**
-- Consumes: `Operation`, `OpStatus`, `FileCopier` (Tasks 1–2); `PlanStep`/`PlanOperation`
+- Consumes: `FileOperation`, `OpStatus`, `FileCopier` (Tasks 1–2); `PlanStep`/`PlanOperation`
   (existing planner); `HashVerifier`; `AppDatabase`.
 - Produces (on `catalog.execution`):
-  - `static func copyDrafts(from steps: [PlanStep], isConnected: (String) -> Bool, now: Date) -> [Operation]`
-  - `func enqueue(_ ops: [Operation]) async throws -> [Operation]`
-  - `func pendingCopies() async throws -> [Operation]`
-  - `func history() async throws -> [Operation]`
-  - `func run(_ ops: [Operation], resolve: @Sendable (String, String) -> URL?, progress: @Sendable @MainActor (Operation) -> Void) async`
+  - `static func copyDrafts(from steps: [PlanStep], isConnected: (String) -> Bool, now: Date) -> [FileOperation]`
+  - `func enqueue(_ ops: [FileOperation]) async throws -> [FileOperation]`
+  - `func pendingCopies() async throws -> [FileOperation]`
+  - `func history() async throws -> [FileOperation]`
+  - `func run(_ ops: [FileOperation], resolve: @Sendable (String, String) -> URL?, progress: @Sendable @MainActor (FileOperation) -> Void) async`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -416,7 +416,7 @@ Append to `DiskGalleryCoreTests/ExecutionTests.swift`:
 
     func testExecutorSkipsWhenDriveNotConnected() async throws {
         let catalog = try Fixture.makeCatalog()
-        let op = Operation(type: .copy, sourceVolumeKey: "A", sourceRelPath: "a.bin",
+        let op = FileOperation(type: .copy, sourceVolumeKey: "A", sourceRelPath: "a.bin",
                            destVolumeKey: "B", destRelPath: "a.bin", bytes: 1,
                            status: .pending, createdAt: Date())
         let enqueued = try await catalog.execution.enqueue([op])
@@ -455,28 +455,28 @@ public final class ExecutorService: Sendable {
     /// Build pending copy operations from a plan's copy steps, for source+destination
     /// drives that are currently connected. Destination path mirrors the source path.
     public static func copyDrafts(from steps: [PlanStep], isConnected: (String) -> Bool,
-                                  now: Date) -> [Operation] {
+                                  now: Date) -> [FileOperation] {
         steps.compactMap { step in
             guard step.operation == .copy,
                   let srcKey = step.sourceDriveKey, let srcPath = step.sourcePath,
                   let dstKey = step.destinationDriveKey,
                   isConnected(srcKey), isConnected(dstKey) else { return nil }
-            return Operation(type: .copy, sourceVolumeKey: srcKey, sourceRelPath: srcPath,
+            return FileOperation(type: .copy, sourceVolumeKey: srcKey, sourceRelPath: srcPath,
                              destVolumeKey: dstKey, destRelPath: srcPath, bytes: step.bytes,
                              status: .pending, createdAt: now)
         }
     }
 
     /// Persists drafts as pending rows; returns them with assigned ids.
-    public func enqueue(_ ops: [Operation]) async throws -> [Operation] {
+    public func enqueue(_ ops: [FileOperation]) async throws -> [FileOperation] {
         try await db.writer.write { db in
             try ops.map { var o = $0; try o.insert(db); return o }
         }
     }
 
-    public func pendingCopies() async throws -> [Operation] {
+    public func pendingCopies() async throws -> [FileOperation] {
         try await db.writer.read { db in
-            try Operation
+            try FileOperation
                 .filter(Column("status") == OpStatus.pending.rawValue
                         && Column("type") == OpType.copy.rawValue)
                 .order(Column("id"))
@@ -485,17 +485,17 @@ public final class ExecutorService: Sendable {
     }
 
     /// All operations, newest first — the audit log / history.
-    public func history() async throws -> [Operation] {
+    public func history() async throws -> [FileOperation] {
         try await db.writer.read { db in
-            try Operation.order(Column("id").desc).fetchAll(db)
+            try FileOperation.order(Column("id").desc).fetchAll(db)
         }
     }
 
     /// Runs the given operations in order. `resolve(volumeKey, relPath)` maps to the
     /// on-disk URL (nil when the drive isn't mounted). Honors task cancellation.
-    public func run(_ ops: [Operation],
+    public func run(_ ops: [FileOperation],
                     resolve: @Sendable (String, String) -> URL?,
-                    progress: @Sendable @MainActor (Operation) -> Void) async {
+                    progress: @Sendable @MainActor (FileOperation) -> Void) async {
         for op in ops {
             if Task.isCancelled { break }
             guard let id = op.id else { continue }
@@ -511,7 +511,7 @@ public final class ExecutorService: Sendable {
             _ = try? await update(id) { $0.status = .running; $0.startedAt = Date() }
             do {
                 let outcome = try copier.copyVerified(from: src, to: dst)
-                let updated: Operation?
+                let updated: FileOperation?
                 switch outcome {
                 case .verified(let h), .skippedIdentical(let h):
                     updated = try await finish(id, status: .done, sourceHash: h, destHash: h)
@@ -533,9 +533,9 @@ public final class ExecutorService: Sendable {
     // MARK: - Persistence helpers
 
     @discardableResult
-    private func update(_ id: Int64, _ mutate: @Sendable @escaping (inout Operation) -> Void) async throws -> Operation? {
+    private func update(_ id: Int64, _ mutate: @Sendable @escaping (inout FileOperation) -> Void) async throws -> FileOperation? {
         try await db.writer.write { db in
-            guard var op = try Operation.fetchOne(db, key: id) else { return nil }
+            guard var op = try FileOperation.fetchOne(db, key: id) else { return nil }
             mutate(&op)
             try op.update(db)
             return op
@@ -544,7 +544,7 @@ public final class ExecutorService: Sendable {
 
     private func finish(_ id: Int64, status: OpStatus, sourceHash: String? = nil,
                         destHash: String? = nil, failureReason: String? = nil,
-                        skipReason: String? = nil) async throws -> Operation? {
+                        skipReason: String? = nil) async throws -> FileOperation? {
         try await update(id) {
             $0.status = status
             $0.finishedAt = Date()
@@ -618,7 +618,7 @@ Add these types and methods (e.g. near the organization-plan methods around line
     /// A batch of copy operations ready to run for the just-connected drive(s).
     struct ExecutionPrompt: Identifiable {
         let id = UUID()
-        var drafts: [Operation]
+        var drafts: [FileOperation]
         var fileCount: Int { drafts.count }
         var totalBytes: Int64 { drafts.reduce(0) { $0 + $1.bytes } }
         var driveNames: [String]
@@ -801,7 +801,7 @@ Then add this view at the end of the file (after `OrganizeStepRow`):
 /// History of execution operations (newest first) — the audit log.
 struct ExecutionActivityList: View {
     @Environment(AppEnvironment.self) private var env
-    @State private var ops: [Operation] = []
+    @State private var ops: [FileOperation] = []
 
     var body: some View {
         Group {
@@ -842,7 +842,7 @@ struct ExecutionActivityList: View {
         default: .secondary
         }
     }
-    private func detail(_ op: Operation) -> String {
+    private func detail(_ op: FileOperation) -> String {
         let where_ = "\(op.sourceVolumeKey) → \(op.destVolumeKey ?? "—")"
         if let r = op.failureReason ?? op.skipReason { return "\(where_) · \(r)" }
         return where_
@@ -881,6 +881,6 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 **Placeholder scan:** none — every code step is complete; commands have expected output. The two "build + manual smoke" gates (Tasks 4–5) reflect the real absence of an app unit-test target, not a placeholder.
 
-**Type consistency:** `Operation`/`OpType`/`OpStatus` (Task 1) are used unchanged in Tasks 3–5. `ExecutorService.copyDrafts/enqueue/pendingCopies/history/run` signatures (Task 3) match their call sites in Task 4. `FileCopier.Outcome` (Task 2) cases map 1:1 to the `switch` in `ExecutorService.run` (Task 3). `OrganizeHomeView.Mode` gains `.activity` consistently (Task 5). `PlanStep` field names match the planner (`sourceDriveKey`, `sourcePath`, `destinationDriveKey`, `operation == .copy`).
+**Type consistency:** `FileOperation`/`OpType`/`OpStatus` (Task 1) are used unchanged in Tasks 3–5. `ExecutorService.copyDrafts/enqueue/pendingCopies/history/run` signatures (Task 3) match their call sites in Task 4. `FileCopier.Outcome` (Task 2) cases map 1:1 to the `switch` in `ExecutorService.run` (Task 3). `OrganizeHomeView.Mode` gains `.activity` consistently (Task 5). `PlanStep` field names match the planner (`sourceDriveKey`, `sourcePath`, `destinationDriveKey`, `operation == .copy`).
 
 **Note for the executor (subagent-driven):** the test counts in Steps assume the Stage-1 tests are added cumulatively (153 baseline → +1, +3, +2 ≈ 159); if other tests change the baseline, treat "all green, 0 failures" as the gate rather than the exact number.
