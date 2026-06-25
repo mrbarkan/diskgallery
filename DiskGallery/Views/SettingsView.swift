@@ -101,13 +101,6 @@ struct AppearanceSettings: View {
     var body: some View {
         @Bindable var theme = env.theme
         Form {
-            Section("Look") {
-                Picker("Skin", selection: $theme.skin) {
-                    ForEach(Skin.allCases) { Text($0.name).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-            }
             Section("Mode") {
                 Picker("Appearance", selection: $theme.mode) {
                     ForEach(AppearanceMode.allCases) { Text($0.name).tag($0) }
@@ -132,19 +125,6 @@ struct AppearanceSettings: View {
                 }
                 .padding(.vertical, 4)
             }
-            Section {
-                Picker("Layout", selection: $theme.oledLayout) {
-                    ForEach(OLEDLayout.userSelectable) { Text($0.name).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .disabled(theme.skin == .classic)
-            } header: {
-                Text("OLED Display")
-            } footer: {
-                Text("The OLED drive display appears in the Modern look.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
         }
         .formStyle(.grouped)
         .tint(env.theme.accent.palette.accent)
@@ -166,29 +146,6 @@ struct ShortcutSettings: View {
             }
             Section("Finder Colors") {
                 ForEach(ShortcutAction.colorActions) { ShortcutRow(action: $0) }
-            }
-            Section {
-                HStack {
-                    Image(systemName: "sidebar.right").foregroundStyle(.secondary).frame(width: 14)
-                    Text("Toggle side panes")
-                    Spacer()
-                    Button("Tab") { env.shortcuts.setPaneToggleToTab() }
-                        .buttonStyle(.borderless)
-                        .foregroundStyle(env.shortcuts.paneToggleKey == "tab" ? Color.secondary : Color.accentColor)
-                    TextField("", text: Binding(
-                        get: { env.shortcuts.paneToggleDisplay },
-                        set: { newValue in
-                            if let ch = newValue.last, ch.isLetter || ch.isNumber {
-                                env.shortcuts.setPaneToggleKey(String(ch))
-                            }
-                        }))
-                    .frame(width: 48).multilineTextAlignment(.center).textFieldStyle(.roundedBorder)
-                }
-            } header: {
-                Text("View")
-            } footer: {
-                Text("Collapses the Reclaimable, Action plan and Inspector panes to enlarge the browser (Modern skin). Type a letter to rebind, or click Tab.")
-                    .font(.caption).foregroundStyle(.secondary)
             }
             Section {
                 Button("Reset to Defaults") { env.shortcuts.resetToDefaults() }
