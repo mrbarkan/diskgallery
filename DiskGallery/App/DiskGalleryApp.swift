@@ -151,6 +151,12 @@ struct ContentView: View {
         .sheet(isPresented: Binding(get: { env.activeScan != nil }, set: { _ in })) {
             ScanProgressView()
         }
+        .sheet(item: Binding(get: { env.executionPrompt }, set: { env.executionPrompt = $0 })) { prompt in
+            ExecutionConfirmView(prompt: prompt).environment(env)
+        }
+        .sheet(isPresented: Binding(get: { env.executionProgress != nil }, set: { _ in })) {
+            if let p = env.executionProgress { ExecutionProgressView(progress: p).environment(env) }
+        }
         .alert("Something went wrong",
                isPresented: Binding(get: { env.errorMessage != nil },
                                     set: { if !$0 { env.errorMessage = nil } })) {

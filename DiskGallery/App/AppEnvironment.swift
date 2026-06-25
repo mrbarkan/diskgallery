@@ -122,6 +122,10 @@ final class AppEnvironment {
     var errorMessage: String?
     var upgradeFeature: Feature?     // non-nil ⇒ show the upgrade sheet for this feature
 
+    var executionPrompt: ExecutionPrompt?       // non-nil shows the confirm sheet
+    var executionProgress: ExecutionProgress?   // non-nil shows the progress HUD
+    @ObservationIgnored private var executionTask: Task<Void, Never>?
+
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var currentScanSnapshotId: Int64?
     @ObservationIgnored private var currentScanURL: URL?
@@ -409,6 +413,7 @@ final class AppEnvironment {
     private func handleVolumeMounted() async {
         await volumes.refresh()             // make sure mount URLs are current first
         await captureConnectedHardware()
+        Task { [weak self] in await self?.surfaceReadyCopiesOnMount() }
     }
 
     /// Probes every currently-connected cataloged drive (off the main thread) and persists any
@@ -767,6 +772,66 @@ final class AppEnvironment {
             report(error)
             return ([], [])
         }
+    }
+
+    /// A batch of copy operations ready to run for the just-connected drive(s).
+    struct ExecutionPrompt: Identifiable {
+        let id = UUID()
+        var drafts: [FileOperation]
+        var fileCount: Int { drafts.count }
+        var totalBytes: Int64 { drafts.reduce(0) { $0 + $1.bytes } }
+        var driveNames: [String]
+    }
+
+    struct ExecutionProgress {
+        var completed: Int
+        var total: Int
+        var currentName: String
+    }
+
+    /// On reconnect: if Pro and the current plan has copy steps whose drives are all
+    /// connected, surface the confirm sheet.
+    func surfaceReadyCopiesOnMount() async {
+        guard license.isUnlocked(.transfer) else { return }
+        guard executionPrompt == nil, executionProgress == nil else { return }
+        let plan = await organizationPlan()
+        let drafts = ExecutorService.copyDrafts(from: plan.steps,
+                                                isConnected: { [volumes] in volumes.isConnected(key: $0) },
+                                                now: Date())
+        guard !drafts.isEmpty else { return }
+        let names = Set(drafts.compactMap { $0.destVolumeKey }
+            .compactMap { key in volumeSummaries.first { ($0.uuid ?? $0.name) == key }?.name })
+        executionPrompt = ExecutionPrompt(drafts: drafts, driveNames: names.sorted())
+    }
+
+    /// Runs the operations the user confirmed in the sheet.
+    func runConfirmedExecution() {
+        guard let prompt = executionPrompt else { return }
+        executionPrompt = nil
+        executionProgress = ExecutionProgress(completed: 0, total: prompt.drafts.count, currentName: "")
+        // Snapshot mount URLs on the main actor now (VolumeService is @MainActor-isolated;
+        // the resolve closure must be nonisolated/Sendable, so we can't call it directly from there).
+        let mountSnapshot: [String: URL] = Dictionary(
+            volumes.external.map { ($0.key, $0.url) }, uniquingKeysWith: { first, _ in first })
+        executionTask = Task { [weak self] in
+            guard let self else { return }
+            let enqueued = (try? await self.catalog.execution.enqueue(prompt.drafts)) ?? []
+            let total = enqueued.count
+            await self.catalog.execution.run(enqueued, resolve: { key, rel in
+                mountSnapshot[key]?.appendingPathComponent(rel)
+            }, progress: { @MainActor [weak self] op in
+                guard let self else { return }
+                let done = (self.executionProgress?.completed ?? 0) + 1
+                self.executionProgress = ExecutionProgress(completed: done, total: total,
+                                                           currentName: (op.sourceRelPath as NSString).lastPathComponent)
+            })
+            self.executionProgress = nil
+            self.dataVersion += 1
+        }
+    }
+
+    func cancelExecution() {
+        executionTask?.cancel()
     }
 
     /// Builds the non-destructive organization plan from every drive's tagged items.
