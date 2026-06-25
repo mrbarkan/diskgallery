@@ -121,17 +121,6 @@ struct LibrarySidebarView: View {
         }
     }
 
-    private func icon(for tag: Tag) -> String {
-        switch tag {
-        case .delete: return "trash"
-        case .keep: return "checkmark.seal"
-        case .review: return "questionmark.circle"
-        case .move: return "arrow.right.circle"
-        case .backup: return "shippingbox"
-        case .none: return "tag"
-        }
-    }
-
     private func scan() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
