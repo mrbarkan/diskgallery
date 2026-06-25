@@ -344,10 +344,10 @@ public struct FileCopier: Sendable {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [ ] **Step 4: Regenerate the project, then run to verify it passes**
 
-Run: `xcodebuild -project DiskGallery.xcodeproj -scheme DiskGalleryCore -configuration Debug -destination 'platform=macOS,arch=arm64' test 2>&1 | tail -4`
-Expected: `** TEST SUCCEEDED **`, 157 tests, 0 failures.
+Run: `xcodegen generate && xcodebuild -project DiskGallery.xcodeproj -scheme DiskGalleryCore -configuration Debug -destination 'platform=macOS,arch=arm64' test 2>&1 | tail -4`
+Expected: `** TEST SUCCEEDED **`, all green, 0 failures (≈157 — treat all-green as the gate). `xcodegen generate` is required: XcodeGen uses explicit file refs (no synchronized groups), so the new `FileCopier.swift` must be added to the project before it compiles.
 
 - [ ] **Step 5: Commit**
 
@@ -571,10 +571,10 @@ and add this line at the end of `init`, after `self.unified = UnifiedBrowserServ
         self.execution = ExecutorService(db: db, hasher: hasher)
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [ ] **Step 5: Regenerate the project, then run to verify it passes**
 
-Run: `xcodebuild -project DiskGallery.xcodeproj -scheme DiskGalleryCore -configuration Debug -destination 'platform=macOS,arch=arm64' test 2>&1 | tail -4`
-Expected: `** TEST SUCCEEDED **`, 159 tests, 0 failures.
+Run: `xcodegen generate && xcodebuild -project DiskGallery.xcodeproj -scheme DiskGalleryCore -configuration Debug -destination 'platform=macOS,arch=arm64' test 2>&1 | tail -4`
+Expected: `** TEST SUCCEEDED **`, all green, 0 failures (≈159 — treat all-green as the gate). `xcodegen generate` adds the new `ExecutorService.swift` to the project (explicit file refs).
 
 - [ ] **Step 6: Commit**
 
@@ -749,10 +749,10 @@ In `DiskGallery/App/DiskGalleryApp.swift`, in `ContentView.body`, after the exis
 
 (`ExecutionPrompt` is already `Identifiable`; `ContentView` already has `env` in scope.)
 
-- [ ] **Step 4: Build + smoke**
+- [ ] **Step 4: Regenerate the project, build + smoke**
 
-Run: `xcodebuild -project DiskGallery.xcodeproj -scheme DiskGallery -configuration Debug -destination 'platform=macOS,arch=arm64' build 2>&1 | tail -3`
-Expected: `** BUILD SUCCEEDED **`.
+Run: `xcodegen generate && xcodebuild -project DiskGallery.xcodeproj -scheme DiskGallery -configuration Debug -destination 'platform=macOS,arch=arm64' build 2>&1 | tail -3`
+Expected: `** BUILD SUCCEEDED **`. (`xcodegen generate` adds the new `ExecutionConfirmView.swift` to the project.)
 Smoke (manual, requires a Pro/unconfigured license + two scanned drives with Backup-tagged files): tag a file Backup with a destination role set, connect the destination drive, confirm the **Ready to back up** sheet appears, click **Run**, watch the progress HUD, and verify the file now exists on the destination drive. (If no license is configured, all features are unlocked — see `LicenseStore`.)
 
 - [ ] **Step 5: Commit**
