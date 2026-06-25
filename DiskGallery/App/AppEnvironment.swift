@@ -413,7 +413,7 @@ final class AppEnvironment {
     private func handleVolumeMounted() async {
         await volumes.refresh()             // make sure mount URLs are current first
         await captureConnectedHardware()
-        Task { [weak self] in await self?.surfaceReadyCopiesOnMount() }
+        Task { [weak self] in await self?.surfaceReadyOperationsOnMount() }
     }
 
     /// Probes every currently-connected cataloged drive (off the main thread) and persists any
@@ -774,11 +774,13 @@ final class AppEnvironment {
         }
     }
 
-    /// A batch of copy operations ready to run for the just-connected drive(s).
+    /// A batch of copy/move operations ready to run for the just-connected drive(s).
     struct ExecutionPrompt: Identifiable {
         let id = UUID()
         var drafts: [FileOperation]
         var fileCount: Int { drafts.count }
+        var copyCount: Int { drafts.filter { $0.type == .copy }.count }
+        var moveCount: Int { drafts.filter { $0.type == .move }.count }
         var totalBytes: Int64 { drafts.reduce(0) { $0 + $1.bytes } }
         var driveNames: [String]
     }
@@ -789,15 +791,15 @@ final class AppEnvironment {
         var currentName: String
     }
 
-    /// On reconnect: if Pro and the current plan has copy steps whose drives are all
-    /// connected, surface the confirm sheet.
-    func surfaceReadyCopiesOnMount() async {
+    /// On reconnect: if Pro and the current plan has copy/move steps whose drives are
+    /// all connected, surface the confirm sheet.
+    func surfaceReadyOperationsOnMount() async {
         guard license.isUnlocked(.transfer) else { return }
         guard executionPrompt == nil, executionProgress == nil else { return }
         let plan = await organizationPlan()
-        let drafts = ExecutorService.copyDrafts(from: plan.steps,
-                                                isConnected: { [volumes] in volumes.isConnected(key: $0) },
-                                                now: Date())
+        let connected: (String) -> Bool = { [volumes] in volumes.isConnected(key: $0) }
+        let drafts = ExecutorService.copyDrafts(from: plan.steps, isConnected: connected, now: Date())
+            + ExecutorService.moveDrafts(from: plan.steps, isConnected: connected, now: Date())
         guard !drafts.isEmpty else { return }
         let names = Set(drafts.compactMap { $0.destVolumeKey }
             .compactMap { key in volumeSummaries.first { ($0.uuid ?? $0.name) == key }?.name })
@@ -824,6 +826,14 @@ final class AppEnvironment {
                 self.executionProgress = ExecutionProgress(completed: done, total: total,
                                                            currentName: (op.sourceRelPath as NSString).lastPathComponent)
             })
+            // A completed move leaves its source in the Trash — clear the source's
+            // annotation so it isn't re-proposed as a move on the next reconnect.
+            let ids = Set(enqueued.compactMap(\.id))
+            let finished = (try? await self.catalog.execution.history()) ?? []
+            for op in finished where op.id.map(ids.contains) == true && op.type == .move && op.status == .done {
+                try? await self.catalog.annotations.setDecision(.none, volumeKey: op.sourceVolumeKey,
+                                                                relPath: op.sourceRelPath)
+            }
             self.executionProgress = nil
             self.dataVersion += 1
         }

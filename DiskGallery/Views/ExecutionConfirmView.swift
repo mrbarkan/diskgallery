@@ -1,18 +1,17 @@
 import SwiftUI
 import DiskGalleryCore
 
-/// Confirm-once review sheet shown when a drive with ready copy operations connects.
+/// Confirm-once review sheet shown when a drive with ready copy/move operations connects.
 struct ExecutionConfirmView: View {
     @Environment(AppEnvironment.self) private var env
     let prompt: AppEnvironment.ExecutionPrompt
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("Ready to back up", systemImage: "externaldrive.badge.checkmark")
+            Label("Ready to run", systemImage: "externaldrive.badge.checkmark")
                 .font(.title2.bold())
-            Text("\(prompt.fileCount) file\(prompt.fileCount == 1 ? "" : "s") · \(Format.bytes(prompt.totalBytes)) → \(prompt.driveNames.joined(separator: ", "))")
-                .foregroundStyle(.secondary)
-            Label("Files are copied and checksum-verified. Nothing is moved or deleted; existing files are never overwritten.",
+            Text(summary).foregroundStyle(.secondary)
+            Label("Backups and moves are copied and checksum-verified before anything else happens. A move then sends the original to the Trash. Existing files are never overwritten.",
                   systemImage: "checkmark.shield")
                 .font(.caption).foregroundStyle(.secondary)
             HStack {
@@ -24,7 +23,15 @@ struct ExecutionConfirmView: View {
             }
         }
         .padding(24)
-        .frame(width: 440)
+        .frame(width: 460)
+    }
+
+    private var summary: String {
+        var parts: [String] = []
+        if prompt.copyCount > 0 { parts.append("\(prompt.copyCount) back up") }
+        if prompt.moveCount > 0 { parts.append("\(prompt.moveCount) move") }
+        let what = parts.isEmpty ? "\(prompt.fileCount) operations" : parts.joined(separator: " · ")
+        return "\(what) · \(Format.bytes(prompt.totalBytes)) → \(prompt.driveNames.joined(separator: ", "))"
     }
 }
 
@@ -35,7 +42,7 @@ struct ExecutionProgressView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Backing up…").font(.headline)
+            Text("Running…").font(.headline)
             ProgressView(value: Double(progress.completed), total: Double(max(progress.total, 1)))
             Text("\(progress.completed) of \(progress.total) · \(progress.currentName)")
                 .font(.caption).foregroundStyle(.secondary).lineLimit(1)
