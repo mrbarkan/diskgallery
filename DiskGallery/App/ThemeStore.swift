@@ -27,7 +27,9 @@ final class ThemeStore {
     var oledLayout: OLEDLayout  { didSet { defaults.set(oledLayout.rawValue, forKey: "oledLayout") } }
 
     init() {
-        skin = Skin(rawValue: defaults.string(forKey: "skin") ?? "") ?? .modern
+        // Classic is the only shipping skin. Coerce unconditionally so every shared-view
+        // `skin == .modern` check resolves to Classic (Modern stays compiled but frozen).
+        skin = .classic
         mode = AppearanceMode(rawValue: defaults.string(forKey: "appearanceMode") ?? "") ?? .system
         oledLayout = OLEDLayout(rawValue: defaults.string(forKey: "oledLayout") ?? "") ?? .telemetry
         // Accent: prefer the new key; otherwise migrate the legacy `theme` value once.
