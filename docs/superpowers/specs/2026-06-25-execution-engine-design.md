@@ -145,9 +145,11 @@ The invariants are non-negotiable; the executor enforces them regardless of UI.
 
 - **Organize** home (the existing Plan view) is the **preview** of what will run; the
   reconnect **confirm sheet** is the commit point.
-- A new **Activity / History** sidebar row (under "Plan") shows running / pending /
-  done / failed / skipped operations with reasons and the audit trail; allows
-  **retry** of failed ops and **cancel** of pending ones.
+- An **Activity / History** view — shown as a **segment in the Organize home**
+  (`[Plan · By drive · Activity]`) rather than a separate sidebar row, since a new
+  `SidebarItem` case would force editing the frozen Modern switch — lists running /
+  pending / done / failed / skipped operations with reasons and the audit trail; later
+  stages add **retry** of failed ops and **cancel** of pending ones.
 - A **progress HUD** during a run (current op, throughput, count, Cancel).
 - All native SwiftUI; no files under `Views/Modern/`.
 
