@@ -137,6 +137,31 @@ enum Migrations {
             }
         }
 
+        // Execution engine: persisted operations (copy/move/delete) tracked through
+        // their lifecycle so runs are resumable and auditable. Volume keys use the
+        // stable `uuid ?? name` identity, like annotations/roles.
+        migrator.registerMigration("v7") { db in
+            try db.create(table: "operation") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("type", .text).notNull()
+                t.column("sourceVolumeKey", .text).notNull()
+                t.column("sourceRelPath", .text).notNull()
+                t.column("destVolumeKey", .text)
+                t.column("destRelPath", .text)
+                t.column("bytes", .integer).notNull().defaults(to: 0)
+                t.column("sourceHash", .text)
+                t.column("destHash", .text)
+                t.column("status", .text).notNull()
+                t.column("failureReason", .text)
+                t.column("skipReason", .text)
+                t.column("dependsOn", .integer)
+                t.column("createdAt", .datetime).notNull()
+                t.column("startedAt", .datetime)
+                t.column("finishedAt", .datetime)
+            }
+            try db.create(index: "idx_operation_status", on: "operation", columns: ["status"])
+        }
+
         return migrator
     }
 }
