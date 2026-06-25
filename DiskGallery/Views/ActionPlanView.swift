@@ -1,15 +1,12 @@
 import SwiftUI
 import DiskGalleryCore
 
-/// Everything the user has tagged, grouped by drive, in a suggested plug-in order —
-/// so they know which drives to connect (and in what order) to act on their decisions.
-struct ActionPlanView: View {
+struct OrganizeByDriveList: View {
     @Environment(AppEnvironment.self) private var env
     @State private var stats: [DriveStats] = []
 
     private var modern: Bool { env.theme.skin == .modern }
 
-    /// Drives with pending decisions, most-to-do first.
     private var planned: [DriveStats] {
         stats.filter(\.hasPending).sorted { lhs, rhs in
             if lhs.pendingCount != rhs.pendingCount { return lhs.pendingCount > rhs.pendingCount }
@@ -41,7 +38,6 @@ struct ActionPlanView: View {
                 .modernListChrome(modern)
             }
         }
-        .navigationTitle("Action Plan")
         .task(id: env.dataVersion) { await load() }
     }
 
@@ -55,11 +51,7 @@ struct ActionPlanView: View {
         }
         .padding(12)
         return Group {
-            if modern {
-                pills.glassCard(radius: 14).padding(.horizontal, 12)
-            } else {
-                pills
-            }
+            if modern { pills.glassCard(radius: 14).padding(.horizontal, 12) } else { pills }
         }
     }
 

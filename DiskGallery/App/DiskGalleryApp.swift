@@ -234,15 +234,13 @@ struct ContentColumn: View {
         case .duplicates:
             DuplicatesView()
         case .tagged(let tag):
-            TaggedListView(tag: tag)
+            TaggedListView(initialFilter: tag == .none ? nil : tag)
         case .search:
             SearchResultsView()
-        case .plan:
-            ActionPlanView()
-        case .transfer:
-            TransferPlannerView()
+        case .plan, .transfer:
+            OrganizeHomeView()        // merged into Organize; kept for Modern compatibility
         case .organize:
-            OrganizeView()
+            OrganizeHomeView()
         case .allDrives:
             AllDrivesView()
         case nil:

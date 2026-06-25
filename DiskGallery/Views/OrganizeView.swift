@@ -1,12 +1,58 @@
 import SwiftUI
 import DiskGalleryCore
 
-/// Classic (native) Organize view: the cross-drive, non-destructive transfer plan as a
-/// numbered run-order list. Backed by the same `OrganizationPlanner` as the Modern page.
-struct OrganizeView: View {
+/// Classic Organize home: the cross-drive plan, with a [Plan · By drive] toggle.
+/// `Plan` = the auto run-order list; `By drive` = pending decisions grouped per drive.
+struct OrganizeHomeView: View {
+    enum Mode: String, CaseIterable, Identifiable {
+        case plan = "Plan", byDrive = "By drive"
+        var id: String { rawValue }
+    }
+
     @Environment(AppEnvironment.self) private var env
+    @State private var mode: Mode = .plan
     @State private var plan: OrganizationPlan = .empty
     @State private var loaded = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Picker("View", selection: $mode) {
+                ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(8)
+            Divider()
+            switch mode {
+            case .plan:    OrganizePlanList(plan: plan, loaded: loaded)
+            case .byDrive: OrganizeByDriveList()
+            }
+        }
+        .navigationTitle("Organize")
+        .toolbar {
+            if mode == .plan {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button("Export Plan…") { env.exportOrganizationReport(plan) }
+                        Button("Copy Plan") { env.copyOrganizationReport(plan) }
+                    } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(plan.steps.isEmpty)
+                }
+            }
+        }
+        .task(id: env.dataVersion) {
+            plan = await env.organizationPlan()
+            loaded = true
+        }
+    }
+}
+
+/// The numbered run-order plan list (formerly `OrganizeView`’s body).
+struct OrganizePlanList: View {
+    let plan: OrganizationPlan
+    let loaded: Bool
 
     var body: some View {
         Group {
@@ -32,22 +78,6 @@ struct OrganizeView: View {
                     }
                 }
             }
-        }
-        .navigationTitle("Organize")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    Button("Export Plan…") { env.exportOrganizationReport(plan) }
-                    Button("Copy Plan") { env.copyOrganizationReport(plan) }
-                } label: {
-                    Label("Export", systemImage: "square.and.arrow.up")
-                }
-                .disabled(plan.steps.isEmpty)
-            }
-        }
-        .task(id: env.dataVersion) {
-            plan = await env.organizationPlan()
-            loaded = true
         }
     }
 

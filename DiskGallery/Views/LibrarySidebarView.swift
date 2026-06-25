@@ -31,41 +31,19 @@ struct LibrarySidebarView: View {
             Section {
                 Label("Duplicates", systemImage: "doc.on.doc")
                     .badge(env.totalReclaimable > 0 ? Text(Format.bytes(env.totalReclaimable)) : nil)
-                    .modernRowTint(modern, selected: env.selection == .duplicates, accent: env.theme.accent.palette.accent)
                     .tag(SidebarItem.duplicates)
-                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .duplicates)) : nil)
                 Label("Search", systemImage: "magnifyingglass")
-                    .modernRowTint(modern, selected: env.selection == .search, accent: env.theme.accent.palette.accent)
                     .tag(SidebarItem.search)
-                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .search)) : nil)
+                Label("Tagged", systemImage: "tag")
+                    .badge(plannedItemCount)
+                    .tag(SidebarItem.taggedAll)
             } header: { sectionHeader("Library") }
 
             Section {
-                Label("Action Plan", systemImage: "checklist")
-                    .badge(plannedItemCount)
-                    .modernRowTint(modern, selected: env.selection == .plan, accent: env.theme.accent.palette.accent)
-                    .tag(SidebarItem.plan)
-                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .plan)) : nil)
-                Label("Transfer Planner", systemImage: "arrow.left.arrow.right")
-                    .modernRowTint(modern, selected: env.selection == .transfer, accent: env.theme.accent.palette.accent)
-                    .tag(SidebarItem.transfer)
-                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .transfer)) : nil)
                 Label("Organize", systemImage: "wand.and.stars")
                     .badge(organizeItemCount)
-                    .modernRowTint(modern, selected: env.selection == .organize, accent: env.theme.accent.palette.accent)
                     .tag(SidebarItem.organize)
-                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .organize)) : nil)
             } header: { sectionHeader("Plan") }
-
-            Section {
-                ForEach(Tag.actionTags) { tag in
-                    Label(tag.label, systemImage: icon(for: tag))
-                        .badge(env.tagCounts[tag] ?? 0)
-                        .modernRowTint(modern, selected: env.selection == .tagged(tag), accent: env.theme.accent.palette.accent)
-                        .tag(SidebarItem.tagged(tag))
-                        .listRowBackground(modern ? AnyView(modernRowBackground(for: .tagged(tag))) : nil)
-                }
-            } header: { sectionHeader("Action Tags") }
 
             if env.volumeSummaries.isEmpty && env.driveGroups.isEmpty {
                 Section {
