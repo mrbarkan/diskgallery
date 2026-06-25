@@ -8,25 +8,38 @@ import GRDB
 public final class ExecutorService: Sendable {
     let db: AppDatabase
     let copier: FileCopier
+    let trasher: FileTrasher
 
     init(db: AppDatabase, hasher: HashVerifier) {
         self.db = db
         self.copier = FileCopier(hasher: hasher)
+        self.trasher = FileTrasher()
     }
 
-    /// Build pending copy operations from a plan's copy steps, for source+destination
-    /// drives that are currently connected. Destination path mirrors the source path.
-    public static func copyDrafts(from steps: [PlanStep], isConnected: (String) -> Bool,
-                                  now: Date) -> [FileOperation] {
+    /// Build pending operations from a plan's steps of a given operation, for
+    /// source+destination drives that are currently connected. Destination path
+    /// mirrors the source path.
+    private static func drafts(from steps: [PlanStep], planOp: PlanOperation, opType: OpType,
+                              isConnected: (String) -> Bool, now: Date) -> [FileOperation] {
         steps.compactMap { step in
-            guard step.operation == .copy,
+            guard step.operation == planOp,
                   let srcKey = step.sourceDriveKey, let srcPath = step.sourcePath,
                   let dstKey = step.destinationDriveKey,
                   isConnected(srcKey), isConnected(dstKey) else { return nil }
-            return FileOperation(type: .copy, sourceVolumeKey: srcKey, sourceRelPath: srcPath,
-                             destVolumeKey: dstKey, destRelPath: srcPath, bytes: step.bytes,
-                             status: .pending, createdAt: now)
+            return FileOperation(type: opType, sourceVolumeKey: srcKey, sourceRelPath: srcPath,
+                                 destVolumeKey: dstKey, destRelPath: srcPath, bytes: step.bytes,
+                                 status: .pending, createdAt: now)
         }
+    }
+
+    public static func copyDrafts(from steps: [PlanStep], isConnected: (String) -> Bool,
+                                  now: Date) -> [FileOperation] {
+        drafts(from: steps, planOp: .copy, opType: .copy, isConnected: isConnected, now: now)
+    }
+
+    public static func moveDrafts(from steps: [PlanStep], isConnected: (String) -> Bool,
+                                  now: Date) -> [FileOperation] {
+        drafts(from: steps, planOp: .move, opType: .move, isConnected: isConnected, now: now)
     }
 
     /// Persists drafts as pending rows; returns them with assigned ids.
@@ -72,16 +85,16 @@ public final class ExecutorService: Sendable {
 
             _ = try? await update(id) { $0.status = .running; $0.startedAt = Date() }
             do {
-                let outcome = try copier.copyVerified(from: src, to: dst)
                 let updated: FileOperation?
-                switch outcome {
-                case .verified(let h), .skippedIdentical(let h):
-                    updated = try await finish(id, status: .done, sourceHash: h, destHash: h)
-                case .conflict:
+                switch op.type {
+                case .copy:
+                    let outcome = try copier.copyVerified(from: src, to: dst)
+                    updated = try await applyCopyOutcome(id, outcome)
+                case .move:
+                    updated = try await performMove(id, src: src, dst: dst)
+                case .delete:
                     updated = try await finish(id, status: .skipped,
-                                               skipReason: "a different file already exists at the destination")
-                case .checksumMismatch:
-                    updated = try await finish(id, status: .failed, failureReason: "checksum mismatch after copy")
+                                               skipReason: "delete is not available yet")
                 }
                 if let updated { await progress(updated) }
             } catch {
@@ -89,6 +102,43 @@ public final class ExecutorService: Sendable {
                     await progress(updated)
                 }
             }
+        }
+    }
+
+    /// A verified copy then trashes the source. The source is trashed ONLY after the
+    /// destination copy is checksum-verified. Idempotent: if the source is already gone
+    /// but the destination exists, the move is treated as already completed.
+    private func performMove(_ id: Int64, src: URL, dst: URL) async throws -> FileOperation? {
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: src.path) {
+            if fm.fileExists(atPath: dst.path) {
+                return try await finish(id, status: .done)
+            }
+            return try await finish(id, status: .failed, failureReason: "source not found")
+        }
+        let outcome = try copier.copyVerified(from: src, to: dst)
+        switch outcome {
+        case .verified(let h), .skippedIdentical(let h):
+            try trasher.trash(src)                 // safe: destination copy is verified
+            return try await finish(id, status: .done, sourceHash: h, destHash: h)
+        case .conflict:
+            return try await finish(id, status: .skipped,
+                                    skipReason: "a different file already exists at the destination")
+        case .checksumMismatch:
+            return try await finish(id, status: .failed, failureReason: "checksum mismatch after copy")
+        }
+    }
+
+    /// Maps a copy outcome to a terminal status (used by `.copy` and the copy phase of `.move`).
+    private func applyCopyOutcome(_ id: Int64, _ outcome: FileCopier.Outcome) async throws -> FileOperation? {
+        switch outcome {
+        case .verified(let h), .skippedIdentical(let h):
+            return try await finish(id, status: .done, sourceHash: h, destHash: h)
+        case .conflict:
+            return try await finish(id, status: .skipped,
+                                    skipReason: "a different file already exists at the destination")
+        case .checksumMismatch:
+            return try await finish(id, status: .failed, failureReason: "checksum mismatch after copy")
         }
     }
 

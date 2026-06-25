@@ -127,4 +127,77 @@ final class ExecutionTests: XCTestCase {
                        "the file must no longer exist at its original path")
         if let trashedURL { XCTAssertTrue(FileManager.default.fileExists(atPath: trashedURL.path)) }
     }
+
+    func testExecutorMoveCopiesThenTrashesSource() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let driveA = try tempDir(), driveB = try tempDir()
+        let src = driveA.appendingPathComponent("m.bin")
+        try Data(repeating: 0x4D, count: 4096).write(to: src)
+
+        let step = PlanStep(id: "s1", orderIndex: 1, operation: .move, name: "m.bin",
+                            sourceDriveKey: "A", sourceDriveName: "A", sourcePath: "m.bin",
+                            destinationDriveKey: "B", destinationDriveName: "B", bytes: 4096,
+                            estDuration: 0, feasibility: .ok, dependsOn: [], isOverride: false)
+        let drafts = ExecutorService.moveDrafts(from: [step], isConnected: { _ in true }, now: Date())
+        XCTAssertEqual(drafts.count, 1)
+        XCTAssertEqual(drafts.first?.type, .move)
+
+        let enqueued = try await catalog.execution.enqueue(drafts)
+        let mounts = ["A": driveA, "B": driveB]
+        await catalog.execution.run(enqueued, resolve: { key, rel in
+            mounts[key]?.appendingPathComponent(rel)
+        }, progress: { _ in })
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: driveB.appendingPathComponent("m.bin").path),
+                      "destination copy must exist")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: src.path),
+                       "source must be trashed after a verified copy")
+        let after = try await catalog.execution.history()
+        XCTAssertEqual(after.first?.status, .done)
+    }
+
+    func testExecutorMoveDoesNotTrashSourceOnConflict() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let driveA = try tempDir(), driveB = try tempDir()
+        let src = driveA.appendingPathComponent("c.bin")
+        let dst = driveB.appendingPathComponent("c.bin")
+        try Data(repeating: 0x41, count: 1000).write(to: src)
+        try Data(repeating: 0x42, count: 1000).write(to: dst)   // different file already at dest
+
+        let op = FileOperation(type: .move, sourceVolumeKey: "A", sourceRelPath: "c.bin",
+                               destVolumeKey: "B", destRelPath: "c.bin", bytes: 1000,
+                               status: .pending, createdAt: Date())
+        let enqueued = try await catalog.execution.enqueue([op])
+        let mounts = ["A": driveA, "B": driveB]
+        await catalog.execution.run(enqueued, resolve: { key, rel in
+            mounts[key]?.appendingPathComponent(rel)
+        }, progress: { _ in })
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: src.path),
+                      "source must NOT be trashed on conflict")
+        XCTAssertEqual(try Data(contentsOf: dst), Data(repeating: 0x42, count: 1000),
+                       "destination must not be overwritten")
+        let after = try await catalog.execution.history()
+        XCTAssertEqual(after.first?.status, .skipped)
+    }
+
+    func testExecutorMoveIsIdempotentWhenSourceAlreadyGone() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let driveA = try tempDir(), driveB = try tempDir()
+        // Source absent, destination already present (a move that completed the copy+trash
+        // but crashed before recording done).
+        try Data(repeating: 0x4D, count: 64).write(to: driveB.appendingPathComponent("m.bin"))
+
+        let op = FileOperation(type: .move, sourceVolumeKey: "A", sourceRelPath: "m.bin",
+                               destVolumeKey: "B", destRelPath: "m.bin", bytes: 64,
+                               status: .pending, createdAt: Date())
+        let enqueued = try await catalog.execution.enqueue([op])
+        let mounts = ["A": driveA, "B": driveB]
+        await catalog.execution.run(enqueued, resolve: { key, rel in
+            mounts[key]?.appendingPathComponent(rel)
+        }, progress: { _ in })
+
+        let after = try await catalog.execution.history()
+        XCTAssertEqual(after.first?.status, .done, "already-moved source + present dest = done")
+    }
 }
