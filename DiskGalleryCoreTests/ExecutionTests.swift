@@ -6,10 +6,10 @@ final class ExecutionTests: XCTestCase {
 
     func testOperationRoundTripsThroughTheDatabase() async throws {
         let catalog = try Fixture.makeCatalog()   // runs migrations incl. v7
-        let template = DiskGalleryCore.Operation(type: .copy, sourceVolumeKey: "A", sourceRelPath: "shoot/a.cr2",
+        let template = FileOperation(type: .copy, sourceVolumeKey: "A", sourceRelPath: "shoot/a.cr2",
                            destVolumeKey: "B", destRelPath: "shoot/a.cr2", bytes: 1234,
                            status: .pending, createdAt: Date())
-        let insertedOp = try await catalog.database.writer.write { db -> DiskGalleryCore.Operation in
+        let insertedOp = try await catalog.database.writer.write { db -> FileOperation in
             var op = template
             try op.insert(db)
             return op
@@ -17,7 +17,7 @@ final class ExecutionTests: XCTestCase {
         XCTAssertNotNil(insertedOp.id)
 
         let fetched = try await catalog.database.writer.read { db in
-            try DiskGalleryCore.Operation.fetchAll(db)
+            try FileOperation.fetchAll(db)
         }
         XCTAssertEqual(fetched.count, 1)
         XCTAssertEqual(fetched.first?.type, .copy)

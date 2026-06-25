@@ -13,7 +13,7 @@ public enum OpStatus: String, Codable, Sendable {
 /// One file operation, materialized from the Organize plan and tracked through
 /// execution so a run is resumable and auditable. Keyed by the stable volume key
 /// (`uuid ?? name`), like annotations — survives re-scans and reconnects.
-public struct Operation: Codable, Sendable, Identifiable, FetchableRecord, MutablePersistableRecord {
+public struct FileOperation: Codable, Sendable, Identifiable, FetchableRecord, MutablePersistableRecord {
     public static let databaseTableName = "operation"
 
     public var id: Int64?

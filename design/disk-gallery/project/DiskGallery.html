@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="en" data-mode="dark" data-accent="violet">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DiskGallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="diskgallery.css?v=10" />
+</head>
+<body>
+
+<div class="app" data-screen-label="DiskGallery workspace">
+
+  <!-- ============ TITLE BAR (left zone) ============ -->
+  <div class="titlebar-left">
+    <div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+    <div class="win-title">DiskGallery — <b data-b="name">Archive Vault</b></div>
+  </div>
+
+  <!-- ============ TOP BAR (right zone) ============ -->
+  <div class="topbar">
+    <div class="crumbs">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="11" rx="2"/><path d="M6 12.5h.01"/></svg></span>
+      <span class="seg">Archive Vault</span>
+      <span class="sep">/</span>
+      <span class="seg">Photography</span>
+      <span class="sep">/</span>
+      <span class="seg cur">2024 Shoots</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <span>Search all drives</span>
+      <kbd>⌘K</kbd>
+    </div>
+    <div class="tcluster">
+      <button class="tbtn display" id="btnDisplay" title="Switch OLED display layout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v4h-4"/></svg>
+        <span class="lab">Display</span>
+        <span class="mode">Telemetry</span>
+      </button>
+      <button class="tbtn" id="btnChanges" title="Check for changes since the last scan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 8v4l3 2"/></svg>
+        <span class="lab">Check changes</span>
+      </button>
+      <button class="tbtn" id="btnRescan" title="Re-scan this drive">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="2"/><path d="M12 9.5a3 3 0 1 0 3 3"/><path d="M15 9.5v3h-3"/></svg>
+        <span class="lab">Re-scan</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><circle cx="7.5" cy="6.5" r="0.6" fill="currentColor"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">DiskGallery</div>
+        <div class="brand-sub">Offline Catalog</div>
+      </div>
+    </div>
+
+    <button class="scan-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+      Scan a drive
+    </button>
+
+    <nav class="nav">
+      <div class="nav-sec">
+        <div class="nav-sec-h">Library</div>
+        <div class="nav-item on" data-page="gallery">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+          Gallery View
+          <span class="badge">248K</span>
+        </div>
+        <div class="nav-item" data-page="duplicates">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>
+          Duplicates
+          <span class="badge">412 GB</span>
+        </div>
+        <div class="nav-item" data-page="search">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+          Search
+          <span class="badge"></span>
+        </div>
+      </div>
+
+      <div class="nav-sec">
+        <div class="nav-sec-h">Plan</div>
+        <div class="nav-item" data-page="action-plan">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M4 12h.01M4 18h.01"/></svg></span>
+          Action Plan
+          <span class="badge">14</span>
+        </div>
+        <div class="nav-item" data-page="transfer">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 3l5 4-5 4"/><path d="M21 7H8"/><path d="M8 21l-5-4 5-4"/><path d="M3 17h13"/></svg></span>
+          Transfer Planner
+          <span class="badge">3</span>
+        </div>
+      </div>
+
+      <div class="nav-sec">
+        <div class="nav-sec-h">Action Tags</div>
+        <div class="nav-item" data-page="action-plan" data-tag="Keep"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span>Keep<span class="badge">1,842</span></div>
+        <div class="nav-item" data-page="action-plan" data-tag="Delete"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></span>Delete<span class="badge">96</span></div>
+        <div class="nav-item" data-page="action-plan" data-tag="Review"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7M12 16.5h.01"/></svg></span>Review<span class="badge">212</span></div>
+        <div class="nav-item" data-page="action-plan" data-tag="Move"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M13 9l3 3-3 3"/></svg></span>Move<span class="badge">34</span></div>
+        <div class="nav-item" data-page="action-plan" data-tag="Backup"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>Backup<span class="badge">58</span></div>
+      </div>
+
+      <div class="nav-sec">
+        <div class="nav-sec-h">Drives <span style="color:var(--ink-3)">3 / 5</span></div>
+
+        <div class="drive on" data-drive="Archive Vault">
+          <div class="drive-top">
+            <span class="drive-stat up"></span>
+            <span class="drive-name">Archive Vault</span>
+          </div>
+          <div class="drive-sub">3.16 TB · 248,193 files</div>
+          <div class="minibar"><i class="used" style="width:79%"></i></div>
+        </div>
+
+        <div class="drive" data-drive="Field SSD">
+          <div class="drive-top">
+            <span class="drive-stat up"></span>
+            <span class="drive-name">Field SSD</span>
+          </div>
+          <div class="drive-sub">1.10 TB · 64,820 files</div>
+          <div class="minibar"><i class="used" style="width:55%"></i></div>
+        </div>
+
+        <div class="drive" data-drive="Photos Cold">
+          <div class="drive-top">
+            <span class="drive-stat down"></span>
+            <span class="drive-name">Photos Cold</span>
+          </div>
+          <div class="drive-sub">3.80 TB · 412,006 files</div>
+          <div class="minibar"><i class="used full" style="width:95%"></i></div>
+        </div>
+
+        <div class="drive" data-drive="Time Machine">
+          <div class="drive-top">
+            <span class="drive-stat down"></span>
+            <span class="drive-name">Time Machine</span>
+          </div>
+          <div class="drive-sub">6.20 TB · 1.2M files</div>
+          <div class="minibar"><i class="used" style="width:78%"></i></div>
+        </div>
+
+        <div class="drive" data-drive="Scratch NVMe">
+          <div class="drive-top">
+            <span class="drive-stat up"></span>
+            <span class="drive-name">Scratch NVMe</span>
+            <span class="drive-incomplete" title="Scan incomplete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg></span>
+          </div>
+          <div class="drive-sub" style="color:var(--warn)">Incomplete — resume to finish</div>
+          <div class="minibar"><i class="used" style="width:40%"></i></div>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ============ WORKSPACE ============ -->
+  <main class="workspace">
+
+    <!-- ===== OLED HERO (permanent) ===== -->
+    <section class="oled">
+
+      <!-- LAYOUT A — TELEMETRY -->
+      <div class="oled-layout active" data-oled="telemetry">
+        <div class="oled-top">
+          <div class="left">
+            <span class="oled-tag"><span class="d"></span>Selected Drive</span>
+            <span class="name"><span data-b="name">Archive Vault</span> · <span data-b="captb">4 TB</span></span>
+          </div>
+          <div class="right">
+            <span class="oled-pill live"><span class="d"></span>Connected</span>
+            <span class="oled-pill">APFS · ENCRYPTED</span>
+            <span class="oled-pill">Scanned 2d ago</span>
+          </div>
+        </div>
+
+        <div class="cells">
+          <div class="cell">
+            <div class="k oled-k">Capacity</div>
+            <div class="v"><span data-b="cap">4.0</span><span class="u">TB</span></div>
+            <div class="sub oled-sub"><span data-b="free">842 GB</span> free</div>
+          </div>
+          <div class="cell">
+            <div class="k oled-k">Used</div>
+            <div class="v accent"><span data-b="used">3.16</span><span class="u">TB</span></div>
+            <div class="sub oled-sub"><span data-b="pct">79</span>% full</div>
+          </div>
+          <div class="cell">
+            <div class="k oled-k">Files</div>
+            <div class="v"><span data-b="files">248,193</span></div>
+            <div class="sub oled-sub">cataloged</div>
+          </div>
+          <div class="cell">
+            <div class="k oled-k">Folders</div>
+            <div class="v"><span data-b="folders">18,402</span></div>
+            <div class="sub oled-sub">rolled up</div>
+          </div>
+          <div class="cell">
+            <div class="k oled-k">Duplicated</div>
+            <div class="v ok">412<span class="u">GB</span></div>
+            <div class="sub oled-sub">reclaimable</div>
+          </div>
+        </div>
+
+        <div class="oled-bar">
+          <span class="oled-k">VOL UUID&nbsp; 8F2A·C71D</span>
+          <span class="capbar"><i class="used" data-b="bar" style="width:79%"></i></span>
+          <span class="oled-path">/Volumes/<b data-b="path">Archive Vault/Photography/2024 Shoots</b></span>
+        </div>
+      </div>
+
+      <!-- LAYOUT B — GAUGE -->
+      <div class="oled-layout" data-oled="gauge">
+        <div class="oled-gauge-wrap">
+          <div class="gauge">
+            <svg width="168" height="168" viewBox="0 0 168 168">
+              <circle cx="84" cy="84" r="72" fill="none" stroke="rgba(243,241,233,0.10)" stroke-width="13"/>
+              <circle cx="84" cy="84" r="72" fill="none" stroke="var(--accent)" stroke-width="13" stroke-linecap="round"
+                      stroke-dasharray="452.4" stroke-dashoffset="95" data-b="gaugebar" style="filter:drop-shadow(0 0 10px var(--accent-glow))"/>
+            </svg>
+            <div class="center">
+              <div class="pct"><span data-b="pct">79</span><span class="s">%</span></div>
+              <div class="cap oled-k">Used</div>
+            </div>
+          </div>
+          <div class="gauge-side">
+            <div>
+              <div class="oled-tag"><span class="d"></span><span data-b="name">Archive Vault</span> · <span data-b="captb">4 TB</span></div>
+              <div class="gauge-name" style="margin-top:12px"><span data-b="used">3.16</span> TB used</div>
+              <div class="oled-sub" style="margin-top:6px"><span data-b="free">842 GB</span> free · APFS encrypted · connected</div>
+            </div>
+            <div class="gauge-stats">
+              <div><div class="k oled-k">Files</div><div class="v"><span data-b="files">248,193</span></div></div>
+              <div><div class="k oled-k">Folders</div><div class="v"><span data-b="folders">18,402</span></div></div>
+              <div><div class="k oled-k">Duplicated</div><div class="v" style="color:var(--ok)">412<span class="u">GB</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYOUT C — MINIMAL -->
+      <div class="oled-layout" data-oled="minimal">
+        <div class="oled-min">
+          <div class="oled-min-top">
+            <span class="oled-tag"><span class="d"></span>Selected Drive</span>
+            <span class="oled-pill live"><span class="d"></span>Connected · scanned 2d ago</span>
+          </div>
+          <div class="oled-min-name" data-b="name">Archive Vault</div>
+          <span class="capbar" style="height:11px"><i class="used" data-b="bar" style="width:79%"></i></span>
+          <div class="oled-min-stats">
+            <span class="v"><span data-b="used">3.16</span> <span class="u">TB used</span></span>
+            <span class="v"><span data-b="free">842 GB</span> <span class="u">free</span></span>
+            <span class="v"><span data-b="files">248,193</span> <span class="u">files</span></span>
+            <span class="v" style="color:var(--ok)">412 <span class="u">GB reclaimable</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="oled-flash"></div>
+      <div class="oled-sweep"></div>
+    </section>
+
+    <!-- ===== PAGES ===== -->
+    <div class="pages">
+
+      <!-- ============ PAGE: DRIVE BROWSER ============ -->
+      <section class="page bento" data-page="drive" data-screen-label="Drive browser">
+
+        <!-- BROWSER -->
+        <section class="card area-browser">
+          <div class="card-h">
+            <div class="t"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>2024 Shoots</div>
+            <div class="meta">7 items · 1.89 TB</div>
+          </div>
+          <div class="browser-list">
+            <div class="frow folder">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fname">01 Iceland Aurora</span>
+              <span class="ftags"><span class="chip keep">Keep</span><span class="cdot dot green"></span></span>
+              <span class="fsize">184 GB</span>
+            </div>
+            <div class="frow folder">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fname">02 Tokyo Street</span>
+              <span class="ftags"></span>
+              <span class="fsize">92 GB</span>
+            </div>
+            <div class="frow folder">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fname">03 Studio Portraits</span>
+              <span class="ftags"><span class="chip review">Review</span><span class="cdot dot yellow"></span></span>
+              <span class="fsize">211 GB</span>
+            </div>
+            <div class="frow folder sel">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fname">RAW Originals</span>
+              <span class="ftags"><span class="chip backup">Backup</span><span class="cdot dot blue"></span></span>
+              <span class="fsize">1.40 TB</span>
+            </div>
+            <div class="frow">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></span>
+              <span class="fname">contact_sheet_master<span class="ext">.psd</span></span>
+              <span class="ftags"><span class="chip delete">Delete</span><span class="cdot dot red"></span></span>
+              <span class="fsize">1.2 GB</span>
+            </div>
+            <div class="frow">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></span>
+              <span class="fname">selects_final<span class="ext">.lrcat</span></span>
+              <span class="ftags"><span class="chip keep">Keep</span></span>
+              <span class="fsize">88 MB</span>
+            </div>
+            <div class="frow">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></span>
+              <span class="fname">edit_notes<span class="ext">.md</span></span>
+              <span class="ftags"></span>
+              <span class="fsize">4 KB</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- INSPECTOR -->
+        <section class="card area-inspector">
+          <div class="card-h">
+            <div class="t"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>Inspector</div>
+            <div class="meta">1 selected</div>
+          </div>
+          <div class="insp">
+            <div class="insp-hero">
+              <div class="insp-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+              <div>
+                <div class="insp-title">RAW Originals</div>
+                <div class="insp-kind">Folder · 12,408 items</div>
+              </div>
+            </div>
+
+            <dl class="spec">
+              <dt>Size</dt><dd class="size">1.40 TB</dd>
+              <dt>On disk</dt><dd>1.41 TB</dd>
+              <dt>Modified</dt><dd>14 Mar 2025, 09:22</dd>
+              <dt>Path</dt><dd>/Photography/2024 Shoots/RAW Originals</dd>
+            </dl>
+
+            <div class="insp-sec-h">Action Tag</div>
+            <div class="tagbtns">
+              <div class="tagbtn keep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Keep</span></div>
+              <div class="tagbtn delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg><span>Delete</span></div>
+              <div class="tagbtn review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7M12 16.5h.01"/></svg><span>Review</span></div>
+              <div class="tagbtn move"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M13 9l3 3-3 3"/></svg><span>Move</span></div>
+              <div class="tagbtn backup on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg><span>Backup</span></div>
+              <div class="tagbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14"/></svg><span>None</span></div>
+            </div>
+
+            <div class="insp-sec-h">Finder Color</div>
+            <div class="swatches">
+              <span class="sw none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12"/></svg></span>
+              <span class="sw dot red" style="background:var(--fc-red)"></span>
+              <span class="sw" style="background:var(--fc-orange)"></span>
+              <span class="sw" style="background:var(--fc-yellow)"></span>
+              <span class="sw" style="background:var(--fc-green)"></span>
+              <span class="sw on" style="background:var(--fc-blue)"></span>
+              <span class="sw" style="background:var(--fc-purple)"></span>
+              <span class="sw" style="background:var(--fc-gray)"></span>
+            </div>
+
+            <div class="finder-note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 16.5A4.5 4.5 0 0 0 17 8h-1.3A7 7 0 1 0 4 14.9"/><path d="M9 13l2 2 4-4"/></svg>
+              Written to the file as Finder tags
+            </div>
+          </div>
+        </section>
+
+        <!-- STAT TILES -->
+        <div class="area-stats">
+          <div class="card tile tile-reclaim">
+            <div class="lbl">Reclaimable · Duplicates</div>
+            <div class="big-num" style="margin-top:10px">412<span class="u">GB</span></div>
+            <div class="stack-bar">
+              <i style="width:46%;background:var(--accent)"></i>
+              <i style="width:30%;background:var(--fc-blue)"></i>
+              <i style="width:24%;background:var(--ink-4)"></i>
+            </div>
+            <div class="tile-row">
+              <span class="tile-sub"><b>1,204</b> sets across <b>6</b> drives</span>
+              <span class="lbl" data-goto="duplicates" style="cursor:pointer">View →</span>
+            </div>
+          </div>
+
+          <div class="card tile">
+            <div class="lbl">Action Plan · 14 tagged</div>
+            <div class="plan-rows">
+              <div class="plan-row"><span class="lab"><span class="pdot" style="background:var(--ok)"></span>Keep</span><span class="plan-track"><i style="width:88%;background:var(--ok)"></i></span><span class="amt">1.6 TB</span></div>
+              <div class="plan-row"><span class="lab"><span class="pdot" style="background:var(--fc-blue)"></span>Backup</span><span class="plan-track"><i style="width:64%;background:var(--fc-blue)"></i></span><span class="amt">1.4 TB</span></div>
+              <div class="plan-row"><span class="lab"><span class="pdot" style="background:var(--warn)"></span>Review</span><span class="plan-track"><i style="width:22%;background:var(--warn)"></i></span><span class="amt">211 GB</span></div>
+              <div class="plan-row"><span class="lab"><span class="pdot" style="background:var(--bad)"></span>Delete</span><span class="plan-track"><i style="width:6%;background:var(--bad)"></i></span><span class="amt">38 GB</span></div>
+            </div>
+            <div class="tile-row" style="margin-top:14px">
+              <span class="tile-sub"><b>3</b> drives to connect</span>
+              <span class="lbl" data-goto="action-plan" style="cursor:pointer">Open plan →</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PAGE: DUPLICATES ============ -->
+      <section class="page page--dupes" data-page="duplicates" data-screen-label="Duplicates">
+
+        <section class="card area-dlist">
+          <div class="card-h">
+            <div class="t"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>Duplicate Sets</div>
+            <div class="meta">1,204 sets · 412 GB</div>
+          </div>
+          <div class="filterbar">
+            <span class="fchip on">All</span>
+            <span class="fchip">Photos</span>
+            <span class="fchip">Video</span>
+            <span class="fchip">RAW</span>
+            <span class="fchip">Documents</span>
+          </div>
+          <div class="browser-list">
+            <div class="frow dup sel">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>
+              <span class="fcol"><span class="fname">IMG_4821.CR3</span><span class="fmeta">3 copies · Archive Vault, Field SSD, Photos Cold</span></span>
+              <span class="dup-x">×3</span>
+              <span class="fsize ok">+96 MB</span>
+            </div>
+            <div class="frow dup">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>
+              <span class="fcol"><span class="fname">Iceland Aurora — full edit</span><span class="fmeta">2 copies · Archive Vault, Time Machine</span></span>
+              <span class="dup-x">×2</span>
+              <span class="fsize ok">+184 GB</span>
+            </div>
+            <div class="frow dup">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>
+              <span class="fcol"><span class="fname">render_master_4k.mov</span><span class="fmeta">2 copies · Field SSD, Scratch NVMe</span></span>
+              <span class="dup-x">×2</span>
+              <span class="fsize ok">+42 GB</span>
+            </div>
+            <div class="frow dup">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>
+              <span class="fcol"><span class="fname">Studio Portraits backup</span><span class="fmeta">4 copies · Archive Vault, Field SSD, Photos Cold +1</span></span>
+              <span class="dup-x">×4</span>
+              <span class="fsize ok">+63 GB</span>
+            </div>
+            <div class="frow dup">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>
+              <span class="fcol"><span class="fname">Lightroom Catalog 2023</span><span class="fmeta">2 copies · Archive Vault, Photos Cold</span></span>
+              <span class="dup-x">×2</span>
+              <span class="fsize ok">+11 GB</span>
+            </div>
+            <div class="frow dup">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>
+              <span class="fcol"><span class="fname">Tokyo Street selects</span><span class="fmeta">3 copies · Field SSD, Photos Cold, Time Machine</span></span>
+              <span class="dup-x">×3</span>
+              <span class="fsize ok">+8.4 GB</span>
+            </div>
+            <div class="frow dup">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></span>
+              <span class="fcol"><span class="fname">proxies_1080.zip</span><span class="fmeta">2 copies · Scratch NVMe, Field SSD</span></span>
+              <span class="dup-x">×2</span>
+              <span class="fsize ok">+3.1 GB</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card area-dside">
+          <div class="card-h">
+            <div class="t"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span>Resolve Set</div>
+            <div class="meta">×3 copies</div>
+          </div>
+          <div class="cbody">
+            <div class="dup-hero">
+              <div class="insp-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></div>
+              <div>
+                <div class="insp-title">IMG_4821.CR3</div>
+                <div class="insp-kind">RAW Image · 48 MB each · +96 MB reclaimable</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="sec-h" style="margin-bottom:9px">Copies found</div>
+              <div class="copylist">
+                <div class="copyrow keep">
+                  <span class="copy-drive">Archive Vault</span>
+                  <span class="copy-path">/Photography/2024 Shoots/RAW Originals</span>
+                  <span class="copy-badge keep">Keep</span>
+                </div>
+                <div class="copyrow">
+                  <span class="copy-drive">Field SSD</span>
+                  <span class="copy-path">/Imports/March/CR3</span>
+                  <span class="copy-badge del">Delete</span>
+                </div>
+                <div class="copyrow">
+                  <span class="copy-drive">Photos Cold</span>
+                  <span class="copy-path">/Backup/2024/raw_dump</span>
+                  <span class="copy-badge del">Delete</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="sec-h" style="margin-bottom:9px">Keep rule</div>
+              <div class="filterbar" style="padding:0">
+                <span class="fchip on">Fastest drive</span>
+                <span class="fchip">Newest</span>
+                <span class="fchip">Largest drive</span>
+              </div>
+            </div>
+
+            <div class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Delete 2 duplicates · free 96 MB</div>
+            <div class="finder-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 16.5A4.5 4.5 0 0 0 17 8h-1.3A7 7 0 1 0 4 14.9"/><path d="M9 13l2 2 4-4"/></svg>Verified identical by checksum (SHA-256)</div>
+          </div>
+        </section>
+
+        <div class="card tile tile-reclaim area-dstat">
+          <div class="lbl">Reclaimable across all drives</div>
+          <div class="big-num" style="margin-top:10px">412<span class="u">GB</span></div>
+          <div class="stack-bar">
+            <i style="width:46%;background:var(--accent)"></i>
+            <i style="width:30%;background:var(--fc-blue)"></i>
+            <i style="width:24%;background:var(--ink-4)"></i>
+          </div>
+          <div class="tile-row">
+            <span class="tile-sub"><b>1,204</b> sets · <b>2,918</b> redundant copies</span>
+            <span class="lbl" style="color:var(--accent)">Auto-resolve all</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PAGE: ACTION PLAN ============ -->
+      <section class="page page--plan" data-page="action-plan" data-screen-label="Action Plan">
+
+        <section class="card area-plist">
+          <div class="card-h">
+            <div class="t"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M4 12h.01M4 18h.01"/></svg></span>Tagged Items</div>
+            <div class="meta">14 items · 3.2 TB</div>
+          </div>
+          <div class="filterbar" id="planFilter">
+            <span class="fchip on" data-tag="All">All</span>
+            <span class="fchip" data-tag="Keep">Keep</span>
+            <span class="fchip" data-tag="Delete">Delete</span>
+            <span class="fchip" data-tag="Review">Review</span>
+            <span class="fchip" data-tag="Move">Move</span>
+            <span class="fchip" data-tag="Backup">Backup</span>
+          </div>
+          <div class="browser-list">
+            <div class="frow" data-tag="Backup">
+              <span class="ficon folder" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fcol"><span class="fname">RAW Originals</span><span class="fmeta">Archive Vault · /Photography/2024 Shoots</span></span>
+              <span class="ftags"><span class="chip backup">Backup</span></span>
+              <span class="fsize">1.40 TB</span>
+            </div>
+            <div class="frow" data-tag="Keep">
+              <span class="ficon folder" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fcol"><span class="fname">01 Iceland Aurora</span><span class="fmeta">Archive Vault · /Photography/2024 Shoots</span></span>
+              <span class="ftags"><span class="chip keep">Keep</span></span>
+              <span class="fsize">184 GB</span>
+            </div>
+            <div class="frow" data-tag="Review">
+              <span class="ficon folder" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fcol"><span class="fname">03 Studio Portraits</span><span class="fmeta">Archive Vault · /Photography/2024 Shoots</span></span>
+              <span class="ftags"><span class="chip review">Review</span></span>
+              <span class="fsize">211 GB</span>
+            </div>
+            <div class="frow" data-tag="Delete">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></span>
+              <span class="fcol"><span class="fname">contact_sheet_master.psd</span><span class="fmeta">Archive Vault · duplicate of selects_final</span></span>
+              <span class="ftags"><span class="chip delete">Delete</span></span>
+              <span class="fsize">1.2 GB</span>
+            </div>
+            <div class="frow" data-tag="Move">
+              <span class="ficon folder" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fcol"><span class="fname">render_master_4k.mov</span><span class="fmeta">Scratch NVMe → Archive Vault</span></span>
+              <span class="ftags"><span class="chip move">Move</span></span>
+              <span class="fsize">42 GB</span>
+            </div>
+            <div class="frow" data-tag="Backup">
+              <span class="ficon folder" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fcol"><span class="fname">Tokyo Street selects</span><span class="fmeta">Field SSD · /Imports/March</span></span>
+              <span class="ftags"><span class="chip backup">Backup</span></span>
+              <span class="fsize">92 GB</span>
+            </div>
+            <div class="frow" data-tag="Keep">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></span>
+              <span class="fcol"><span class="fname">selects_final.lrcat</span><span class="fmeta">Archive Vault · /Photography/2024 Shoots</span></span>
+              <span class="ftags"><span class="chip keep">Keep</span></span>
+              <span class="fsize">88 MB</span>
+            </div>
+            <div class="frow" data-tag="Delete">
+              <span class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></span>
+              <span class="fcol"><span class="fname">proxies_1080.zip</span><span class="fmeta">Scratch NVMe · regenerable</span></span>
+              <span class="ftags"><span class="chip delete">Delete</span></span>
+              <span class="fsize">3.1 GB</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card area-pexec">
+          <div class="card-h">
+            <div class="t"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l5 5L20 7"/></svg></span>Execute Plan</div>
+            <div class="meta">14 tagged</div>
+          </div>
+          <div class="cbody">
+            <div class="sum-grid">
+              <div class="sum-cell del"><div class="v">38<span class="u">GB</span></div><div class="k oled-k" style="color:var(--ink-3)">Freed by delete</div></div>
+              <div class="sum-cell backup"><div class="v">58</div><div class="k oled-k" style="color:var(--ink-3)">To back up</div></div>
+              <div class="sum-cell move"><div class="v">34</div><div class="k oled-k" style="color:var(--ink-3)">To move</div></div>
+              <div class="sum-cell review"><div class="v">212</div><div class="k oled-k" style="color:var(--ink-3)">Need review</div></div>
+            </div>
+
+            <div>
+              <div class="sec-h" style="margin-bottom:6px">Run order</div>
+              <div class="step-list">
+                <div class="step"><span class="n">1</span>Verify checksums<span class="amt">14 items</span></div>
+                <div class="step"><span class="n">2</span>Move flagged files<span class="amt">42 GB</span></div>
+                <div class="step"><span class="n">3</span>Back up to Archive Vault<span class="amt">1.4 TB</span></div>
+                <div class="step"><span class="n">4</span>Delete confirmed duplicates<span class="amt">38 GB</span></div>
+              </div>
+            </div>
+
+            <div class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9z"/></svg>Run plan</div>
+            <div class="finder-note" style="color:var(--warn)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 18a1.8 1.8 0 0 0 1.6 2.7h16a1.8 1.8 0 0 0 1.6-2.7L13.7 3.9a1.8 1.8 0 0 0-3.4 0z"/></svg>3 drives must be connected to run</div>
+          </div>
+        </section>
+
+        <div class="card tile area-ptot">
+          <div class="lbl">Plan Totals</div>
+          <div class="plan-rows">
+            <div class="plan-row"><span class="lab"><span class="pdot" style="background:var(--ok)"></span>Keep</span><span class="plan-track"><i style="width:88%;background:var(--ok)"></i></span><span class="amt">1.6 TB</span></div>
+            <div class="plan-row"><span class="lab"><span class="pdot" style="background:var(--fc-blue)"></span>Backup</span><span class="plan-track"><i style="width:64%;background:var(--fc-blue)"></i></span><span class="amt">1.4 TB</span></div>
+            <div class="plan-row"><span class="lab"><span class="pdot" style="background:var(--fc-purple)"></span>Move</span><span class="plan-track"><i style="width:30%;background:var(--fc-purple)"></i></span><span class="amt">42 GB</span></div>
+            <div class="plan-row"><span class="lab"><span class="pdot" style="background:var(--warn)"></span>Review</span><span class="plan-track"><i style="width:22%;background:var(--warn)"></i></span><span class="amt">211 GB</span></div>
+            <div class="plan-row"><span class="lab"><span class="pdot" style="background:var(--bad)"></span>Delete</span><span class="plan-track"><i style="width:6%;background:var(--bad)"></i></span><span class="amt">38 GB</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PAGE: TRANSFER PLANNER ============ -->
+      <section class="page page--transfer" data-page="transfer" data-screen-label="Transfer Planner">
+
+        <section class="card area-tqueue">
+          <div class="card-h">
+            <div class="t"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 3l5 4-5 4"/><path d="M21 7H8"/><path d="M8 21l-5-4 5-4"/><path d="M3 17h13"/></svg></span>Transfer Queue</div>
+            <div class="meta">3 queued · 1.24 TB</div>
+          </div>
+          <div class="browser-list">
+            <div class="qrow">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fcol">
+                <span class="fname">RAW Originals</span>
+                <span class="qpath"><b>Field SSD</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b>Archive Vault</b></span>
+              </span>
+              <span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="fsize">1.40 TB</span><span class="qstatus ready">Ready</span></span>
+            </div>
+            <div class="qrow">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v5h5"/><path d="M6 3h8l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></span>
+              <span class="fcol">
+                <span class="fname">render_master_4k.mov</span>
+                <span class="qpath"><b>Scratch NVMe</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b>Archive Vault</b></span>
+              </span>
+              <span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="fsize">42 GB</span><span class="qstatus ready">Ready</span></span>
+            </div>
+            <div class="qrow">
+              <span class="ficon" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span class="fcol">
+                <span class="fname">Tokyo Street selects</span>
+                <span class="qpath"><b>Field SSD</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b>Photos Cold</b></span>
+              </span>
+              <span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="fsize">92 GB</span><span class="qstatus queued">Waiting drive</span></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card area-tproj">
+          <div class="card-h">
+            <div class="t"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="11" rx="2"/><path d="M6 12.5h.01"/></svg></span>Drive Projections</div>
+            <div class="meta">after transfer</div>
+          </div>
+          <div class="cbody">
+            <div class="proj-row">
+              <div class="proj-top">
+                <span class="proj-name"><span class="pdrive"></span>Archive Vault</span>
+                <span class="proj-delta">79% → <b>84%</b></span>
+              </div>
+              <div class="proj-bar"><i class="cur" style="width:79%"></i><i class="inc" style="width:5%"></i></div>
+            </div>
+            <div class="proj-row">
+              <div class="proj-top">
+                <span class="proj-name"><span class="pdrive" style="background:var(--ink-4)"></span>Photos Cold</span>
+                <span class="proj-delta" style="color:var(--bad)">95% → <b style="color:var(--bad)">97%</b></span>
+              </div>
+              <div class="proj-bar"><i class="cur" style="width:95%"></i><i class="over" style="width:2%"></i></div>
+            </div>
+            <div class="proj-row">
+              <div class="proj-top">
+                <span class="proj-name"><span class="pdrive"></span>Field SSD</span>
+                <span class="proj-delta">55% → <b style="color:var(--ok)">12%</b></span>
+              </div>
+              <div class="proj-bar"><i class="inc" style="width:12%"></i></div>
+            </div>
+            <div class="proj-row">
+              <div class="proj-top">
+                <span class="proj-name"><span class="pdrive"></span>Scratch NVMe</span>
+                <span class="proj-delta">40% → <b style="color:var(--ok)">8%</b></span>
+              </div>
+              <div class="proj-bar"><i class="inc" style="width:8%"></i></div>
+            </div>
+            <div class="finder-note" style="color:var(--warn)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 18a1.8 1.8 0 0 0 1.6 2.7h16a1.8 1.8 0 0 0 1.6-2.7L13.7 3.9a1.8 1.8 0 0 0-3.4 0z"/></svg>Photos Cold will exceed 95% — pick another target</div>
+          </div>
+        </section>
+
+        <div class="card tile area-tsum">
+          <div class="lbl">Transfer Summary</div>
+          <div class="big-num" style="margin-top:10px">1.24<span class="u">TB</span></div>
+          <div class="tile-row" style="margin-top:8px">
+            <span class="tile-sub"><b>3</b> jobs · est. <b>2h 40m</b> over USB-C</span>
+          </div>
+          <div class="cta" style="margin-top:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 4-5 4"/><path d="M21 7H8"/><path d="M8 21l-5-4 5-4"/><path d="M3 17h13"/></svg>Start transfer</div>
+        </div>
+      </section>
+
+      <!-- ============ PAGE: SEARCH ============ -->
+      <section class="page page--search" data-page="search" data-screen-label="Search">
+        <div class="card search-hero">
+          <div>
+            <div class="t" style="display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700"><span class="ic" style="color:var(--accent);display:flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>Search all drives</div>
+            <div class="insp-kind" style="margin-top:6px">Catalog stays searchable even when drives are offline</div>
+          </div>
+          <div class="search-big">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" placeholder="Filenames, paths, Finder tags…" />
+            <kbd>⌘K</kbd>
+          </div>
+          <div class="search-scopes">
+            <span class="fchip on">All drives</span>
+            <span class="fchip">Archive Vault</span>
+            <span class="fchip">Photos · RAW</span>
+            <span class="fchip">Tagged: Delete</span>
+            <span class="fchip">Duplicates only</span>
+          </div>
+          <div>
+            <div class="sec-h" style="margin-bottom:4px">Recent</div>
+            <div class="recent">
+              <div class="recent-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>*.CR3 modified this year<span class="rcount">8,204</span></div>
+              <div class="recent-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>render_master<span class="rcount">17</span></div>
+              <div class="recent-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>tag:Delete size:>1GB<span class="rcount">23</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PAGE: GALLERY ============ -->
+      <section class="page page--gallery active" data-page="gallery" data-screen-label="Gallery View">
+        <section class="card area-gallery">
+          <div class="card-h">
+            <div class="t gv-title"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Gallery View</div>
+            <div class="gv-tools">
+              <span class="meta" id="galMeta">— cached</span>
+              <button class="cache-btn" id="galCacheBtn" title="Choose which file types get thumbnails generated at scan time">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+                <span>Scan cache</span><b id="galCacheCount">4/6</b>
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- drive shelf -->
+          <div class="shelf" id="galShelf"></div>
+
+          <!-- file-type filter (rendered) -->
+          <div class="filterbar gfilter" id="galFilter"></div>
+
+          <div class="gallery-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15l-5-5L5 21"/><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
+            Previews are generated per file type during scan — pick fewer types for faster scans · browsable offline
+          </div>
+
+          <!-- contact sheet (rendered) -->
+          <div class="sheet" id="galSheet"></div>
+
+          <!-- scan-cache popover (built in JS) -->
+          <div class="scanpop" id="galScanpop" hidden></div>
+        </section>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- thumbnail for bundling -->
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0c0e13"/><rect x="30" y="34" width="40" height="26" rx="4" fill="#040506" stroke="#a78bff" stroke-width="1.4"/><rect x="35" y="52" width="30" height="3" rx="1.5" fill="#a78bff"/><circle cx="37" cy="40" r="1.5" fill="#4ade80"/></svg>
+</template>
+
+<!-- Tweaks -->
+<div id="tweaks-root"></div>
+
+<!-- OLED display controller + toolbar actions (vanilla, framework-agnostic) -->
+<script>
+(function () {
+  const ORDER = ['telemetry', 'gauge', 'minimal'];
+  const LABEL = { telemetry: 'Telemetry', gauge: 'Gauge', minimal: 'Minimal' };
+  let current = 'telemetry';
+
+  const oledEl   = () => document.querySelector('.oled');
+  const layouts  = () => document.querySelectorAll('.oled-layout');
+  const labelEl  = () => document.querySelector('.tbtn.display .mode');
+
+  function fx() {
+    ['.oled-flash', '.oled-sweep'].forEach(sel => {
+      const el = document.querySelector(sel);
+      if (!el) return;
+      el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+    });
+  }
+  function instant(nextEl) {
+    const o = oledEl(); if (!o) return;
+    o.classList.add('no-anim');
+    layouts().forEach(el => el.classList.remove('active', 'leaving'));
+    nextEl.classList.add('active');
+    void o.offsetWidth; o.classList.remove('no-anim');
+  }
+
+  window.applyOLED = function (mode, animate) {
+    if (!ORDER.includes(mode)) mode = 'telemetry';
+    const map = {}; layouts().forEach(el => map[el.dataset.oled] = el);
+    const nextEl = map[mode]; if (!nextEl) return;
+
+    if (mode === current) {
+      if (!nextEl.classList.contains('active')) instant(nextEl);
+    } else {
+      const curEl = map[current];
+      if (animate && curEl) {
+        curEl.classList.add('leaving'); curEl.classList.remove('active');
+        fx();
+        void nextEl.offsetWidth;
+        nextEl.classList.add('active');
+        setTimeout(() => curEl.classList.remove('leaving'), 520);
+      } else {
+        instant(nextEl);
+      }
+      current = mode;
+    }
+    if (labelEl()) labelEl().textContent = LABEL[mode];
+  };
+  window.currentOLED = () => current;
+  window.cycleOLED = function () {
+    const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
+    window.applyOLED(next, true);
+    window.dispatchEvent(new CustomEvent('oledcycle', { detail: LABEL[next] }));
+  };
+
+  // ---- per-drive OLED data binding ----
+  const DRIVES = {
+    'Archive Vault': { name:'Archive Vault', captb:'4 TB', cap:'4.0', used:'3.16', free:'842 GB', files:'248,193', folders:'18,402', pct:79 },
+    'Field SSD':     { name:'Field SSD',     captb:'2 TB', cap:'2.0', used:'1.10', free:'900 GB', files:'64,820',  folders:'5,210',  pct:55 },
+    'Photos Cold':   { name:'Photos Cold',   captb:'4 TB', cap:'4.0', used:'3.80', free:'205 GB', files:'412,006', folders:'31,940', pct:95 },
+    'Time Machine':  { name:'Time Machine',  captb:'8 TB', cap:'8.0', used:'6.20', free:'1.8 TB', files:'1.2M',    folders:'94,120', pct:78 },
+    'Scratch NVMe':  { name:'Scratch NVMe',  captb:'2 TB', cap:'2.0', used:'0.80', free:'1.2 TB', files:'12,904',  folders:'820',    pct:40 }
+  };
+  const setText = (k, v) => document.querySelectorAll('[data-b="'+k+'"]').forEach(e => e.textContent = v);
+  window.selectDrive = function (name) {
+    const d = DRIVES[name]; if (!d) return;
+    ['name','captb','cap','used','free','files','folders','pct'].forEach(k => setText(k, d[k]));
+    document.querySelectorAll('[data-b="bar"]').forEach(e => e.style.width = d.pct + '%');
+    const off = (452.4 * (1 - d.pct / 100)).toFixed(1);
+    document.querySelectorAll('[data-b="gaugebar"]').forEach(e => e.setAttribute('stroke-dashoffset', off));
+    document.querySelectorAll('[data-b="path"]').forEach(e => e.textContent = d.name + '/Photography/2024 Shoots');
+  };
+
+  // ---- toolbar wiring ----
+  function withSpinner(btn, workingLabel) {
+    const lab = btn.querySelector('.lab');
+    const original = lab.textContent;
+    const icon = btn.querySelector('svg');
+    btn.classList.add('busy');
+    if (icon) icon.style.display = 'none';
+    const spin = document.createElement('span'); spin.className = 'spin';
+    btn.insertBefore(spin, lab);
+    lab.textContent = workingLabel;
+    return function restore(finalLabel, okFlash) {
+      spin.remove();
+      if (icon) icon.style.display = '';
+      btn.classList.remove('busy');
+      if (finalLabel) lab.textContent = finalLabel;
+      if (okFlash) {
+        btn.classList.add('ok-flash');
+        setTimeout(() => { btn.classList.remove('ok-flash'); lab.textContent = original; }, 1700);
+      } else {
+        lab.textContent = original;
+      }
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('btnDisplay').addEventListener('click', () => window.cycleOLED());
+
+    document.getElementById('btnRescan').addEventListener('click', function () {
+      if (this.classList.contains('busy')) return;
+      const restore = withSpinner(this, 'Scanning\u2026');
+      const pill = document.querySelector('.oled-layout[data-oled="telemetry"] .oled-pill:last-child');
+      const prev = pill ? pill.textContent : null;
+      if (pill) pill.textContent = 'Scanning\u2026';
+      setTimeout(() => {
+        if (pill) pill.textContent = 'Scanned just now';
+        restore();
+        setTimeout(() => { if (pill) pill.textContent = prev; }, 6000);
+      }, 1900);
+    });
+
+    document.getElementById('btnChanges').addEventListener('click', function () {
+      if (this.classList.contains('busy')) return;
+      const restore = withSpinner(this, 'Checking\u2026');
+      setTimeout(() => restore('Up to date', true), 1200);
+    });
+  });
+})();
+</script>
+
+<!-- page navigation (vanilla) -->
+<script>
+(function () {
+  const DISK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="11" rx="2"/><path d="M6 12.5h.01"/></svg>';
+  const CRUMBS = {
+    drive:        d => [d, 'Photography', '2024 Shoots'],
+    gallery:      () => ['Gallery View', 'Contact sheet'],
+    duplicates:   () => ['Duplicates', 'All drives'],
+    'action-plan':() => ['Action Plan', '14 tagged'],
+    transfer:     () => ['Transfer Planner', '3 queued'],
+    search:       () => ['Search']
+  };
+  const TITLE = { drive: d => d, gallery: () => 'Gallery View', duplicates: () => 'Duplicate Finder', 'action-plan': () => 'Action Plan', transfer: () => 'Transfer Planner', search: () => 'Search' };
+  let curDrive = 'Archive Vault';
+
+  function setChrome(key) {
+    const parts = (CRUMBS[key] || (() => ['DiskGallery']))(curDrive);
+    const crumbs = document.querySelector('.crumbs');
+    crumbs.innerHTML = '<span class="ic">' + DISK + '</span>' +
+      parts.map((p, i) => '<span class="seg' + (i === parts.length - 1 ? ' cur' : '') + '">' + p + '</span>')
+           .join('<span class="sep">/</span>');
+    const tname = (TITLE[key] || (() => 'DiskGallery'))(curDrive);
+    document.querySelector('.win-title').innerHTML = 'DiskGallery — <b>' + tname + '</b>';
+  }
+
+  function showPage(key, srcEl) {
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === key));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('on'));
+    if (srcEl && srcEl.classList.contains('nav-item')) {
+      srcEl.classList.add('on');
+    } else {
+      // highlight the primary (untagged) nav item for this page
+      const primary = document.querySelector('.nav-item[data-page="' + key + '"]:not([data-tag])');
+      if (primary) primary.classList.add('on');
+    }
+    setChrome(key);
+  }
+  window.showPage = showPage;
+
+  // plan filter
+  function applyPlanFilter(tag) {
+    const rows = document.querySelectorAll('.page--plan .browser-list .frow');
+    rows.forEach(r => r.style.display = (tag === 'All' || r.dataset.tag === tag) ? '' : 'none');
+    document.querySelectorAll('#planFilter .fchip').forEach(c => c.classList.toggle('on', c.dataset.tag === tag));
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // nav items -> pages
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+      item.addEventListener('click', () => {
+        const key = item.dataset.page;
+        showPage(key, item);
+        if (key === 'action-plan') applyPlanFilter(item.dataset.tag || 'All');
+      });
+    });
+
+    // drives -> drive browser
+    document.querySelectorAll('.drive[data-drive]').forEach(d => {
+      d.addEventListener('click', () => {
+        document.querySelectorAll('.drive').forEach(x => x.classList.remove('on'));
+        d.classList.add('on');
+        curDrive = d.dataset.drive;
+        window.selectDrive(curDrive);
+        showPage('drive');
+      });
+    });
+
+    // plan filter chips
+    document.querySelectorAll('#planFilter .fchip').forEach(c => {
+      c.addEventListener('click', () => applyPlanFilter(c.dataset.tag));
+    });
+
+    // tile "go to" links
+    document.querySelectorAll('[data-goto]').forEach(el => {
+      el.addEventListener('click', () => showPage(el.dataset.goto));
+    });
+
+    setChrome('gallery');
+  });
+})();
+</script>
+
+<!-- gallery / contact sheet (vanilla) -->
+<script>
+(function () {
+  // ---- drive catalog (mirrors sidebar) ----
+  const DRIVES = [
+    { name:'Archive Vault', stat:'up',   used:79, photos:'182K', cap:'4 TB' },
+    { name:'Field SSD',     stat:'up',   used:55, photos:'41K',  cap:'2 TB' },
+    { name:'Photos Cold',   stat:'down', used:95, photos:'318K', cap:'4 TB' },
+    { name:'Time Machine',  stat:'down', used:78, photos:'604K', cap:'8 TB' },
+    { name:'Scratch NVMe',  stat:'up',   used:40, photos:'9K',   cap:'2 TB' }
+  ];
+  const DRIVE_DOT = {
+    'Archive Vault':'var(--ok)', 'Field SSD':'var(--ok)', 'Photos Cold':'var(--ink-4)',
+    'Time Machine':'var(--ink-4)', 'Scratch NVMe':'var(--ok)'
+  };
+
+  // ---- file types ----
+  const TYPES = [
+    { id:'raw',    label:'RAW',    ext:'.CR3' },
+    { id:'photo',  label:'Photos', ext:'.JPG' },
+    { id:'video',  label:'Video',  ext:'.MOV' },
+    { id:'design', label:'Design', ext:'.PSD' },
+    { id:'pdf',    label:'Docs',   ext:'.PDF' },
+    { id:'audio',  label:'Audio',  ext:'.WAV' }
+  ];
+  const EXT    = Object.fromEntries(TYPES.map(t => [t.id, t.ext]));
+  const LABEL  = Object.fromEntries(TYPES.map(t => [t.id, t.label]));
+  const COUNTS = { raw:'182K', photo:'48.2K', video:'2,140', design:'1,380', pdf:'3,604', audio:'918' };
+
+  // which types had previews generated in the last scan (selectable to keep scans fast)
+  const cached = new Set(['raw','photo','video','design']);
+
+  // ---- shoots / frames ----
+  const F = (id, opts) => Object.assign({ id }, opts || {});
+  const SHOOTS = [
+    { shoot:'01 Iceland Aurora', drive:'Archive Vault', size:'184 GB', frames:[
+      F('AURORA_0418',{type:'raw',tag:'keep'}), F('AURORA_0421',{type:'raw',tag:'keep',dup:2}), F('AURORA_0426',{type:'raw'}),
+      F('AURORA_0433',{type:'raw',tag:'keep'}), F('AURORA_grade',{type:'design',tag:'keep'}), F('AURORA_0447',{type:'raw'}),
+      F('aurora_timelapse',{type:'video',dur:'01:38'}), F('AURORA_0461',{type:'raw',tag:'review'}),
+      F('aurora_ambient',{type:'audio',dur:'03:20',tag:'keep'})
+    ]},
+    { shoot:'02 Tokyo Street', drive:'Field SSD', size:'92 GB', frames:[
+      F('TKY_2201',{type:'photo'}), F('TKY_2208',{type:'raw',tag:'keep'}), F('TKY_2215',{type:'raw',dup:3}),
+      F('TKY_2223',{type:'raw',tag:'keep'}), F('TKY_2230',{type:'photo'}), F('tokyo_bts',{type:'video',dur:'06:54',dup:2}),
+      F('tokyo_field_rec',{type:'audio',dur:'12:04'}), F('TKY_2260',{type:'photo',tag:'keep'})
+    ]},
+    { shoot:'03 Studio Portraits', drive:'Archive Vault', size:'211 GB', frames:[
+      F('STU_0901',{type:'raw',tag:'review'}), F('STU_0907',{type:'raw',tag:'review'}), F('STU_0912',{type:'raw',tag:'keep'}),
+      F('STU_retouch_01',{type:'design',tag:'review'}), F('STU_0924',{type:'raw'}), F('STU_0931',{type:'raw',tag:'keep',dup:2}),
+      F('model_release',{type:'pdf',tag:'review'}), F('STU_0950',{type:'raw',tag:'keep'})
+    ]},
+    { shoot:'RAW Originals', drive:'Photos Cold', size:'1.40 TB', frames:[
+      F('IMG_4811',{type:'raw',tag:'backup'}), F('IMG_4821',{type:'raw',tag:'backup',dup:3}), F('IMG_4830',{type:'raw',tag:'backup'}),
+      F('IMG_4844',{type:'raw'}), F('IMG_4851',{type:'raw',tag:'backup'}), F('IMG_4860',{type:'raw',tag:'backup'})
+    ]},
+    { shoot:'Render Masters', drive:'Scratch NVMe', size:'42 GB', frames:[
+      F('render_master_4k',{type:'video',tag:'move',dur:'04:12'}), F('studio_reel',{type:'video',tag:'move',dur:'02:20'}),
+      F('promo_cut_v3',{type:'video',dur:'00:48'}), F('promo_score_v2',{type:'audio',dur:'01:48',tag:'review'}),
+      F('promo_grade',{type:'design',dup:2})
+    ]},
+    { shoot:'Deliverables', drive:'Archive Vault', size:'2.4 GB', frames:[
+      F('Iceland_Aurora_book',{type:'pdf',tag:'keep'}), F('client_invoice_03',{type:'pdf'}),
+      F('print_layout_A2',{type:'design',tag:'keep'}), F('cover_treatment',{type:'design',dup:2}),
+      F('contract_2024',{type:'pdf',tag:'keep'})
+    ]}
+  ];
+
+  const state = { group:'Shoot', media:'all', drive:'all', tags:true, names:true };
+
+  const hash = s => { let h=0; for (let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; };
+  const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  const LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  const LOCK_SM = '<svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  const DOCPG = '<span class="pg"><i class="t"></i><i style="width:94%"></i><i style="width:82%"></i><i style="width:90%"></i><i style="width:58%"></i><i style="width:84%"></i><i style="width:44%"></i></span>';
+
+  function wave(id){
+    let h = hash(id) || 7, bars = '';
+    for (let i=0;i<26;i++){ h = (h*1103515245 + 12345) >>> 0; bars += '<i style="height:' + (16 + (h % 78)) + '%"></i>'; }
+    return '<span class="wf">' + bars + '</span>';
+  }
+
+  function flat() {
+    const out = [];
+    SHOOTS.forEach(s => s.frames.forEach(f =>
+      out.push(Object.assign({ shoot:s.shoot, drive:s.drive, shootSize:s.size }, f))));
+    return out;
+  }
+  function passes(f) {
+    if (state.drive !== 'all' && f.drive !== state.drive) return false;
+    if (state.media === 'all') return true;
+    return f.type === state.media;
+  }
+
+  function thumbInner(f) {
+    const t = f.type;
+    if (!cached.has(t)) return '<div class="thumb uc"><span class="lock">' + LOCK + '</span></div>';
+    if (t === 'pdf')   return '<div class="thumb thumb-doc">' + DOCPG + '</div>';
+    if (t === 'audio') return '<div class="thumb thumb-audio">' + wave(f.id) + '</div>';
+    return '<div class="thumb"></div>';
+  }
+
+  function tileHTML(f) {
+    const t = f.type;
+    const uc = !cached.has(t);
+    const v = (hash(f.id) % 5) + 1;
+    return '<figure class="tile' + (uc ? ' uncached' : '') + '" data-type="' + t + '"' +
+      (f.tag ? ' data-tag="' + f.tag + '"' : '') + ' data-v="' + v + '">' +
+      thumbInner(f) +
+      (!uc && t === 'video' ? '<span class="play">' + PLAY + '</span><span class="dur">' + (f.dur || '00:30') + '</span>' : '') +
+      (!uc && t === 'audio' ? '<span class="dur">' + (f.dur || '00:30') + '</span>' : '') +
+      '<span class="t-tag"></span>' +
+      (f.dup ? '<span class="t-dup">\u00d7' + f.dup + '</span>' : '') +
+      '<figcaption><span class="tname">' + f.id + '</span><span class="text">' + (uc ? 'Not cached' : ((t==='video'||t==='audio') ? '' : EXT[t])) + '</span></figcaption>' +
+      '</figure>';
+  }
+
+  function groupHTML(label, sub, drive, frames) {
+    const dot = drive ? '<span class="sh-drive"><span class="d" style="background:' + (DRIVE_DOT[drive]||'var(--ink-4)') + '"></span>' + drive + '</span>' : '';
+    return '<div class="shoot-group">' +
+      '<div class="shoot-h"><span class="sh-name">' + label + '</span>' + dot +
+      '<span class="sh-line"></span><span class="sh-meta">' + sub + '</span></div>' +
+      '<div class="grid">' + frames.map(tileHTML).join('') + '</div></div>';
+  }
+
+  function render() {
+    const sheet = document.getElementById('galSheet');
+    if (!sheet) return;
+    const frames = flat().filter(passes);
+
+    const meta = document.getElementById('galMeta');
+    if (meta) {
+      const withPrev = frames.filter(f => cached.has(f.type)).length;
+      meta.textContent = frames.length + ' files \u00b7 ' + withPrev + ' with previews';
+    }
+
+    let html = '';
+    if (!frames.length) {
+      html = '<div class="gallery-note" style="padding:24px 2px">No files match this filter</div>';
+    } else if (state.group === 'Drive') {
+      DRIVES.forEach(d => {
+        const fr = frames.filter(f => f.drive === d.name);
+        if (fr.length) html += groupHTML(d.name, fr.length + ' files \u00b7 ' + d.photos + ' cataloged', null, fr);
+      });
+    } else if (state.group === 'Type') {
+      TYPES.forEach(ty => {
+        const fr = frames.filter(f => f.type === ty.id);
+        if (fr.length) html += groupHTML(ty.label, fr.length + ' files \u00b7 ' + (cached.has(ty.id) ? 'previews cached' : 'not cached'), null, fr);
+      });
+    } else {
+      SHOOTS.forEach(s => {
+        const fr = frames.filter(f => f.shoot === s.shoot);
+        if (fr.length) html += groupHTML(s.shoot, fr.length + ' files \u00b7 ' + s.size, s.drive, fr);
+      });
+    }
+    sheet.innerHTML = html;
+  }
+
+  function renderFilters() {
+    const bar = document.getElementById('galFilter');
+    if (!bar) return;
+    let html = '<span class="fchip' + (state.media==='all'?' on':'') + '" data-media="all">All</span>';
+    TYPES.forEach(ty => {
+      const uc = !cached.has(ty.id);
+      html += '<span class="fchip' + (state.media===ty.id?' on':'') + (uc?' locked':'') + '" data-media="' + ty.id + '">' +
+        ty.label + (uc ? ' ' + LOCK_SM : '') + '</span>';
+    });
+    bar.innerHTML = html;
+  }
+
+  function renderShelf() {
+    const shelf = document.getElementById('galShelf');
+    if (!shelf) return;
+    const spine = (cls) => '<div class="shelf-spine">' +
+      Array.from({length:4}, () => '<i class="' + (cls||'') + '"></i>').join('') + '</div>';
+    let html = '<div class="shelf-card' + (state.drive==='all'?' on':'') + '" data-gdrive="all">' +
+      spine('all') +
+      '<div class="shelf-top"><span class="shelf-stat up"></span><span class="shelf-name">All drives</span></div>' +
+      '<div class="shelf-sub"><span>248K files</span><span>5 drives</span></div>' +
+      '<div class="shelf-bar"><i style="width:100%;background:var(--accent)"></i></div></div>';
+    DRIVES.forEach(d => {
+      html += '<div class="shelf-card' + (state.drive===d.name?' on':'') + '" data-gdrive="' + d.name + '">' +
+        spine() +
+        '<div class="shelf-top"><span class="shelf-stat ' + d.stat + '"></span><span class="shelf-name">' + d.name + '</span></div>' +
+        '<div class="shelf-sub"><span>' + d.photos + ' files</span><span>' + d.cap + '</span></div>' +
+        '<div class="shelf-bar"><i style="width:' + d.used + '%" class="' + (d.used>=92?'full':'') + '"></i></div></div>';
+    });
+    shelf.innerHTML = html;
+  }
+
+  function renderScanpop() {
+    const pop = document.getElementById('galScanpop');
+    if (!pop) return;
+    pop.innerHTML =
+      '<div class="sp-h">Generate previews for\u2026</div>' +
+      '<div class="sp-sub">Choosing fewer types makes scans much faster. Uncached files still appear in the catalog \u2014 just without a thumbnail until the next scan.</div>' +
+      '<div class="sp-list">' + TYPES.map(ty => {
+        const on = cached.has(ty.id);
+        return '<div class="sp-row" data-type="' + ty.id + '">' +
+          '<span class="sp-name">' + ty.label + ' <i class="sp-ext">' + ty.ext + '</i></span>' +
+          '<span class="sp-count">' + COUNTS[ty.id] + '</span>' +
+          '<span class="sp-toggle' + (on?' on':'') + '" role="switch" aria-checked="' + on + '"></span>' +
+          '<span class="sp-prog"><i></i></span>' +
+          '</div>';
+      }).join('') + '</div>' +
+      '<div class="sp-foot"><span class="note">Toggling a type on <b>re-indexes</b> it now.</span></div>';
+  }
+
+  function refresh() {
+    renderFilters();
+    render();
+    const c = document.getElementById('galCacheCount');
+    if (c) c.textContent = cached.size + '/' + TYPES.length;
+  }
+
+  // exposed for Tweaks
+  window.applyGallery = function (o) {
+    const card = document.querySelector('.area-gallery');
+    if (o.size != null && document.getElementById('galSheet'))
+      document.getElementById('galSheet').style.setProperty('--tile-min', o.size + 'px');
+    if (card) {
+      card.classList.toggle('gallery-notags', o.tags === false);
+      card.classList.toggle('gallery-nonames', o.names === false);
+    }
+    if (o.group && o.group !== state.group) { state.group = o.group; render(); }
+  };
+
+  function openPop(open) {
+    const pop = document.getElementById('galScanpop');
+    const btn = document.getElementById('galCacheBtn');
+    if (!pop || !btn) return;
+    pop.hidden = !open;
+    btn.classList.toggle('open', open);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    renderShelf();
+    renderFilters();
+    renderScanpop();
+    refresh();
+
+    document.getElementById('galShelf').addEventListener('click', function (e) {
+      const card = e.target.closest('.shelf-card'); if (!card) return;
+      state.drive = card.dataset.gdrive;
+      renderShelf();
+      render();
+      if (state.drive !== 'all' && window.selectDrive) window.selectDrive(state.drive);
+    });
+
+    document.getElementById('galFilter').addEventListener('click', function (e) {
+      const chip = e.target.closest('.fchip'); if (!chip) return;
+      state.media = chip.dataset.media;
+      this.querySelectorAll('.fchip').forEach(c => c.classList.toggle('on', c === chip));
+      render();
+    });
+
+    document.getElementById('galSheet').addEventListener('click', function (e) {
+      const tile = e.target.closest('.tile'); if (!tile) return;
+      if (tile.classList.contains('uncached')) { openPop(true); return; }
+      const was = tile.classList.contains('sel');
+      this.querySelectorAll('.tile.sel').forEach(t => t.classList.remove('sel'));
+      if (!was) tile.classList.add('sel');
+    });
+
+    // scan-cache popover
+    const btn = document.getElementById('galCacheBtn');
+    const pop = document.getElementById('galScanpop');
+    btn.addEventListener('click', function (e) { e.stopPropagation(); openPop(pop.hidden); });
+    pop.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const tg = e.target.closest('.sp-toggle'); if (!tg) return;
+      const row = tg.closest('.sp-row'); const id = row.dataset.type;
+      if (row.classList.contains('indexing')) return;
+      if (cached.has(id)) {
+        cached.delete(id);
+        tg.classList.remove('on'); tg.setAttribute('aria-checked', 'false');
+        refresh();
+      } else {
+        row.classList.add('indexing');
+        tg.classList.add('on'); tg.setAttribute('aria-checked', 'true');
+        setTimeout(function () {
+          cached.add(id);
+          row.classList.remove('indexing');
+          refresh();
+        }, 1100);
+      }
+    });
+    document.addEventListener('click', function () { if (!pop.hidden) openPop(false); });
+  });
+})();
+</script>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+const ACCENTS = { '#a78bff':'violet', '#5aa2ff':'blue', '#54e0a0':'green', '#f7c14e':'amber', '#ff855f':'coral' };
+const OLED = { 'Telemetry':'telemetry', 'Gauge':'gauge', 'Minimal':'minimal' };
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "dark": true,
+  "accent": "#a78bff",
+  "oled": "Telemetry",
+  "glass": 40,
+  "galGroup": "Shoot",
+  "galTile": 152,
+  "galTags": true,
+  "galNames": true
+}/*EDITMODE-END*/;
+
+function apply(t, instant){
+  const r = document.documentElement;
+  r.dataset.mode = t.dark ? 'dark' : 'light';
+  r.dataset.accent = ACCENTS[t.accent] || 'violet';
+  const layout = OLED[t.oled] || 'telemetry';
+  window.applyOLED(layout, !instant);
+  r.style.setProperty('--blur', (4 + t.glass * 0.30).toFixed(1) + 'px');
+  if (window.applyGallery) window.applyGallery({ group: t.galGroup, size: t.galTile, tags: t.galTags, names: t.galNames });
+}
+
+function App(){
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const first = React.useRef(true);
+  React.useEffect(() => { apply(t, first.current); first.current = false; }, [t]);
+  React.useEffect(() => {
+    const h = e => setTweak('oled', e.detail);
+    window.addEventListener('oledcycle', h);
+    return () => window.removeEventListener('oledcycle', h);
+  }, []);
+  return (
+    <TweaksPanel>
+      <TweakSection label="Appearance" />
+      <TweakToggle label="Dark mode" value={t.dark} onChange={v => setTweak('dark', v)} />
+      <TweakColor label="Accent" value={t.accent}
+        options={['#a78bff','#5aa2ff','#54e0a0','#f7c14e','#ff855f']}
+        onChange={v => setTweak('accent', v)} />
+      <TweakSlider label="Glass blur" value={t.glass} min={0} max={100} unit="%"
+        onChange={v => setTweak('glass', v)} />
+      <TweakSection label="OLED display" />
+      <TweakRadio label="Layout" value={t.oled}
+        options={['Telemetry','Gauge','Minimal']}
+        onChange={v => setTweak('oled', v)} />
+      <TweakSection label="Gallery" />
+      <TweakRadio label="Group by" value={t.galGroup}
+        options={['Shoot','Drive','Type']}
+        onChange={v => setTweak('galGroup', v)} />
+      <TweakSlider label="Tile size" value={t.galTile} min={110} max={240} unit="px"
+        onChange={v => setTweak('galTile', v)} />
+      <TweakToggle label="Action tags" value={t.galTags} onChange={v => setTweak('galTags', v)} />
+      <TweakToggle label="Filenames" value={t.galNames} onChange={v => setTweak('galNames', v)} />
+    </TweaksPanel>
+  );
+}
+apply(TWEAK_DEFAULTS, true);
+ReactDOM.createRoot(document.getElementById('tweaks-root')).render(<App />);
+</script>
+</body>
+</html>

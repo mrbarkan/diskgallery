@@ -93,9 +93,9 @@
 		9BDCC4825CCA0392F74A7774 /* DiskGalleryCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; };
 		9C5E0BBD9E34E1611BED70ED /* LibrarySidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5844EC9B6BCF8A8733084C2E /* LibrarySidebarView.swift */; };
 		9FAA111FB1D47D4A250CFF75 /* Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AFFB1E76AE447035048FF76 /* Catalog.swift */; };
-		A27DE63913888BDE456955D3 /* Operation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 383730B516904BB6A35E7818 /* Operation.swift */; };
 		A6F8081BD8E0E7CE48D5F3ED /* TaggedListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D3048FEAC718F9F9AF6C11 /* TaggedListView.swift */; };
 		A706A33776F445979BAFE087 /* ModernInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = D564B66BBB945852BB905402 /* ModernInspector.swift */; };
+		A7D03DFF5B452E8DAB8EDF76 /* FileOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE0290245E00880A68D2336F /* FileOperation.swift */; };
 		AC9701D75226543C584AA598 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = EDAD081A4FE6D77943D6D89D /* GRDB */; };
 		AF4B6A53D3887455342582AF /* Migrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 419C2FE432E8213D40143239 /* Migrations.swift */; };
 		AF654013EAEE5BC737A5585F /* ChangesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAB8199993101F11F86332D /* ChangesView.swift */; };
@@ -224,7 +224,6 @@
 		369012288A55FF3177C489B1 /* DiskGalleryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiskGalleryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3737FA4398BB56E6850F2A40 /* VolumeFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeFilterTests.swift; sourceTree = "<group>"; };
 		37759AE691004539E555EF69 /* PathVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathVisibility.swift; sourceTree = "<group>"; };
-		383730B516904BB6A35E7818 /* Operation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Operation.swift; sourceTree = "<group>"; };
 		395CB1FD1B89F2B19088F80B /* ScanProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProgress.swift; sourceTree = "<group>"; };
 		3B52932E7BD947A7097C9085 /* BetaWindowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaWindowTests.swift; sourceTree = "<group>"; };
 		3BA826B6044DF48C920A5180 /* CoverageOLED.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageOLED.swift; sourceTree = "<group>"; };
@@ -328,6 +327,7 @@
 		F8822CADD3F623321528676A /* ProBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProBadge.swift; sourceTree = "<group>"; };
 		F99FC8A7DC3A97C0CC85640D /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		F9C040BBD8951A53231F2AC7 /* StatTiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatTiles.swift; sourceTree = "<group>"; };
+		FE0290245E00880A68D2336F /* FileOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileOperation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -553,7 +553,7 @@
 		625AE92E80BA82D6DD89D856 /* Execution */ = {
 			isa = PBXGroup;
 			children = (
-				383730B516904BB6A35E7818 /* Operation.swift */,
+				FE0290245E00880A68D2336F /* FileOperation.swift */,
 			);
 			path = Execution;
 			sourceTree = "<group>";
@@ -984,6 +984,7 @@
 				60595B0C3850E9835F789891 /* DuplicateEngine.swift in Sources */,
 				189DEFA7EE56C537E421F1A0 /* Feature.swift in Sources */,
 				C7A6E53217D0526EBAE323DE /* FileCategory.swift in Sources */,
+				A7D03DFF5B452E8DAB8EDF76 /* FileOperation.swift in Sources */,
 				46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */,
 				163787F6E82DDAE41147E42E /* HashVerifier.swift in Sources */,
 				FF798E13607B774E1C65EE27 /* KeepRule.swift in Sources */,
@@ -991,7 +992,6 @@
 				D15774DD85C64615AD6C6942 /* LicenseVerifier.swift in Sources */,
 				AF4B6A53D3887455342582AF /* Migrations.swift in Sources */,
 				412F1FED7D5647E1F85054CF /* Models.swift in Sources */,
-				A27DE63913888BDE456955D3 /* Operation.swift in Sources */,
 				4C39E65D70728750BBC0BC0D /* OrganizationPlanner.swift in Sources */,
 				8165D633F7C1316406A49D27 /* PathVisibility.swift in Sources */,
 				83A13362369ACD6FE56C51CF /* PlanningService.swift in Sources */,
