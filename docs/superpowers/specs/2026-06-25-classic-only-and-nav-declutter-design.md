@@ -129,8 +129,11 @@ Classic's `OrganizeView` and `ActionPlanView` are **Classic-only** (Modern uses
 
 ### 2.3 Single Tagged destination with a filter
 
-- Add a Classic-only `SidebarItem` case **`.taggedAll`** (additive; `.tagged(Tag)` is kept
-  for deep-links and Modern). Add its `token` (`"taggedAll"`) and `init?(token:)` mapping.
+- Encode the combined view's selection as **`.tagged(.none)`** (the `.none` decision means
+  "all"), exposed via a readable convenience `static var taggedAll: SidebarItem { .tagged(.none) }`.
+  This adds **no new enum case**, so Modern's exhaustive `switch` (verified to have no
+  `default`) compiles untouched — honoring the freeze. The existing `.tagged` token already
+  round-trips (`"tagged:0"`), so no token changes are needed for it.
 - Generalize `DiskGallery/Views/TaggedListView.swift` to take an **optional initial
   filter** and always show filter chips **All / Keep / Delete / Review / Move / Backup**
   with per-tag counts. Default selection: **All**.
@@ -145,10 +148,10 @@ Classic's `OrganizeView` and `ActionPlanView` are **Classic-only** (Modern uses
 ### 2.4 Routing & persistence (`DiskGalleryApp.swift`, `AppEnvironment.swift`)
 
 - In Classic `ContentColumn` (`DiskGalleryApp.swift`): route `.organize` →
-  `OrganizeHomeView`; route `.taggedAll` and `.tagged(tag)` → the generalized
-  `TaggedListView`. The now-unreachable `.plan` and `.transfer` cases (kept for Modern)
-  route to `OrganizeHomeView` as a safe fallback so any stray selection lands somewhere
-  sane.
+  `OrganizeHomeView`; route `.tagged(tag)` → the generalized `TaggedListView` (this case
+  now covers `.tagged(.none)` = all). The now-unreachable `.plan` and `.transfer` cases
+  (kept for Modern) route to `OrganizeHomeView` as a safe fallback so any stray selection
+  lands somewhere sane.
 - **Token migration** in `SidebarItem.init?(token:)`: map legacy persisted tokens
   `"plan"` and `"transfer"` → `.organize`, so a user whose last-selected view was Action
   Plan or Transfer Planner reopens on Organize rather than a removed surface.
@@ -173,7 +176,7 @@ Classic's `OrganizeView` and `ActionPlanView` are **Classic-only** (Modern uses
 | `App/ThemeStore.swift` | Default + coerce `skin = .classic` |
 | `Views/SettingsView.swift` | Remove Skin picker, OLED section, Toggle-side-panes row |
 | `Views/LibrarySidebarView.swift` | Remove Action Plan / Transfer Planner / 5 tag rows; add single Tagged row |
-| `App/AppEnvironment.swift` | Add `SidebarItem.taggedAll` (+ token + migration of `plan`/`transfer`) |
+| `App/AppEnvironment.swift` | Add `SidebarItem.taggedAll` convenience (= `.tagged(.none)`); migrate `plan`/`transfer` tokens → `.organize` |
 | `App/DiskGalleryApp.swift` | Route `.organize`→`OrganizeHomeView`, `.taggedAll`/`.tagged`→`TaggedListView`, fallback `.plan`/`.transfer` |
 | `Views/OrganizeView.swift` + `Views/ActionPlanView.swift` | Extract inner lists; new `OrganizeHomeView` with toggle |
 | `Views/TaggedListView.swift` | Filter chips + optional initial filter |
