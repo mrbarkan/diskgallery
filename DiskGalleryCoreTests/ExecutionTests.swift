@@ -25,4 +25,50 @@ final class ExecutionTests: XCTestCase {
         XCTAssertEqual(fetched.first?.destRelPath, "shoot/a.cr2")
         XCTAssertEqual(fetched.first?.bytes, 1234)
     }
+
+    private func tempDir() throws -> URL {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("DGExec-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    func testCopyVerifiedWritesAndVerifies() throws {
+        let root = try tempDir()
+        let src = root.appendingPathComponent("a.bin")
+        let dst = root.appendingPathComponent("out/a.bin")   // nested: dir must be created
+        try Data(repeating: 0x41, count: 4096).write(to: src)
+
+        let outcome = try FileCopier().copyVerified(from: src, to: dst)
+        XCTAssertEqual(outcome, .verified(hash: try HashVerifier().sha256(fileURL: src)))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dst.path))
+        XCTAssertEqual(try Data(contentsOf: dst), try Data(contentsOf: src))
+        // No stray temp file left behind.
+        let leftovers = try FileManager.default.contentsOfDirectory(atPath: dst.deletingLastPathComponent().path)
+        XCTAssertEqual(leftovers.filter { $0.hasPrefix(".dg-tmp-") }, [])
+    }
+
+    func testCopyVerifiedSkipsIdenticalDestination() throws {
+        let root = try tempDir()
+        let src = root.appendingPathComponent("a.bin")
+        let dst = root.appendingPathComponent("a.bin.copy")
+        try Data(repeating: 0x42, count: 1000).write(to: src)
+        try Data(repeating: 0x42, count: 1000).write(to: dst)   // identical
+
+        let outcome = try FileCopier().copyVerified(from: src, to: dst)
+        XCTAssertEqual(outcome, .skippedIdentical(hash: try HashVerifier().sha256(fileURL: src)))
+    }
+
+    func testCopyVerifiedReportsConflictAndNeverOverwrites() throws {
+        let root = try tempDir()
+        let src = root.appendingPathComponent("a.bin")
+        let dst = root.appendingPathComponent("a.bin.copy")
+        try Data(repeating: 0x41, count: 1000).write(to: src)
+        try Data(repeating: 0x42, count: 1000).write(to: dst)   // different
+
+        let outcome = try FileCopier().copyVerified(from: src, to: dst)
+        XCTAssertEqual(outcome, .conflict)
+        XCTAssertEqual(try Data(contentsOf: dst), Data(repeating: 0x42, count: 1000),
+                       "destination must NOT be overwritten on conflict")
+    }
 }

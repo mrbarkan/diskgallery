@@ -24,6 +24,7 @@
 		189DEFA7EE56C537E421F1A0 /* Feature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82CEA25A8A02DB36E150E78C /* Feature.swift */; };
 		1BBC250BE23923DBA37ABCB0 /* BackupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82987EC891FA8B2F0A51F0F /* BackupTests.swift */; };
 		1C9272BC8B0BC1C338147B3E /* LicenseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5473AB3A7C7A7143F2118E2E /* LicenseStore.swift */; };
+		1DBA5EE04B1863B824646DD5 /* FileCopier.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9D07CA34FE8810CF5FF634 /* FileCopier.swift */; };
 		21CE4A1CDDDC11E0FADC92A7 /* BetaWindowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B52932E7BD947A7097C9085 /* BetaWindowTests.swift */; };
 		26E03B7CB351BBB67A92F649 /* DiskGalleryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 149B608FC593D130B299F9C8 /* DiskGalleryApp.swift */; };
 		2C0B049C5CB6873A381D4EBB /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99FC8A7DC3A97C0CC85640D /* SplashView.swift */; };
@@ -293,6 +294,7 @@
 		BC0F324047574353BA4FF76D /* DriveHardwareProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveHardwareProbe.swift; sourceTree = "<group>"; };
 		BC3C0065500C24587932BC0A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BC621BD96C2E755F0715EB35 /* UpgradeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeSheet.swift; sourceTree = "<group>"; };
+		BF9D07CA34FE8810CF5FF634 /* FileCopier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCopier.swift; sourceTree = "<group>"; };
 		C0886F22F3BD10A946192FCA /* Scanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scanner.swift; sourceTree = "<group>"; };
 		C1827D6C9D202B74DE91FDA3 /* BetaGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaGate.swift; sourceTree = "<group>"; };
 		C54ECFB382AC39796AC01E43 /* ModernWorkspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernWorkspace.swift; sourceTree = "<group>"; };
@@ -553,6 +555,7 @@
 		625AE92E80BA82D6DD89D856 /* Execution */ = {
 			isa = PBXGroup;
 			children = (
+				BF9D07CA34FE8810CF5FF634 /* FileCopier.swift */,
 				FE0290245E00880A68D2336F /* FileOperation.swift */,
 			);
 			path = Execution;
@@ -984,6 +987,7 @@
 				60595B0C3850E9835F789891 /* DuplicateEngine.swift in Sources */,
 				189DEFA7EE56C537E421F1A0 /* Feature.swift in Sources */,
 				C7A6E53217D0526EBAE323DE /* FileCategory.swift in Sources */,
+				1DBA5EE04B1863B824646DD5 /* FileCopier.swift in Sources */,
 				A7D03DFF5B452E8DAB8EDF76 /* FileOperation.swift in Sources */,
 				46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */,
 				163787F6E82DDAE41147E42E /* HashVerifier.swift in Sources */,
