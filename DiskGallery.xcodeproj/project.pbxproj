@@ -18,6 +18,7 @@
 		119F3A7CA0084C00109D5EE1 /* AccentPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 481741FBB56E535B49151FE4 /* AccentPalette.swift */; };
 		1413BAE28BBFD4DB63531FBC /* ModernBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 306BD8977188CC295B8CA426 /* ModernBrowser.swift */; };
 		14C5A841805377CA845DA228 /* BetaWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF22A1C2A8F1DF0BB410211 /* BetaWindow.swift */; };
+		15EB8449EE1B76121F169032 /* FileTrasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41F0F99044760166F240908A /* FileTrasher.swift */; };
 		163787F6E82DDAE41147E42E /* HashVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */; };
 		168050F4AFACC6AD2C6D6364 /* BetaExpiredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CF5A435CDE43A8373D386F5 /* BetaExpiredView.swift */; };
 		181E3433E8EF0D7AFA7419B4 /* ThemeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B60F525D3DE6BD4E0A73D7F /* ThemeModel.swift */; };
@@ -237,6 +238,7 @@
 		411D66DC8AAED302B83CB44B /* MutationGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MutationGuardTests.swift; sourceTree = "<group>"; };
 		413E51629AFD434627D3871C /* DiskGalleryCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiskGalleryCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		419C2FE432E8213D40143239 /* Migrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Migrations.swift; sourceTree = "<group>"; };
+		41F0F99044760166F240908A /* FileTrasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTrasher.swift; sourceTree = "<group>"; };
 		4296D75D18CD7E48D8D775B7 /* ExecutionConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutionConfirmView.swift; sourceTree = "<group>"; };
 		44221205F5A1049B868EF037 /* UnifiedCompare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedCompare.swift; sourceTree = "<group>"; };
 		4641768447517CCF35814381 /* ModernControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernControls.swift; sourceTree = "<group>"; };
@@ -563,6 +565,7 @@
 				94039570E648916C922F9B01 /* ExecutorService.swift */,
 				BF9D07CA34FE8810CF5FF634 /* FileCopier.swift */,
 				FE0290245E00880A68D2336F /* FileOperation.swift */,
+				41F0F99044760166F240908A /* FileTrasher.swift */,
 			);
 			path = Execution;
 			sourceTree = "<group>";
@@ -997,6 +1000,7 @@
 				C7A6E53217D0526EBAE323DE /* FileCategory.swift in Sources */,
 				1DBA5EE04B1863B824646DD5 /* FileCopier.swift in Sources */,
 				A7D03DFF5B452E8DAB8EDF76 /* FileOperation.swift in Sources */,
+				15EB8449EE1B76121F169032 /* FileTrasher.swift in Sources */,
 				46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */,
 				163787F6E82DDAE41147E42E /* HashVerifier.swift in Sources */,
 				FF798E13607B774E1C65EE27 /* KeepRule.swift in Sources */,

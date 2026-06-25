@@ -114,4 +114,17 @@ final class ExecutionTests: XCTestCase {
         let after = try await catalog.execution.history()
         XCTAssertEqual(after.first?.status, .skipped)
     }
+
+    func testFileTrasherRemovesSourceFromOriginalPath() throws {
+        let root = try tempDir()
+        let victim = root.appendingPathComponent("doomed.bin")
+        try Data(repeating: 0x44, count: 512).write(to: victim)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: victim.path))
+
+        let trashedURL = try FileTrasher().trash(victim)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: victim.path),
+                       "the file must no longer exist at its original path")
+        if let trashedURL { XCTAssertTrue(FileManager.default.fileExists(atPath: trashedURL.path)) }
+    }
 }
