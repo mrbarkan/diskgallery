@@ -19,22 +19,11 @@ final class ThemeModelTests: XCTestCase {
     }
 
     func testRawValuesAreStableForPersistence() {
-        XCTAssertEqual(Skin.allCases.map(\.rawValue), ["classic", "modern"])
         XCTAssertEqual(Accent.allCases.map(\.rawValue),
                        ["graphite", "violet", "blue", "green", "amber", "coral"])
-        XCTAssertEqual(OLEDLayout.allCases.map(\.rawValue),
-                       ["telemetry", "minimal", "actionDetail"])
-    }
-
-    func testGaugeLayoutRemoved() {
-        XCTAssertNil(OLEDLayout(rawValue: "gauge"))
     }
 
     func testDisplayNames() {
-        XCTAssertEqual(Skin.classic.name, "Classic")
-        XCTAssertEqual(Skin.modern.name, "Modern")
         XCTAssertEqual(Accent.violet.name, "Violet")
-        XCTAssertEqual(OLEDLayout.telemetry.name, "Telemetry")
-        XCTAssertEqual(OLEDLayout.actionDetail.name, "Action")
     }
 }

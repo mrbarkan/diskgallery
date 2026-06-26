@@ -2,7 +2,7 @@ import SwiftUI
 import Observation
 import DiskGalleryCore
 
-/// System / light / dark. (Skin, Accent, and OLEDLayout live in DiskGalleryCore.)
+/// System / light / dark. (Accent lives in DiskGalleryCore.)
 enum AppearanceMode: String, CaseIterable, Identifiable {
     case system, light, dark
     var id: String { rawValue }
@@ -21,17 +21,11 @@ enum AppearanceMode: String, CaseIterable, Identifiable {
 final class ThemeStore {
     private let defaults = UserDefaults.standard
 
-    var skin: Skin              { didSet { defaults.set(skin.rawValue, forKey: "skin") } }
     var accent: Accent          { didSet { defaults.set(accent.rawValue, forKey: "accent") } }
     var mode: AppearanceMode    { didSet { defaults.set(mode.rawValue, forKey: "appearanceMode") } }
-    var oledLayout: OLEDLayout  { didSet { defaults.set(oledLayout.rawValue, forKey: "oledLayout") } }
 
     init() {
-        // Classic is the only shipping skin. Coerce unconditionally so every shared-view
-        // `skin == .modern` check resolves to Classic (Modern stays compiled but frozen).
-        skin = .classic
         mode = AppearanceMode(rawValue: defaults.string(forKey: "appearanceMode") ?? "") ?? .system
-        oledLayout = OLEDLayout(rawValue: defaults.string(forKey: "oledLayout") ?? "") ?? .telemetry
         // Accent: prefer the new key; otherwise migrate the legacy `theme` value once.
         if let raw = defaults.string(forKey: "accent"), let stored = Accent(rawValue: raw) {
             accent = stored
@@ -42,11 +36,4 @@ final class ThemeStore {
         }
     }
 
-    /// Advance the OLED layout Telemetry → Minimal → Telemetry (the Display button).
-    /// `.actionDetail` is auto-selected on the Organize page and isn't part of the cycle.
-    func cycleOLEDLayout() {
-        let cyclable = OLEDLayout.userSelectable
-        guard let i = cyclable.firstIndex(of: oledLayout) else { oledLayout = .telemetry; return }
-        oledLayout = cyclable[(i + 1) % cyclable.count]
-    }
 }

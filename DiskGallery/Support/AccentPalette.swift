@@ -27,13 +27,3 @@ extension Accent {
     }
 }
 
-/// Fixed (non-accent) OLED screen tokens, from diskgallery.css.
-enum OLEDColor {
-    static let screen    = Color.black          // pitch black panel
-    static let ink       = Color.white          // bright pixels
-    static let ink2      = Color.white.opacity(0.72)
-    static let ink3      = Color.white.opacity(0.46)
-    static let ok        = Color(hex: 0x4ADE80)
-    static let warn      = Color(hex: 0xF7B955)
-    static let bad        = Color(hex: 0xF8736B)
-}

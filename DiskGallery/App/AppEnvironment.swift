@@ -148,21 +148,10 @@ final class AppEnvironment {
             guard let characters = event.charactersIgnoringModifiers else { return event }
             // Extract only Sendable data before hopping to the main actor.
             let consumed = MainActor.assumeIsolated {
-                self.handlePaneToggle(characters: characters) || self.handleShortcut(characters: characters)
+                self.handleShortcut(characters: characters)
             }
             return consumed ? nil : event
         }
-    }
-
-    /// Tab (or the user's bound key) toggles the Modern bento focus mode — collapse the
-    /// Reclaimable / Action plan / Inspector panes to enlarge the browser. Modern volume
-    /// pages only, and never while typing in a text field.
-    private func handlePaneToggle(characters: String) -> Bool {
-        guard theme.skin == .modern, case .volume = selection else { return false }
-        if let responder = NSApp.keyWindow?.firstResponder, responder is NSText { return false }
-        guard shortcuts.matchesPaneToggle(characters) else { return false }
-        withAnimation(.easeInOut(duration: 0.25)) { viewPrefs.toggleFocusMode() }
-        return true
     }
 
     /// Runs the tagging shortcut bound to `characters` on the current selection.
