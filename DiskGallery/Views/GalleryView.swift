@@ -2,6 +2,40 @@ import SwiftUI
 import AppKit
 import DiskGalleryCore
 
+/// Media-type filter chips for the Gallery.
+enum GalleryFilter: String, CaseIterable, Identifiable {
+    case all, photos, raw, video, docs, audio
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .all: return "All"; case .photos: return "Photos"; case .raw: return "RAW"
+        case .video: return "Video"; case .docs: return "Docs"; case .audio: return "Audio"
+        }
+    }
+    var categories: [FileCategory] {
+        switch self {
+        case .all:    return [.photos, .raw, .video, .documents, .audio]
+        case .photos: return [.photos]
+        case .raw:    return [.raw]
+        case .video:  return [.video]
+        case .docs:   return [.documents]
+        case .audio:  return [.audio]
+        }
+    }
+}
+
+/// How the Gallery grid is grouped into sections.
+enum GalleryGrouping: String, CaseIterable, Identifiable {
+    case none, shoot, drive, type
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .none: return "None"; case .shoot: return "Shoot"
+        case .drive: return "Drive"; case .type: return "Type"
+        }
+    }
+}
+
 struct GalleryView: View {
     @Environment(AppEnvironment.self) private var env
 
@@ -10,56 +44,134 @@ struct GalleryView: View {
     @State private var annotations: [String: Annotation] = [:]   // "volumeKey\u{1}relPath" -> annotation
     @State private var selectedIds: Set<Int64> = []
     @State private var loaded = false
+    @State private var filter: GalleryFilter = .all
+    @State private var grouping: GalleryGrouping = .none
+    @State private var cachedCount = 0
 
-    private static let mediaCategories: [FileCategory] = [.photos, .raw, .video, .documents]
     private let columns = [GridItem(.adaptive(minimum: 150, maximum: 220), spacing: 12)]
 
     var body: some View {
-        ScrollView {
-            if loaded && entries.isEmpty {
-                ContentUnavailableView("No media yet", systemImage: "photo.on.rectangle.angled",
-                    description: Text("Scan a drive and generate previews to see your photos here."))
-                    .padding(.top, 80)
-            } else {
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(entries) { entry in
-                        GalleryTile(entry: entry,
-                                    dupCount: dupCounts["\(entry.name)\u{1}\(entry.logicalSize)"] ?? 0,
-                                    annotation: annotations["\(entry.volumeKey)\u{1}\(entry.relPath)"],
-                                    isSelected: selectedIds.contains(entry.id))
-                            .contentShape(Rectangle())
-                            .onTapGesture { handleTap(entry) }
+        VStack(spacing: 0) {
+            controlBar
+            Divider()
+            ScrollView {
+                if loaded && entries.isEmpty {
+                    ContentUnavailableView("No media yet", systemImage: "photo.on.rectangle.angled",
+                        description: Text("Scan a drive and generate previews to see your photos here."))
+                        .padding(.top, 80)
+                } else {
+                    LazyVGrid(columns: columns, spacing: 12, pinnedViews: [.sectionHeaders]) {
+                        ForEach(sections, id: \.title) { section in
+                            Section {
+                                ForEach(section.items) { entry in
+                                    GalleryTile(entry: entry,
+                                                dupCount: dupCounts["\(entry.name)\u{1}\(entry.logicalSize)"] ?? 0,
+                                                annotation: annotations["\(entry.volumeKey)\u{1}\(entry.relPath)"],
+                                                isSelected: selectedIds.contains(entry.id))
+                                        .contentShape(Rectangle())
+                                        .onTapGesture { handleTap(entry) }
+                                }
+                            } header: {
+                                if !section.title.isEmpty {
+                                    HStack {
+                                        Text(section.title).font(.headline)
+                                        Spacer()
+                                        Text("\(section.items.count)").foregroundStyle(.secondary)
+                                    }
+                                    .padding(.vertical, 4).padding(.horizontal, 4)
+                                    .frame(maxWidth: .infinity)
+                                    .background(.regularMaterial)
+                                }
+                            }
+                        }
                     }
+                    .padding(16)
                 }
-                .padding(16)
             }
         }
         .navigationTitle("Gallery")
-        .task(id: env.dataVersion) { await load() }
+        .task(id: "\(env.dataVersion)-\(filter.rawValue)") { await load() }
+    }
+
+    @ViewBuilder private var controlBar: some View {
+        HStack(spacing: 12) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(GalleryFilter.allCases) { f in
+                        Button { filter = f } label: {
+                            Text(f.label).font(.caption.weight(.medium))
+                                .padding(.horizontal, 10).padding(.vertical, 4)
+                                .background(filter == f ? env.theme.accent.palette.accent : Color(.controlBackgroundColor),
+                                            in: Capsule())
+                                .foregroundStyle(filter == f ? .white : .primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            Spacer(minLength: 8)
+            Text("\(cachedCount) of \(entries.count) cached")
+                .font(.caption).foregroundStyle(.secondary).fixedSize()
+            Picker("Group", selection: $grouping) {
+                ForEach(GalleryGrouping.allCases) { g in Text(g.label).tag(g) }
+            }
+            .pickerStyle(.menu).fixedSize()
+        }
+        .padding(.horizontal, 12).padding(.vertical, 8)
     }
 
     private func load() async {
-        let items = (try? await env.catalog.gallery.items(categories: Self.mediaCategories)) ?? []
+        let items = (try? await env.catalog.gallery.items(categories: filter.categories)) ?? []
 
-        // Duplicate counts: one bulk query, keyed exactly like DuplicateSet.id ("name\u{1}logicalSize").
+        // Duplicate counts (one bulk query), keyed like DuplicateSet.id.
         let sets = (try? await env.catalog.duplicates.duplicateSets(minCopies: 2, limit: 2000)) ?? []
         var dups: [String: Int] = [:]
         for s in sets { dups["\(s.name)\u{1}\(s.logicalSize)"] = s.copies }
 
-        // Annotations: bulk per drive.
+        // Annotations + cached-thumbnail counts, bulk per drive.
         var annos: [String: Annotation] = [:]
+        var cached = 0
         for (key, group) in Dictionary(grouping: items, by: \.volumeKey) {
-            let map = (try? await env.catalog.annotations.annotations(
-                volumeKey: key, relPaths: group.map(\.relPath))) ?? [:]
+            let relPaths = group.map(\.relPath)
+            let map = (try? await env.catalog.annotations.annotations(volumeKey: key, relPaths: relPaths)) ?? [:]
             for (relPath, anno) in map { annos["\(key)\u{1}\(relPath)"] = anno }
+            let hit = (try? await env.catalog.thumbnails.cachedRelPaths(volumeKey: key, relPaths: relPaths)) ?? []
+            cached += hit.count
         }
 
         entries = items
         dupCounts = dups
         annotations = annos
-        selectedIds = selectedIds.intersection(Set(items.map(\.id)))   // drop ids that vanished
+        cachedCount = cached
+        selectedIds = selectedIds.intersection(Set(items.map(\.id)))
         syncSelectionToEnv()
         loaded = true
+    }
+
+    /// The grid split into titled sections per the current grouping ("" title = no header).
+    private var sections: [(title: String, items: [GalleryEntry])] {
+        switch grouping {
+        case .none:
+            return entries.isEmpty ? [] : [("", entries)]
+        case .drive:
+            return grouped { $0.volumeName }
+        case .type:
+            return grouped { FileCategory.category(forExtension: $0.ext ?? "").label }
+        case .shoot:
+            return grouped { shoot(of: $0.relPath) }
+        }
+    }
+
+    private func grouped(_ key: (GalleryEntry) -> String) -> [(title: String, items: [GalleryEntry])] {
+        Dictionary(grouping: entries, by: key)
+            .map { (title: $0.key, items: $0.value) }
+            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
+    /// The "shoot" = the file's parent folder name (or "—" at the volume root).
+    private func shoot(of relPath: String) -> String {
+        let parent = (relPath as NSString).deletingLastPathComponent
+        return parent.isEmpty ? "—" : (parent as NSString).lastPathComponent
     }
 
     private func handleTap(_ entry: GalleryEntry) {
