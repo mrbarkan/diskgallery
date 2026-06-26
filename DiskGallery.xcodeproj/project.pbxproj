@@ -65,6 +65,7 @@
 		78F985AE016928608959CE27 /* AnnotationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EFB0CEC11A298EB4F9FFCC /* AnnotationTests.swift */; };
 		791ECA6A41E764190290A12C /* FileCategoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63D12FD145E27077BFBDB7CF /* FileCategoryTests.swift */; };
 		7B1F5D43CB32C43142BAFBE6 /* VolumeFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3737FA4398BB56E6850F2A40 /* VolumeFilterTests.swift */; };
+		7CBF4932474E2A7C0EED87D2 /* GalleryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77B20AFA6B3E8B5D6D383F71 /* GalleryService.swift */; };
 		7E9167B07785325E285B2060 /* OrganizationPlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83DB251EBC4569F837483F0 /* OrganizationPlannerTests.swift */; };
 		7F9684CC87181356712AA720 /* PlanningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C8DCECD169ABFB6FA93CFA2 /* PlanningTests.swift */; };
 		8165D633F7C1316406A49D27 /* PathVisibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37759AE691004539E555EF69 /* PathVisibility.swift */; };
@@ -88,6 +89,7 @@
 		9FAA111FB1D47D4A250CFF75 /* Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AFFB1E76AE447035048FF76 /* Catalog.swift */; };
 		A6F8081BD8E0E7CE48D5F3ED /* TaggedListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D3048FEAC718F9F9AF6C11 /* TaggedListView.swift */; };
 		A7D03DFF5B452E8DAB8EDF76 /* FileOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE0290245E00880A68D2336F /* FileOperation.swift */; };
+		AA10EE288CFA713CB0E5688F /* GalleryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62881B657D719F595100AE56 /* GalleryTests.swift */; };
 		AC9701D75226543C584AA598 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = EDAD081A4FE6D77943D6D89D /* GRDB */; };
 		AF4B6A53D3887455342582AF /* Migrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 419C2FE432E8213D40143239 /* Migrations.swift */; };
 		AF654013EAEE5BC737A5585F /* ChangesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAB8199993101F11F86332D /* ChangesView.swift */; };
@@ -229,11 +231,13 @@
 		5F829DE6FBD919E122240C98 /* AllDrivesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllDrivesView.swift; sourceTree = "<group>"; };
 		6069A75F596EED173763F9A6 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		614B4CF5335499004E59FB34 /* RevealTargetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevealTargetTests.swift; sourceTree = "<group>"; };
+		62881B657D719F595100AE56 /* GalleryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryTests.swift; sourceTree = "<group>"; };
 		63D12FD145E27077BFBDB7CF /* FileCategoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCategoryTests.swift; sourceTree = "<group>"; };
 		6841323EDCA014BA601FB704 /* Thumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Thumbnail.swift; sourceTree = "<group>"; };
 		6CEE1A004B973AABD3E7B995 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		712CE98E1694A1CF820CC275 /* DriveDragItems.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveDragItems.swift; sourceTree = "<group>"; };
 		73DE55DAEC232BB0BE14679A /* CapacityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapacityTests.swift; sourceTree = "<group>"; };
+		77B20AFA6B3E8B5D6D383F71 /* GalleryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryService.swift; sourceTree = "<group>"; };
 		77EFB0CEC11A298EB4F9FFCC /* AnnotationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationTests.swift; sourceTree = "<group>"; };
 		79E7150F9FAC9E3145394AE1 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
 		7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashVerifier.swift; sourceTree = "<group>"; };
@@ -330,6 +334,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		04ED67E12B42B0321F8BF98D /* Gallery */ = {
+			isa = PBXGroup;
+			children = (
+				77B20AFA6B3E8B5D6D383F71 /* GalleryService.swift */,
+			);
+			path = Gallery;
+			sourceTree = "<group>";
+		};
 		09DC52A2DCC5A3D671283992 /* Annotations */ = {
 			isa = PBXGroup;
 			children = (
@@ -474,6 +486,7 @@
 				5320939B847686300165F08C /* FeatureTests.swift */,
 				63D12FD145E27077BFBDB7CF /* FileCategoryTests.swift */,
 				4105C0CC1F9C0469C2052248 /* FinderTagTests.swift */,
+				62881B657D719F595100AE56 /* GalleryTests.swift */,
 				286934E837CA4025B46E82A5 /* GroupingTests.swift */,
 				E4927DF6E42CF4C7CC971510 /* KeepRuleTests.swift */,
 				A29447DD438A0EDA49CD6D07 /* LicenseTests.swift */,
@@ -643,6 +656,7 @@
 				D22E82DBE1245BFAA3EEB9D1 /* Duplicates */,
 				625AE92E80BA82D6DD89D856 /* Execution */,
 				4842FEE73EED492C3DE2E141 /* FinderTags */,
+				04ED67E12B42B0321F8BF98D /* Gallery */,
 				3974AC806D5C0A872093BC8B /* Library */,
 				96DE309E4F4F94AB9B317EAF /* Licensing */,
 				9093CE4B4BFCADF7CB04DEFE /* Planning */,
@@ -828,6 +842,7 @@
 				593A032647E01F0B4D8E25D5 /* FeatureTests.swift in Sources */,
 				791ECA6A41E764190290A12C /* FileCategoryTests.swift in Sources */,
 				54F7E036F94C146237106B8D /* FinderTagTests.swift in Sources */,
+				AA10EE288CFA713CB0E5688F /* GalleryTests.swift in Sources */,
 				F6C371633BD9F87A479F3BA7 /* GroupingTests.swift in Sources */,
 				5E5155418A444E809457726B /* KeepRuleTests.swift in Sources */,
 				907624D036768D1FF01C7D85 /* LicenseTests.swift in Sources */,
@@ -928,6 +943,7 @@
 				A7D03DFF5B452E8DAB8EDF76 /* FileOperation.swift in Sources */,
 				15EB8449EE1B76121F169032 /* FileTrasher.swift in Sources */,
 				46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */,
+				7CBF4932474E2A7C0EED87D2 /* GalleryService.swift in Sources */,
 				163787F6E82DDAE41147E42E /* HashVerifier.swift in Sources */,
 				FF798E13607B774E1C65EE27 /* KeepRule.swift in Sources */,
 				622D7AFD130991BA9BC8B80C /* LibraryService.swift in Sources */,

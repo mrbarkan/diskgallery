@@ -21,6 +21,7 @@ public final class Catalog: Sendable {
     public let unified: UnifiedBrowserService
     public let execution: ExecutorService
     public let thumbnails: ThumbnailService
+    public let gallery: GalleryService
 
     public init(databaseURL: URL) throws {
         let pool = try AppDatabase.makePool(at: databaseURL)
@@ -41,6 +42,7 @@ public final class Catalog: Sendable {
         self.execution = ExecutorService(db: db, hasher: self.hasher)
         let thumbsDir = databaseURL.deletingLastPathComponent().appendingPathComponent("thumbnails", isDirectory: true)
         self.thumbnails = ThumbnailService(db: db, cacheDirectory: thumbsDir)
+        self.gallery = GalleryService(db: db)
     }
 
     /// Opens (creating if needed) the catalog at the default Application Support path.
