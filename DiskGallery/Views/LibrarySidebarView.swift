@@ -14,6 +14,9 @@ struct LibrarySidebarView: View {
     @State private var dropTargetGroupId: Int64?
     @State private var ungroupedTargeted = false
 
+    // Per-drive Previews sheet (one at a time, same pattern as group rename state).
+    @State private var previewsVolume: VolumeSummary?
+
     private var accent: Color { env.theme.accent.palette.accent }
 
     var body: some View {
@@ -63,6 +66,7 @@ struct LibrarySidebarView: View {
             }
         }
         .navigationTitle("DiskGallery")
+        .sheet(item: $previewsVolume) { ScanCacheView(summary: $0) }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button(action: scan) {
@@ -155,6 +159,8 @@ struct LibrarySidebarView: View {
                 .disabled(!env.volumes.isConnected(key: summary.uuid ?? summary.name))
             Divider()
         }
+        Button("Scan Cache / Previews…") { previewsVolume = summary }
+        Divider()
         DriveRoleMenu(key: summary.uuid ?? summary.name)
         Menu("Move to") {
             Button("New Group…") { Task { await env.createGroup(name: "New Group", withDrive: summary.id) } }

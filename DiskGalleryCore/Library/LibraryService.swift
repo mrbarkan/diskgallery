@@ -18,12 +18,14 @@ public struct VolumeSummary: Codable, Sendable, Identifiable, FetchableRecord {
     public var groupId: Int64?           // nil = ungrouped
     public var sortIndex: Int            // order within its group (or within ungrouped)
     public var hardware: DriveHardware?  // best-effort device facts (bus, medium, speed…)
+    public var previewTypes: String?     // JSON-encoded [FileCategory]; nil = default (photos+raw)
 
     public init(id: Int64, uuid: String?, name: String, latestSnapshotId: Int64?,
                 scannedAt: Date?, totalCapacity: Int64?, freeCapacity: Int64?,
                 fsType: String?, fileCount: Int64?, totalLogical: Int64?,
                 rootEntryId: Int64?, latestSnapshotComplete: Bool?,
-                groupId: Int64? = nil, sortIndex: Int = 0, hardware: DriveHardware? = nil) {
+                groupId: Int64? = nil, sortIndex: Int = 0, hardware: DriveHardware? = nil,
+                previewTypes: String? = nil) {
         self.id = id
         self.uuid = uuid
         self.name = name
@@ -39,6 +41,7 @@ public struct VolumeSummary: Codable, Sendable, Identifiable, FetchableRecord {
         self.groupId = groupId
         self.sortIndex = sortIndex
         self.hardware = hardware
+        self.previewTypes = previewTypes
     }
 }
 
@@ -52,7 +55,8 @@ public struct LibraryService: Sendable {
                s.totalCapacity AS totalCapacity, s.freeCapacity AS freeCapacity,
                s.fsType AS fsType, s.fileCount AS fileCount, s.totalLogical AS totalLogical,
                s.rootEntryId AS rootEntryId, s.isComplete AS latestSnapshotComplete,
-               v.groupId AS groupId, v.sortIndex AS sortIndex, v.hardware AS hardware
+               v.groupId AS groupId, v.sortIndex AS sortIndex, v.hardware AS hardware,
+               v.previewTypes AS previewTypes
         FROM volume v
         LEFT JOIN snapshot s ON s.id = (
             SELECT id FROM snapshot s2 WHERE s2.volumeId = v.id
@@ -188,6 +192,13 @@ public struct LibraryService: Sendable {
     public func deleteSnapshot(id: Int64) async throws {
         _ = try await db.writer.write { db in
             try Snapshot.deleteOne(db, key: id)
+        }
+    }
+
+    /// Updates the JSON-encoded preview-type selection for a drive (nil resets to default).
+    public func setPreviewTypes(_ json: String?, volumeId: Int64) async throws {
+        try await db.writer.write { db in
+            try db.execute(sql: "UPDATE volume SET previewTypes = ? WHERE id = ?", arguments: [json, volumeId])
         }
     }
 }

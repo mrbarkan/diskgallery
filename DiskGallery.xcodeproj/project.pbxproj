@@ -37,6 +37,7 @@
 		3F89243663D3FAF7DEFED70A /* VolumeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B2DFD8332DA70FF37376FB /* VolumeService.swift */; };
 		412F1FED7D5647E1F85054CF /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CEE1A004B973AABD3E7B995 /* Models.swift */; };
 		4272814F660D27B90F7ED93C /* AppInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1FF94BF0A803EA9F9F85826 /* AppInfo.swift */; };
+		43D9CAB4E3241728E5BD42BF /* ScanCacheView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF065A612665A90D5CF0162F /* ScanCacheView.swift */; };
 		46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */; };
 		48B9C217FDBC1191B3794535 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BC3C0065500C24587932BC0A /* Assets.xcassets */; };
 		4C39E65D70728750BBC0BC0D /* OrganizationPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 350D0E1C93E48609F8D0B030 /* OrganizationPlanner.swift */; };
@@ -267,6 +268,7 @@
 		BC0F324047574353BA4FF76D /* DriveHardwareProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveHardwareProbe.swift; sourceTree = "<group>"; };
 		BC3C0065500C24587932BC0A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BC621BD96C2E755F0715EB35 /* UpgradeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeSheet.swift; sourceTree = "<group>"; };
+		BF065A612665A90D5CF0162F /* ScanCacheView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanCacheView.swift; sourceTree = "<group>"; };
 		BF9D07CA34FE8810CF5FF634 /* FileCopier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCopier.swift; sourceTree = "<group>"; };
 		C0886F22F3BD10A946192FCA /* Scanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scanner.swift; sourceTree = "<group>"; };
 		C1827D6C9D202B74DE91FDA3 /* BetaGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaGate.swift; sourceTree = "<group>"; };
@@ -368,6 +370,7 @@
 				4296D75D18CD7E48D8D775B7 /* ExecutionConfirmView.swift */,
 				5844EC9B6BCF8A8733084C2E /* LibrarySidebarView.swift */,
 				2C6A636B23F4AF7231425323 /* OrganizeView.swift */,
+				BF065A612665A90D5CF0162F /* ScanCacheView.swift */,
 				4758EFE5A2559FC7E68D053C /* ScanProgressView.swift */,
 				146D1C1E98B588853D9D5BB8 /* SearchResultsView.swift */,
 				E79766C18BB7460C63E09866 /* SettingsView.swift */,
@@ -884,6 +887,7 @@
 				BF54B03A4E72C8AC63331AB3 /* OrganizeView.swift in Sources */,
 				C8C2BAD9C2BDE90D71E027AC /* ProBadge.swift in Sources */,
 				E823F0BAD1DD0D47E048EE92 /* RecentSearchStore.swift in Sources */,
+				43D9CAB4E3241728E5BD42BF /* ScanCacheView.swift in Sources */,
 				087128B95EFB93784C4FCD5E /* ScanProgressView.swift in Sources */,
 				B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */,
 				C723B2681D13ADAD6B82B080 /* SettingsView.swift in Sources */,

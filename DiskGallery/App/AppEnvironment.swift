@@ -126,6 +126,10 @@ final class AppEnvironment {
     var executionProgress: ExecutionProgress?   // non-nil shows the progress HUD
     @ObservationIgnored private var executionTask: Task<Void, Never>?
 
+    struct ThumbnailProgress { var completed: Int; var total: Int }
+    var thumbnailProgress: ThumbnailProgress?
+    @ObservationIgnored private var thumbnailTask: Task<Void, Never>?
+
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var currentScanSnapshotId: Int64?
     @ObservationIgnored private var currentScanURL: URL?
@@ -871,6 +875,60 @@ final class AppEnvironment {
         pasteboard.clearContents()
         pasteboard.setString(plan.reportText(), forType: .string)
     }
+
+    // MARK: Thumbnail generation
+
+    /// Default preview types when a drive has none set.
+    static let defaultPreviewTypes: [FileCategory] = [.photos, .raw]
+
+    func previewTypes(for summary: VolumeSummary) -> [FileCategory] {
+        guard let json = summary.previewTypes,
+              let data = json.data(using: .utf8),
+              let raw = try? JSONDecoder().decode([String].self, from: data) else {
+            return Self.defaultPreviewTypes
+        }
+        return raw.compactMap { FileCategory(rawValue: $0) }
+    }
+
+    func setPreviewTypes(_ types: [FileCategory], forVolume summary: VolumeSummary) {
+        let json = String(data: (try? JSONEncoder().encode(types.map(\.rawValue))) ?? Data(), encoding: .utf8)
+        Task { [weak self] in
+            try? await self?.catalog.library.setPreviewTypes(json, volumeId: summary.id)
+            await self?.refresh()
+        }
+    }
+
+    /// Generate + cache thumbnails for a connected drive's selected preview types.
+    func generateThumbnails(for summary: VolumeSummary) {
+        let key = summary.uuid ?? summary.name
+        guard let mount = volumes.mountURL(forKey: key) else { return }   // must be connected
+        let categories = previewTypes(for: summary)
+        thumbnailProgress = ThumbnailProgress(completed: 0, total: 0)
+        thumbnailTask = Task { [weak self] in
+            guard let self else { return }
+            let entries = (try? await self.catalog.thumbnails.entriesNeedingPreview(
+                volumeId: summary.id, categories: categories)) ?? []
+            self.thumbnailProgress = ThumbnailProgress(completed: 0, total: entries.count)
+            var done = 0
+            for entry in entries {
+                if Task.isCancelled { break }
+                let fileURL = mount.appendingPathComponent(entry.relPath)
+                let fresh = (try? await self.catalog.thumbnails.isFresh(
+                    volumeKey: key, relPath: entry.relPath,
+                    srcModifiedAt: entry.modifiedAt, srcSize: entry.size)) ?? false
+                if !fresh, let data = await self.catalog.thumbnails.generate(fileURL: fileURL, maxPixel: 512) {
+                    try? await self.catalog.thumbnails.store(data, volumeKey: key, relPath: entry.relPath,
+                                                             srcModifiedAt: entry.modifiedAt, srcSize: entry.size)
+                }
+                done += 1
+                self.thumbnailProgress = ThumbnailProgress(completed: done, total: entries.count)
+            }
+            self.thumbnailProgress = nil
+            self.dataVersion += 1
+        }
+    }
+
+    func cancelThumbnails() { thumbnailTask?.cancel() }
 
     // MARK: Catalog management
 
