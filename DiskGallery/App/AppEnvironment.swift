@@ -61,6 +61,16 @@ extension SidebarItem {
     static var taggedAll: SidebarItem { .tagged(.none) }
 }
 
+/// A lightweight reference to a gallery tile, carrying its own drive key so cross-drive
+/// selections can be tagged correctly (the Gallery spans drives, unlike the .volume browser).
+struct GalleryItemRef: Identifiable, Hashable {
+    let id: Int64            // entry id
+    let relPath: String
+    let name: String
+    let logicalSize: Int64
+    let volumeKey: String    // uuid ?? name
+}
+
 /// One sidebar section of drives: a named group (or the ungrouped catch-all when `group == nil`)
 /// with its drives in manual order. Computed from `volumeSummaries` + the loaded `driveGroups`.
 struct DriveGroupSection: Identifiable {
@@ -118,6 +128,7 @@ final class AppEnvironment {
     }
     var selectedEntries: [Entry] = []
     var selectedVolumeKey: String?
+    var selectedGalleryItems: [GalleryItemRef] = []
 
     var activeScan: ScanState?
     var stopRequested = false        // Stop pressed; scan halted; showing the prompt
