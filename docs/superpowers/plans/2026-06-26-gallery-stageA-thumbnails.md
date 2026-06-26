@@ -38,7 +38,7 @@
 
 ---
 
-## Task A1: `thumbnail` table + `previewTypes` column (migration v8) + records
+## Task 1: `thumbnail` table + `previewTypes` column (migration v8) + records
 
 **Files:**
 - Create: `DiskGalleryCore/Thumbnails/Thumbnail.swift`
@@ -164,7 +164,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task A2: `ThumbnailService` — cache + QuickLook generation + Catalog wiring
+## Task 2: `ThumbnailService` — cache + QuickLook generation + Catalog wiring
 
 **Files:**
 - Create: `DiskGalleryCore/Thumbnails/ThumbnailService.swift`
@@ -380,7 +380,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task A3: Scan-time generation pass + per-drive preview-type selection (app)
+## Task 3: Scan-time generation pass + per-drive preview-type selection (app)
 
 **Files:**
 - Modify: `DiskGallery/App/AppEnvironment.swift` (generation pass + preview-type setter + progress state)
