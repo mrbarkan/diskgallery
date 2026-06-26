@@ -16,11 +16,13 @@ public final class ExecutorService: Sendable {
     let db: AppDatabase
     let copier: FileCopier
     let trasher: FileTrasher
+    let hasher: HashVerifier
 
     init(db: AppDatabase, hasher: HashVerifier) {
         self.db = db
         self.copier = FileCopier(hasher: hasher)
         self.trasher = FileTrasher()
+        self.hasher = hasher
     }
 
     /// Build pending operations from a plan's steps of a given operation, for
@@ -47,6 +49,20 @@ public final class ExecutorService: Sendable {
     public static func moveDrafts(from steps: [PlanStep], isConnected: (String) -> Bool,
                                   now: Date) -> [FileOperation] {
         drafts(from: steps, planOp: .move, opType: .move, isConnected: isConnected, now: now)
+    }
+
+    /// Build pending delete operations from a plan's delete steps, for source drives
+    /// that are currently connected. Delete has no destination.
+    public static func deleteDrafts(from steps: [PlanStep], isConnected: (String) -> Bool,
+                                    now: Date) -> [FileOperation] {
+        steps.compactMap { step in
+            guard step.operation == .delete,
+                  let srcKey = step.sourceDriveKey, let srcPath = step.sourcePath,
+                  isConnected(srcKey) else { return nil }
+            return FileOperation(type: .delete, sourceVolumeKey: srcKey, sourceRelPath: srcPath,
+                                 destVolumeKey: nil, destRelPath: nil, bytes: step.bytes,
+                                 status: .pending, createdAt: now)
+        }
     }
 
     /// Persists drafts as pending rows; returns them with assigned ids.
@@ -113,11 +129,11 @@ public final class ExecutorService: Sendable {
             if Task.isCancelled { break }
             guard let id = op.id else { continue }
 
-            guard let dstKey = op.destVolumeKey, let dstPath = op.destRelPath,
-                  let src = resolve(op.sourceVolumeKey, op.sourceRelPath),
-                  let dst = resolve(dstKey, dstPath) else {
-                let updated = try? await finish(id, status: .skipped, skipReason: "drive not connected")
-                if let updated { await progress(updated) }
+            // Every operation needs its source drive connected.
+            guard let src = resolve(op.sourceVolumeKey, op.sourceRelPath) else {
+                if let u = try? await finish(id, status: .skipped, skipReason: "drive not connected") {
+                    await progress(u)
+                }
                 continue
             }
 
@@ -125,22 +141,57 @@ public final class ExecutorService: Sendable {
             do {
                 let updated: FileOperation?
                 switch op.type {
-                case .copy:
-                    let outcome = try copier.copyVerified(from: src, to: dst)
-                    updated = try await applyCopyOutcome(id, outcome)
-                case .move:
-                    updated = try await performMove(id, src: src, dst: dst)
+                case .copy, .move:
+                    // Copy and Move additionally need the destination drive connected.
+                    guard let dstKey = op.destVolumeKey, let dstPath = op.destRelPath,
+                          let dst = resolve(dstKey, dstPath) else {
+                        if let u = try? await finish(id, status: .skipped,
+                                                     skipReason: "destination drive not connected") {
+                            await progress(u)
+                        }
+                        continue
+                    }
+                    if op.type == .copy {
+                        updated = try await applyCopyOutcome(id, copier.copyVerified(from: src, to: dst))
+                    } else {
+                        updated = try await performMove(id, src: src, dst: dst)
+                    }
                 case .delete:
-                    updated = try await finish(id, status: .skipped,
-                                               skipReason: "delete is not available yet")
+                    updated = try await performDelete(id, op: op, src: src, resolve: resolve)
                 }
                 if let updated { await progress(updated) }
             } catch {
-                if let updated = try? await finish(id, status: .failed, failureReason: error.localizedDescription) {
-                    await progress(updated)
+                if let u = try? await finish(id, status: .failed, failureReason: error.localizedDescription) {
+                    await progress(u)
                 }
             }
         }
+    }
+
+    /// Trashes the source ONLY after finding a SHA-256-identical copy on a connected
+    /// backup-role drive (a different volume — so the surviving copy is never the last).
+    /// Idempotent: if the source is already gone, the delete is treated as done.
+    /// If no verified backup copy is reachable, the source is left untouched (skipped).
+    private func performDelete(_ id: Int64, op: FileOperation, src: URL,
+                               resolve: @Sendable (String, String) -> URL?) async throws -> FileOperation? {
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: src.path) {
+            return try await finish(id, status: .done)       // already deleted
+        }
+        let srcHash = try hasher.sha256(fileURL: src)
+        let name = (op.sourceRelPath as NSString).lastPathComponent
+        let candidates = try await backupCandidates(name: name, size: op.bytes,
+                                                     excludingVolumeKey: op.sourceVolumeKey)
+        for candidate in candidates {
+            guard let url = resolve(candidate.volumeKey, candidate.relPath),
+                  fm.fileExists(atPath: url.path) else { continue }
+            if try hasher.sha256(fileURL: url) == srcHash {
+                try trasher.trash(src)        // safe: a verified copy survives on a backup drive
+                return try await finish(id, status: .done, sourceHash: srcHash)
+            }
+        }
+        return try await finish(id, status: .skipped,
+                                skipReason: "no checksum-verified copy on a connected backup drive")
     }
 
     /// A verified copy then trashes the source. The source is trashed ONLY after the
