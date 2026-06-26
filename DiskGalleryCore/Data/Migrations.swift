@@ -162,6 +162,23 @@ enum Migrations {
             try db.create(index: "idx_operation_status", on: "operation", columns: ["status"])
         }
 
+        // Gallery thumbnails: a per-file cache reference + per-drive selected preview types.
+        migrator.registerMigration("v8") { db in
+            try db.create(table: "thumbnail") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("volumeKey", .text).notNull()
+                t.column("relPath", .text).notNull()
+                t.column("cacheFile", .text).notNull()
+                t.column("srcModifiedAt", .datetime)
+                t.column("srcSize", .integer).notNull().defaults(to: 0)
+                t.column("generatedAt", .datetime).notNull()
+                t.uniqueKey(["volumeKey", "relPath"])
+            }
+            try db.alter(table: "volume") { t in
+                t.add(column: "previewTypes", .text)   // JSON [FileCategory]; nil = default (photos+raw)
+            }
+        }
+
         return migrator
     }
 }

@@ -142,10 +142,11 @@ public struct Volume: Codable, Sendable, Identifiable, FetchableRecord, MutableP
     public var groupId: Int64?          // nil = ungrouped
     public var sortIndex: Int           // order within its group (or within ungrouped)
     public var hardware: DriveHardware? // best-effort device facts, captured on scan/connect
+    public var previewTypes: String?    // JSON-encoded [FileCategory]; nil = default
 
     public init(id: Int64? = nil, uuid: String?, name: String, bookmark: Data? = nil,
                 createdAt: Date, groupId: Int64? = nil, sortIndex: Int = 0,
-                hardware: DriveHardware? = nil) {
+                hardware: DriveHardware? = nil, previewTypes: String? = nil) {
         self.id = id
         self.uuid = uuid
         self.name = name
@@ -154,6 +155,7 @@ public struct Volume: Codable, Sendable, Identifiable, FetchableRecord, MutableP
         self.groupId = groupId
         self.sortIndex = sortIndex
         self.hardware = hardware
+        self.previewTypes = previewTypes
     }
 
     public mutating func didInsert(_ inserted: InsertionSuccess) {
