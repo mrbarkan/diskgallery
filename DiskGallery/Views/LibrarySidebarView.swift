@@ -29,6 +29,8 @@ struct LibrarySidebarView: View {
             }
 
             Section {
+                Label("Gallery", systemImage: "square.grid.3x3.fill")
+                    .tag(SidebarItem.gallery)
                 Label("Duplicates", systemImage: "doc.on.doc")
                     .badge(env.totalReclaimable > 0 ? Text(Format.bytes(env.totalReclaimable)) : nil)
                     .tag(SidebarItem.duplicates)

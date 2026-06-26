@@ -87,6 +87,7 @@
 		9BDCC4825CCA0392F74A7774 /* DiskGalleryCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; };
 		9C5E0BBD9E34E1611BED70ED /* LibrarySidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5844EC9B6BCF8A8733084C2E /* LibrarySidebarView.swift */; };
 		9FAA111FB1D47D4A250CFF75 /* Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AFFB1E76AE447035048FF76 /* Catalog.swift */; };
+		A0A2F31AD20D55D4DB22DD6D /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B984BBEB0792642053779B9 /* GalleryView.swift */; };
 		A6F8081BD8E0E7CE48D5F3ED /* TaggedListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D3048FEAC718F9F9AF6C11 /* TaggedListView.swift */; };
 		A7D03DFF5B452E8DAB8EDF76 /* FileOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE0290245E00880A68D2336F /* FileOperation.swift */; };
 		AA10EE288CFA713CB0E5688F /* GalleryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62881B657D719F595100AE56 /* GalleryTests.swift */; };
@@ -191,6 +192,7 @@
 		149B608FC593D130B299F9C8 /* DiskGalleryApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskGalleryApp.swift; sourceTree = "<group>"; };
 		1AFFB1E76AE447035048FF76 /* Catalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalog.swift; sourceTree = "<group>"; };
 		1B60F525D3DE6BD4E0A73D7F /* ThemeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeModel.swift; sourceTree = "<group>"; };
+		1B984BBEB0792642053779B9 /* GalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryView.swift; sourceTree = "<group>"; };
 		1CF5A435CDE43A8373D386F5 /* BetaExpiredView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaExpiredView.swift; sourceTree = "<group>"; };
 		1DEA844745D0DBFB7E8CAAFC /* UnifiedBrowserServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedBrowserServiceTests.swift; sourceTree = "<group>"; };
 		1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTagWriter.swift; sourceTree = "<group>"; };
@@ -380,6 +382,7 @@
 				C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */,
 				2C7B796F9140FFB75649FBEA /* EntryDetailView.swift */,
 				4296D75D18CD7E48D8D775B7 /* ExecutionConfirmView.swift */,
+				1B984BBEB0792642053779B9 /* GalleryView.swift */,
 				5844EC9B6BCF8A8733084C2E /* LibrarySidebarView.swift */,
 				2C6A636B23F4AF7231425323 /* OrganizeView.swift */,
 				BF065A612665A90D5CF0162F /* ScanCacheView.swift */,
@@ -897,6 +900,7 @@
 				364EC7F2121DE680B84DA20A /* EntryDetailView.swift in Sources */,
 				D30172335837E01888E0BADB /* ExecutionConfirmView.swift in Sources */,
 				8D42FF94DD3DB0E8C7B7F256 /* Formatters.swift in Sources */,
+				A0A2F31AD20D55D4DB22DD6D /* GalleryView.swift in Sources */,
 				9C5E0BBD9E34E1611BED70ED /* LibrarySidebarView.swift in Sources */,
 				1C9272BC8B0BC1C338147B3E /* LicenseStore.swift in Sources */,
 				BF54B03A4E72C8AC63331AB3 /* OrganizeView.swift in Sources */,

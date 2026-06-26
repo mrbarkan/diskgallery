@@ -15,6 +15,7 @@ enum SidebarItem: Hashable {
     case plan          // Action plan: everything tagged, grouped by drive
     case transfer      // Transfer planner: will it fit?
     case organize      // Organize: cross-drive, ordered, non-destructive transfer plan
+    case gallery       // Gallery: cross-drive contact sheet
 
     /// A stable string for persisting the selection across launches.
     var token: String {
@@ -27,6 +28,7 @@ enum SidebarItem: Hashable {
         case .plan:           "plan"
         case .transfer:       "transfer"
         case .organize:       "organize"
+        case .gallery:        "gallery"
         }
     }
 
@@ -39,6 +41,7 @@ enum SidebarItem: Hashable {
         case "plan":       self = .organize
         case "transfer":   self = .organize
         case "organize":   self = .organize
+        case "gallery":    self = .gallery
         default:
             if token.hasPrefix("volume:"), let id = Int64(token.dropFirst("volume:".count)) {
                 self = .volume(id)

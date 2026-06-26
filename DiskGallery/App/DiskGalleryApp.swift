@@ -219,6 +219,8 @@ struct ContentColumn: View {
             OrganizeHomeView()
         case .allDrives:
             AllDrivesView()
+        case .gallery:
+            GalleryView()
         case nil:
             ContentUnavailableView("Select a drive",
                                    systemImage: "sidebar.left",
