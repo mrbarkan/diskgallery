@@ -32,8 +32,6 @@ struct TransferPlannerView: View {
         }
     }
 
-    private var modern: Bool { env.theme.skin == .modern }
-
     private var source: DriveStats? { stats.first { $0.id == sourceId } }
     private var destination: DriveStats? { stats.first { $0.id == destId } }
 
@@ -110,8 +108,8 @@ struct TransferPlannerView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(verdictColor(fits).opacity(modern ? 0.12 : 0.08),
-                    in: RoundedRectangle(cornerRadius: modern ? 14 : 10))
+        .background(verdictColor(fits).opacity(0.08),
+                    in: RoundedRectangle(cornerRadius: 10))
     }
 
     private var itemList: some View {
@@ -126,7 +124,6 @@ struct TransferPlannerView: View {
                     Text(Format.bytes(item.sizeBytes)).foregroundStyle(.secondary).monospacedDigit()
                 }
             }
-            .modernListChrome(modern)
             .frame(minHeight: 140)
         }
     }

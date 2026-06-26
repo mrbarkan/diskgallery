@@ -143,11 +143,16 @@ struct ContentView: View {
     @State private var systemAppearance = SystemAppearance()
 
     var body: some View {
-        Group {
-            if modern { modernSplit } else { classicSplit }
+        NavigationSplitView {
+            LibrarySidebarView()
+                .navigationSplitViewColumnWidth(min: 220, ideal: 250)
+        } content: {
+            ContentColumn()
+                .navigationSplitViewColumnWidth(min: 360, ideal: 480)
+        } detail: {
+            detailColumn
+                .navigationSplitViewColumnWidth(min: 280, ideal: 320)
         }
-        .background { if modern { SpatialBackdrop(palette: env.theme.accent.palette) } }
-        .modernWindowChrome(modern)
         .sheet(isPresented: Binding(get: { env.activeScan != nil }, set: { _ in })) {
             ScanProgressView()
         }
@@ -170,26 +175,8 @@ struct ContentView: View {
                 .environment(env)
         }
         .tint(env.theme.accent.palette.accent)
-        .preferredColorScheme(effectiveScheme)
+        .preferredColorScheme(env.theme.mode.resolvedScheme(systemAppearance))
         .frame(minWidth: 1040, minHeight: 680)
-    }
-
-    /// Resolve "System" to a concrete scheme so Modern tokens & glass materials stay in
-    /// sync (a nil preferredColorScheme renders a mixed light/dark UI in this app).
-    private var effectiveScheme: ColorScheme { env.theme.mode.resolvedScheme(systemAppearance) }
-
-    // Classic — the original three-column layout, unchanged.
-    private var classicSplit: some View {
-        NavigationSplitView {
-            LibrarySidebarView()
-                .navigationSplitViewColumnWidth(min: 220, ideal: 250)
-        } content: {
-            ContentColumn()
-                .navigationSplitViewColumnWidth(min: 360, ideal: 480)
-        } detail: {
-            detailColumn
-                .navigationSplitViewColumnWidth(min: 280, ideal: 320)
-        }
     }
 
     /// The detail column shows the All Drives copy-comparison when that view is active,
@@ -206,23 +193,6 @@ struct ContentView: View {
             EntryDetailView()
         }
     }
-
-    // Modern — two floating glass panes over the spatial backdrop (the mockup's
-    // `grid-template-columns: 272px 1fr; gap:14; padding:14`). A custom HStack rather
-    // than NavigationSplitView so the panes float with a true gutter (matches mockup).
-    private var modernSplit: some View {
-        HStack(alignment: .top, spacing: 14) {
-            // Drop the sidebar by one topbar row (40 + 14 gap) so its top edge lines up
-            // with the OLED, leaving the traffic-light strip clear above it.
-            ModernSidebar().frame(width: 272).padding(.top, 54)
-            ModernWorkspace().frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .padding(.horizontal, 14).padding(.bottom, 14).padding(.top, 6)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea()
-    }
-
-    private var modern: Bool { env.theme.skin == .modern }
 }
 
 /// Routes the middle column based on the sidebar selection.

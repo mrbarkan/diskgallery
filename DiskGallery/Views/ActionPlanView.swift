@@ -5,8 +5,6 @@ struct OrganizeByDriveList: View {
     @Environment(AppEnvironment.self) private var env
     @State private var stats: [DriveStats] = []
 
-    private var modern: Bool { env.theme.skin == .modern }
-
     private var planned: [DriveStats] {
         stats.filter(\.hasPending).sorted { lhs, rhs in
             if lhs.pendingCount != rhs.pendingCount { return lhs.pendingCount > rhs.pendingCount }
@@ -35,7 +33,6 @@ struct OrganizeByDriveList: View {
                         }
                     }
                 }
-                .modernListChrome(modern)
             }
         }
         .task(id: env.dataVersion) { await load() }
@@ -50,9 +47,7 @@ struct OrganizeByDriveList: View {
             StatPill(title: "Drives to connect", value: "\(drivesToConnect)", tint: env.theme.accent.palette.accent)
         }
         .padding(12)
-        return Group {
-            if modern { pills.glassCard(radius: 14).padding(.horizontal, 12) } else { pills }
-        }
+        return pills
     }
 
     private func load() async {

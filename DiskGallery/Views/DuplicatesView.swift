@@ -3,7 +3,6 @@ import DiskGalleryCore
 
 struct DuplicatesView: View {
     @Environment(AppEnvironment.self) private var env
-    private var modern: Bool { env.theme.skin == .modern }
     @State private var sets: [DuplicateSet] = []
     @State private var selectedSetID: DuplicateSet.ID?
     @State private var members: [DuplicateMember] = []
@@ -12,16 +11,8 @@ struct DuplicatesView: View {
 
     var body: some View {
         VSplitView {
-            if modern {
-                setsList.glassCard().padding(8)
-            } else {
-                setsList
-            }
-            if modern {
-                membersPanel.glassCard().padding(8)
-            } else {
-                membersPanel
-            }
+            setsList
+            membersPanel
         }
         .navigationTitle("Duplicates")
         .task(id: reloadKey) { await loadSets() }
@@ -36,7 +27,7 @@ struct DuplicatesView: View {
                     Text("Files with the same name and size").font(.headline)
                     Spacer()
                     Text("Reclaimable: \(Format.bytes(env.totalReclaimable))")
-                        .foregroundStyle(modern ? env.theme.accent.palette.accent : .orange)
+                        .foregroundStyle(.orange)
                 }
                 Toggle("Only copies that span different drives", isOn: $crossDriveOnly)
                     .toggleStyle(.checkbox).font(.callout)
@@ -66,7 +57,6 @@ struct DuplicatesView: View {
                     }
                     .tag(set.id)
                 }
-                .modernListChrome(modern)
                 .onChange(of: selectedSetID) { _, _ in Task { await loadMembers() } }
             }
         }
@@ -109,7 +99,6 @@ struct DuplicatesView: View {
                         hashLabel(member)
                     }
                 }
-                .modernListChrome(modern)
             }
         }
     }

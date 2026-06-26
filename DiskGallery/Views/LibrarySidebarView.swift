@@ -14,7 +14,6 @@ struct LibrarySidebarView: View {
     @State private var dropTargetGroupId: Int64?
     @State private var ungroupedTargeted = false
 
-    private var modern: Bool { env.theme.skin == .modern }
     private var accent: Color { env.theme.accent.palette.accent }
 
     var body: some View {
@@ -23,9 +22,7 @@ struct LibrarySidebarView: View {
             Section {
                 Label("All Drives", systemImage: "square.stack.3d.up.fill")
                     .badge(env.coverageSummary.atRiskCount > 0 ? Text("\(env.coverageSummary.atRiskCount) at risk") : nil)
-                    .modernRowTint(modern, selected: env.selection == .allDrives, accent: env.theme.accent.palette.accent)
                     .tag(SidebarItem.allDrives)
-                    .listRowBackground(modern ? AnyView(modernRowBackground(for: .allDrives)) : nil)
             }
 
             Section {
@@ -65,7 +62,6 @@ struct LibrarySidebarView: View {
                 }
             }
         }
-        .modernListChrome(modern)
         .navigationTitle("DiskGallery")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -100,25 +96,8 @@ struct LibrarySidebarView: View {
         [Tag.move, .backup, .delete].reduce(0) { $0 + (env.tagCounts[$1] ?? 0) }
     }
 
-    /// Modern only: an accent-soft rounded fill behind the currently-selected nav row
-    /// (the design's `nav-item.on` treatment). Returns a clear background for unselected
-    /// rows. This is *only* used in Modern — Classic passes `nil` so the system default
-    /// selection style is preserved byte-for-byte.
-    @ViewBuilder private func modernRowBackground(for item: SidebarItem) -> some View {
-        if env.selection == item {
-            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(env.theme.accent.palette.soft)
-        } else {
-            Color.clear
-        }
-    }
-
     @ViewBuilder private func sectionHeader(_ title: String) -> some View {
-        if modern {
-            Text(title).font(.system(size: 9, weight: .semibold, design: .monospaced))
-                .tracking(1.5).textCase(.uppercase).foregroundStyle(.tertiary)
-        } else {
-            Text(title)
-        }
+        Text(title)
     }
 
     private func scan() {
@@ -145,7 +124,6 @@ struct LibrarySidebarView: View {
                     .opacity(dropTargetVolumeId == summary.id ? 1 : 0)
             }
             .tag(SidebarItem.volume(summary.id))
-            .listRowBackground(modern ? AnyView(modernRowBackground(for: .volume(summary.id))) : nil)
             .draggable(DriveDragID.drive(summary.id)) { dragPreview(icon: "externaldrive.fill", name: summary.name) }
             .dropDestination(for: String.self) { items, _ in
                 dropTargetVolumeId = nil
@@ -300,11 +278,9 @@ struct DriveRow: View {
     var body: some View {
         let key = summary.uuid ?? summary.name
         let connected = env.volumes.isConnected(key: key)
-        let modern = env.theme.skin == .modern
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "externaldrive.fill")
                 .foregroundStyle(connected ? Color.green : Color.secondary)
-                .shadow(color: connected && modern ? .green : .clear, radius: 4)
                 .help(connected ? "Connected" : "Disconnected")
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
@@ -361,15 +337,3 @@ struct DriveRow: View {
     }
 }
 
-private extension View {
-    /// Modern only: tint a selected nav row's label with the accent (the design's
-    /// `nav-item.on` text/icon color). When `modern` is false this is a no-op, so the
-    /// Classic label color is left exactly as the system draws it.
-    @ViewBuilder func modernRowTint(_ modern: Bool, selected: Bool, accent: Color) -> some View {
-        if modern && selected {
-            self.foregroundStyle(accent)
-        } else {
-            self
-        }
-    }
-}

@@ -137,8 +137,6 @@ struct FolderView: View {
     @State private var annotations: [String: Annotation] = [:]
     @State private var selection: Set<Int64> = []
 
-    private var modern: Bool { env.theme.skin == .modern }
-
     var body: some View {
         List(selection: $selection) {
             ForEach(children) { entry in
@@ -149,7 +147,6 @@ struct FolderView: View {
                 Text("Empty folder").foregroundStyle(.secondary)
             }
         }
-        .modernListChrome(modern)
         .contextMenu(forSelectionType: Int64.self) { ids in
             tagMenu(for: entries(for: ids))
         } primaryAction: { ids in

@@ -27,16 +27,11 @@ struct EntryInspector: View {
     @State private var annotation: Annotation?
     @State private var note: String = ""
 
-    private var modern: Bool { env.theme.skin == .modern }
-
     var body: some View {
-        Group {
-            if modern { modernBody } else { classicForm }
-        }
-        .task(id: reloadKey) { await load() }
+        classicForm
+            .task(id: reloadKey) { await load() }
     }
 
-    // Classic — the original grouped Form, unchanged.
     private var classicForm: some View {
         Form {
             Section {
@@ -63,72 +58,6 @@ struct EntryInspector: View {
         .formStyle(.grouped)
     }
 
-    // Modern — a frosted-glass inspector card on the spatial backdrop.
-    private var modernBody: some View {
-        let accent = env.theme.accent.palette.accent
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous).fill(accent.opacity(0.22))
-                        Image(systemName: entry.isDir ? "folder.fill" : "doc.fill")
-                            .font(.system(size: 22)).foregroundStyle(accent)
-                    }
-                    .frame(width: 52, height: 52)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(entry.name).font(.headline).lineLimit(2)
-                        Text(entry.isDir ? "Folder" : (entry.ext.map { ".\($0)" } ?? "File"))
-                            .font(.system(.caption, design: .monospaced)).textCase(.uppercase)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer(minLength: 0)
-                }
-
-                specGrid(accent: accent)
-
-                ModernInspectorSection(title: "Action Tag") {
-                    TagControls(targets: [entry], current: annotation, modern: true)
-                    FinderSyncNote()
-                }
-
-                ModernInspectorSection(title: "Note") {
-                    TextField("Note", text: $note, axis: .vertical)
-                        .lineLimit(3, reservesSpace: true)
-                        .textFieldStyle(.roundedBorder)
-                    Button("Save Note") { Task { await env.applyNote(note, to: entry) } }
-                        .controlSize(.small)
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .glassCard()
-            .padding(12)
-        }
-        .scrollContentBackground(.hidden)
-    }
-
-    @ViewBuilder private func specGrid(accent: Color) -> some View {
-        Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 7) {
-            specRow("Size", Format.bytes(entry.displaySize), color: accent)
-            if !entry.isDir { specRow("On disk", Format.bytes(entry.allocSize)) }
-            specRow("Modified", Format.date(entry.modifiedAt))
-            specRow("Path", entry.relPath.isEmpty ? "/" : entry.relPath)
-        }
-        .padding(.top, 2)
-    }
-
-    @ViewBuilder private func specRow(_ key: String, _ value: String, color: Color = .primary) -> some View {
-        GridRow {
-            Text(key)
-                .font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1)
-                .textCase(.uppercase).foregroundStyle(.tertiary)
-                .gridColumnAlignment(.leading)
-            Text(value)
-                .font(.system(.caption, design: .monospaced)).foregroundStyle(color)
-                .lineLimit(1).truncationMode(.middle)
-        }
-    }
-
     private var reloadKey: String { "\(entry.id)-\(env.dataVersion)" }
 
     private func load() async {
@@ -144,54 +73,18 @@ struct MultiSelectInspector: View {
     @Environment(AppEnvironment.self) private var env
     let entries: [Entry]
 
-    private var modern: Bool { env.theme.skin == .modern }
-
     var body: some View {
-        if modern {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("\(entries.count) items selected").font(.headline)
-                    Text("Total \(Format.bytes(entries.reduce(0) { $0 + $1.displaySize }))")
-                        .font(.system(.caption, design: .monospaced)).foregroundStyle(.secondary)
-                    ModernInspectorSection(title: "Tag all selected") {
-                        TagControls(targets: entries, current: nil, modern: true)
-                        FinderSyncNote()
-                    }
-                }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .glassCard()
-                .padding(12)
+        Form {
+            Section {
+                LabeledContent("Selected", value: "\(entries.count) items")
+                LabeledContent("Total size", value: Format.bytes(entries.reduce(0) { $0 + $1.displaySize }))
             }
-            .scrollContentBackground(.hidden)
-        } else {
-            Form {
-                Section {
-                    LabeledContent("Selected", value: "\(entries.count) items")
-                    LabeledContent("Total size", value: Format.bytes(entries.reduce(0) { $0 + $1.displaySize }))
-                }
-                Section("Tag all selected") {
-                    TagControls(targets: entries, current: nil)
-                    FinderSyncNote()
-                }
+            Section("Tag all selected") {
+                TagControls(targets: entries, current: nil)
+                FinderSyncNote()
             }
-            .formStyle(.grouped)
         }
-    }
-}
-
-/// Mono-caps section wrapper used in the Modern inspector.
-struct ModernInspectorSection<Content: View>: View {
-    let title: String
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1.2)
-                .textCase(.uppercase).foregroundStyle(.tertiary)
-            content
-        }
+        .formStyle(.grouped)
     }
 }
 
