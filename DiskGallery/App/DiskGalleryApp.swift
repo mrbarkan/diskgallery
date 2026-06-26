@@ -214,7 +214,7 @@ struct ContentColumn: View {
         case .search:
             SearchResultsView()
         case .plan, .transfer:
-            OrganizeHomeView()        // merged into Organize; kept for Modern compatibility
+            OrganizeHomeView()        // legacy sidebar items — map to the Organize home
         case .organize:
             OrganizeHomeView()
         case .allDrives:

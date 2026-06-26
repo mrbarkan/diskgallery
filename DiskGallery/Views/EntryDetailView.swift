@@ -94,20 +94,17 @@ struct TagControls: View {
     @Environment(AppEnvironment.self) private var env
     let targets: [Entry]
     let current: Annotation?
-    var modern: Bool = false
 
     var body: some View {
-        // In Modern, use the accent for the active Finder-color swatch ring (spec §5).
-        let accentRing: Color = modern ? env.theme.accent.palette.accent : .primary
+        let accentRing: Color = .primary
         return VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                if !modern { Text("Action Tag").font(.caption).foregroundStyle(.secondary) }
+                Text("Action Tag").font(.caption).foregroundStyle(.secondary)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 82), spacing: 6)], spacing: 6) {
                     ForEach([Tag.none] + Tag.actionTags) { tag in
                         DecisionButton(tag: tag,
                                        active: current?.tag == tag,
-                                       key: ShortcutAction.forDecision(tag).map { env.shortcuts.key(for: $0) },
-                                       modern: modern) {
+                                       key: ShortcutAction.forDecision(tag).map { env.shortcuts.key(for: $0) }) {
                             Task { await env.applyDecision(tag, to: targets) }
                         }
                     }
@@ -138,36 +135,26 @@ struct DecisionButton: View {
     let tag: Tag
     let active: Bool
     let key: String?
-    var modern: Bool = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             content
-                .padding(.vertical, modern ? 9 : 5).padding(.horizontal, 8)
+                .padding(.vertical, 5).padding(.horizontal, 8)
                 .frame(maxWidth: .infinity)
                 .background(active ? tag.swiftUIColor.opacity(0.22) : Color.gray.opacity(0.10),
-                            in: RoundedRectangle(cornerRadius: modern ? 11 : 7))
-                .overlay(RoundedRectangle(cornerRadius: modern ? 11 : 7)
+                            in: RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7)
                     .strokeBorder(active ? tag.swiftUIColor : .clear, lineWidth: 1.5))
         }
         .buttonStyle(.plain)
         .foregroundStyle(active ? tag.swiftUIColor : .primary)
     }
 
-    // Modern: icon-over-label (the design's .tagbtn). Classic: label+icon with key hint.
     @ViewBuilder private var content: some View {
-        if modern {
-            VStack(spacing: 5) {
-                Image(systemName: tag.symbol).font(.system(size: 15))
-                Text(tag.label)
-                    .font(.system(size: 9, weight: .semibold, design: .monospaced)).textCase(.uppercase)
-            }
-        } else {
-            VStack(spacing: 2) {
-                Label(tag.label, systemImage: tag.symbol).labelStyle(.titleAndIcon).font(.callout)
-                Text((key ?? " ").uppercased()).font(.caption2).foregroundStyle(.secondary)
-            }
+        VStack(spacing: 2) {
+            Label(tag.label, systemImage: tag.symbol).labelStyle(.titleAndIcon).font(.callout)
+            Text((key ?? " ").uppercased()).font(.caption2).foregroundStyle(.secondary)
         }
     }
 }
@@ -176,7 +163,6 @@ struct ColorSwatch: View {
     let color: FinderColor
     let active: Bool
     let key: String?
-    /// Active ring color: `.primary` in Classic, accent in Modern (spec §5).
     var activeRing: Color = .primary
     let action: () -> Void
 
