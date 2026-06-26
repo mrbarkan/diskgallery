@@ -11,7 +11,7 @@ struct ExecutionConfirmView: View {
             Label("Ready to run", systemImage: "externaldrive.badge.checkmark")
                 .font(.title2.bold())
             Text(summary).foregroundStyle(.secondary)
-            Label("Backups and moves are copied and checksum-verified before anything else happens. A move then sends the original to the Trash. Existing files are never overwritten.",
+            Label("Backups and moves are copied and checksum-verified first; a move then trashes the original. A delete only happens when an identical copy is verified on a backup drive — otherwise it's skipped. Nothing is ever overwritten, and deletes go to the Trash.",
                   systemImage: "checkmark.shield")
                 .font(.caption).foregroundStyle(.secondary)
             HStack {
@@ -30,6 +30,7 @@ struct ExecutionConfirmView: View {
         var parts: [String] = []
         if prompt.copyCount > 0 { parts.append("\(prompt.copyCount) back up") }
         if prompt.moveCount > 0 { parts.append("\(prompt.moveCount) move") }
+        if prompt.deleteCount > 0 { parts.append("\(prompt.deleteCount) delete") }
         let what = parts.isEmpty ? "\(prompt.fileCount) operations" : parts.joined(separator: " · ")
         return "\(what) · \(Format.bytes(prompt.totalBytes)) → \(prompt.driveNames.joined(separator: ", "))"
     }

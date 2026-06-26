@@ -781,6 +781,7 @@ final class AppEnvironment {
         var fileCount: Int { drafts.count }
         var copyCount: Int { drafts.filter { $0.type == .copy }.count }
         var moveCount: Int { drafts.filter { $0.type == .move }.count }
+        var deleteCount: Int { drafts.filter { $0.type == .delete }.count }
         var totalBytes: Int64 { drafts.reduce(0) { $0 + $1.bytes } }
         var driveNames: [String]
     }
@@ -800,6 +801,7 @@ final class AppEnvironment {
         let connected: (String) -> Bool = { [volumes] in volumes.isConnected(key: $0) }
         let drafts = ExecutorService.copyDrafts(from: plan.steps, isConnected: connected, now: Date())
             + ExecutorService.moveDrafts(from: plan.steps, isConnected: connected, now: Date())
+            + ExecutorService.deleteDrafts(from: plan.steps, isConnected: connected, now: Date())
         guard !drafts.isEmpty else { return }
         let names = Set(drafts.compactMap { $0.destVolumeKey }
             .compactMap { key in volumeSummaries.first { ($0.uuid ?? $0.name) == key }?.name })
@@ -830,7 +832,8 @@ final class AppEnvironment {
             // annotation so it isn't re-proposed as a move on the next reconnect.
             let ids = Set(enqueued.compactMap(\.id))
             let finished = (try? await self.catalog.execution.history()) ?? []
-            for op in finished where op.id.map(ids.contains) == true && op.type == .move && op.status == .done {
+            for op in finished where op.id.map(ids.contains) == true
+                && (op.type == .move || op.type == .delete) && op.status == .done {
                 try? await self.catalog.annotations.setDecision(.none, volumeKey: op.sourceVolumeKey,
                                                                 relPath: op.sourceRelPath)
             }
