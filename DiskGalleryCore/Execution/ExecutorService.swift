@@ -175,8 +175,14 @@ public final class ExecutorService: Sendable {
     private func performDelete(_ id: Int64, op: FileOperation, src: URL,
                                resolve: @Sendable (String, String) -> URL?) async throws -> FileOperation? {
         let fm = FileManager.default
-        if !fm.fileExists(atPath: src.path) {
-            return try await finish(id, status: .done)       // already deleted
+        var isDir: ObjCBool = false
+        let exists = fm.fileExists(atPath: src.path, isDirectory: &isDir)
+        if !exists {
+            return try await finish(id, status: .done)       // already deleted (idempotent)
+        }
+        if isDir.boolValue {
+            return try await finish(id, status: .skipped,
+                                    skipReason: "folders aren't supported for verified delete")
         }
         let srcHash = try hasher.sha256(fileURL: src)
         let name = (op.sourceRelPath as NSString).lastPathComponent

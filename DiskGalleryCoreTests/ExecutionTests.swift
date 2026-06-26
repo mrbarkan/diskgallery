@@ -275,6 +275,8 @@ final class ExecutionTests: XCTestCase {
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: dirA.appendingPathComponent("dup.bin").path),
                       "source must NOT be trashed without a backup-role verified copy")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dirB.appendingPathComponent("dup.bin").path),
+                      "the other copy must also be untouched on a skip")
         let after = try await catalog.execution.history()
         XCTAssertEqual(after.first?.status, .skipped)
     }
@@ -297,6 +299,25 @@ final class ExecutionTests: XCTestCase {
         XCTAssertEqual(after.first?.status, .done, "already-gone source = done (idempotent)")
     }
 
+    func testDeleteSkipsADirectorySource() async throws {
+        let catalog = try Fixture.makeCatalog()
+        let dirA = try tempDir()
+        let folder = dirA.appendingPathComponent("folder", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+
+        let op = FileOperation(type: .delete, sourceVolumeKey: "UUID-FD", sourceRelPath: "folder",
+                               destVolumeKey: nil, destRelPath: nil, bytes: 0,
+                               status: .pending, createdAt: Date())
+        let enqueued = try await catalog.execution.enqueue([op])
+        await catalog.execution.run(enqueued, resolve: { key, rel in
+            key == "UUID-FD" ? dirA.appendingPathComponent(rel) : nil
+        }, progress: { _ in })
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: folder.path), "a folder source must not be trashed")
+        let after = try await catalog.execution.history()
+        XCTAssertEqual(after.first?.status, .skipped)
+    }
+
     func testBackupCandidatesOnlyMatchesBackupRoleDrives() async throws {
         let catalog = try Fixture.makeCatalog()
         try await seedVolume(catalog, uuid: "UUID-VOLA", name: "vola",
@@ -304,7 +325,7 @@ final class ExecutionTests: XCTestCase {
         try await seedVolume(catalog, uuid: "UUID-VOLB", name: "volb",
                              files: [("dup.bin", 2048)])
         let vols = try await catalog.library.volumes()
-        XCTAssertEqual(vols.count, 2, "two folder scans should produce two volumes")
+        XCTAssertEqual(vols.count, 2, "two seeded volumes should appear in the library")
         let keyA = AnnotationStore.volumeKey(uuid: vols[0].uuid, name: vols[0].name)
         let keyB = AnnotationStore.volumeKey(uuid: vols[1].uuid, name: vols[1].name)
 

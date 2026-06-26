@@ -828,8 +828,8 @@ final class AppEnvironment {
                 self.executionProgress = ExecutionProgress(completed: done, total: total,
                                                            currentName: (op.sourceRelPath as NSString).lastPathComponent)
             })
-            // A completed move leaves its source in the Trash — clear the source's
-            // annotation so it isn't re-proposed as a move on the next reconnect.
+            // A completed move or delete leaves its source in the Trash — clear the source's
+            // annotation so it isn't re-proposed on the next reconnect.
             let ids = Set(enqueued.compactMap(\.id))
             let finished = (try? await self.catalog.execution.history()) ?? []
             for op in finished where op.id.map(ids.contains) == true
