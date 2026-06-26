@@ -47,11 +47,14 @@ struct GalleryView: View {
     @State private var filter: GalleryFilter = .all
     @State private var grouping: GalleryGrouping = .none
     @State private var cachedCount = 0
+    @State private var driveFilter: Int64?    // selected volume id, nil = all drives
 
     private let columns = [GridItem(.adaptive(minimum: 150, maximum: 220), spacing: 12)]
 
     var body: some View {
         VStack(spacing: 0) {
+            driveShelf
+            Divider()
             controlBar
             Divider()
             ScrollView {
@@ -90,7 +93,55 @@ struct GalleryView: View {
             }
         }
         .navigationTitle("Gallery")
-        .task(id: "\(env.dataVersion)-\(filter.rawValue)") { await load() }
+        .task(id: "\(env.dataVersion)-\(filter.rawValue)-\(driveFilter ?? -1)") { await load() }
+    }
+
+    @ViewBuilder private var driveShelf: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                driveCard(title: "All Drives", systemImage: "square.grid.2x2",
+                          subtitle: "\(env.volumeSummaries.count) drives",
+                          fraction: nil, connected: true, selected: driveFilter == nil) {
+                    driveFilter = nil
+                }
+                ForEach(env.volumeSummaries) { summary in
+                    let used = (summary.totalCapacity ?? 0) - (summary.freeCapacity ?? 0)
+                    let frac = (summary.totalCapacity ?? 0) > 0 ? Double(used) / Double(summary.totalCapacity!) : nil
+                    driveCard(title: summary.name, systemImage: "externaldrive.fill",
+                              subtitle: Format.count(summary.fileCount),
+                              fraction: frac,
+                              connected: env.volumes.isConnected(key: summary.uuid ?? summary.name),
+                              selected: driveFilter == summary.id) {
+                        driveFilter = (driveFilter == summary.id) ? nil : summary.id
+                    }
+                }
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+        }
+    }
+
+    private func driveCard(title: String, systemImage: String, subtitle: String,
+                           fraction: Double?, connected: Bool, selected: Bool,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 5) {
+                    Image(systemName: systemImage).font(.system(size: 11))
+                    Text(title).font(.caption.weight(.semibold)).lineLimit(1)
+                    Circle().fill(connected ? .green : .secondary).frame(width: 6, height: 6)
+                }
+                Text(subtitle).font(.system(size: 10)).foregroundStyle(.secondary)
+                if let fraction {
+                    ProgressView(value: min(max(fraction, 0), 1)).controlSize(.mini).frame(width: 110)
+                }
+            }
+            .padding(8)
+            .frame(width: 150, alignment: .leading)
+            .background(Color(.controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(selected ? env.theme.accent.palette.accent : .clear, lineWidth: 2))
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder private var controlBar: some View {
@@ -121,7 +172,7 @@ struct GalleryView: View {
     }
 
     private func load() async {
-        let items = (try? await env.catalog.gallery.items(categories: filter.categories)) ?? []
+        let items = (try? await env.catalog.gallery.items(categories: filter.categories, volumeId: driveFilter)) ?? []
 
         // Duplicate counts (one bulk query), keyed like DuplicateSet.id.
         let sets = (try? await env.catalog.duplicates.duplicateSets(minCopies: 2, limit: 2000)) ?? []
