@@ -175,19 +175,24 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 Append to `DiskGalleryCoreTests/ExecutionTests.swift`:
 
 ```swift
+    // NOTE: real folder scans collapse multiple temp dirs to one host-volume UUID, so
+    // these tests SEED the catalog (two distinct volumes, via the `seedVolume` helper
+    // added in Stage 3 Task 1) AND create real files on disk (so `performDelete` can
+    // hash + trash). The seeded volume UUID is the volume key; the `resolve` closure
+    // maps that same key to the on-disk temp dir.
+
     func testDeleteTrashesSourceWhenVerifiedBackupCopyExists() async throws {
         let catalog = try Fixture.makeCatalog()
-        let volA = try volTree("dela"), volB = try volTree("delb")   // both hold identical dup.bin
-        _ = try await Fixture.scan(catalog, volA)
-        _ = try await Fixture.scan(catalog, volB)
-        let vols = try await catalog.library.volumes()
-        let keyA = AnnotationStore.volumeKey(uuid: vols[0].uuid, name: vols[0].name)
-        let keyB = AnnotationStore.volumeKey(uuid: vols[1].uuid, name: vols[1].name)
-        try await catalog.driveRoles.setRole(.mainBackup, forKey: keyB)   // B is a backup
+        try await seedVolume(catalog, uuid: "UUID-DA", name: "dela", files: [("dup.bin", 2048)])
+        try await seedVolume(catalog, uuid: "UUID-DB", name: "delb", files: [("dup.bin", 2048)])
+        try await catalog.driveRoles.setRole(.mainBackup, forKey: "UUID-DB")   // B is a backup
+        // Real identical files on disk for hashing + trashing.
+        let dirA = try tempDir(), dirB = try tempDir()
+        try Data(repeating: 0x44, count: 2048).write(to: dirA.appendingPathComponent("dup.bin"))
+        try Data(repeating: 0x44, count: 2048).write(to: dirB.appendingPathComponent("dup.bin"))
+        let mounts = ["UUID-DA": dirA, "UUID-DB": dirB]
 
-        // Map the catalog volume keys to the on-disk trees.
-        let mounts = [keyA: volA, keyB: volB]
-        let op = FileOperation(type: .delete, sourceVolumeKey: keyA, sourceRelPath: "dup.bin",
+        let op = FileOperation(type: .delete, sourceVolumeKey: "UUID-DA", sourceRelPath: "dup.bin",
                                destVolumeKey: nil, destRelPath: nil, bytes: 2048,
                                status: .pending, createdAt: Date())
         let enqueued = try await catalog.execution.enqueue([op])
@@ -195,9 +200,9 @@ Append to `DiskGalleryCoreTests/ExecutionTests.swift`:
             mounts[key]?.appendingPathComponent(rel)
         }, progress: { _ in })
 
-        XCTAssertFalse(FileManager.default.fileExists(atPath: volA.appendingPathComponent("dup.bin").path),
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dirA.appendingPathComponent("dup.bin").path),
                        "source must be trashed once a verified backup copy exists")
-        XCTAssertTrue(FileManager.default.fileExists(atPath: volB.appendingPathComponent("dup.bin").path),
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dirB.appendingPathComponent("dup.bin").path),
                       "the backup copy must remain")
         let after = try await catalog.execution.history()
         XCTAssertEqual(after.first?.status, .done)
@@ -205,16 +210,15 @@ Append to `DiskGalleryCoreTests/ExecutionTests.swift`:
 
     func testDeleteSkipsWhenOnlyCopyIsOnANonBackupDrive() async throws {
         let catalog = try Fixture.makeCatalog()
-        let volA = try volTree("ndela"), volB = try volTree("ndelb")
-        _ = try await Fixture.scan(catalog, volA)
-        _ = try await Fixture.scan(catalog, volB)
-        let vols = try await catalog.library.volumes()
-        let keyA = AnnotationStore.volumeKey(uuid: vols[0].uuid, name: vols[0].name)
-        let keyB = AnnotationStore.volumeKey(uuid: vols[1].uuid, name: vols[1].name)
-        // B has a copy but is NOT a backup role (left neutral) → not a valid surviving copy.
+        try await seedVolume(catalog, uuid: "UUID-NA", name: "ndela", files: [("dup.bin", 2048)])
+        try await seedVolume(catalog, uuid: "UUID-NB", name: "ndelb", files: [("dup.bin", 2048)])
+        // B has the copy but NO backup role → not a valid surviving copy.
+        let dirA = try tempDir(), dirB = try tempDir()
+        try Data(repeating: 0x44, count: 2048).write(to: dirA.appendingPathComponent("dup.bin"))
+        try Data(repeating: 0x44, count: 2048).write(to: dirB.appendingPathComponent("dup.bin"))
+        let mounts = ["UUID-NA": dirA, "UUID-NB": dirB]
 
-        let mounts = [keyA: volA, keyB: volB]
-        let op = FileOperation(type: .delete, sourceVolumeKey: keyA, sourceRelPath: "dup.bin",
+        let op = FileOperation(type: .delete, sourceVolumeKey: "UUID-NA", sourceRelPath: "dup.bin",
                                destVolumeKey: nil, destRelPath: nil, bytes: 2048,
                                status: .pending, createdAt: Date())
         let enqueued = try await catalog.execution.enqueue([op])
@@ -222,7 +226,7 @@ Append to `DiskGalleryCoreTests/ExecutionTests.swift`:
             mounts[key]?.appendingPathComponent(rel)
         }, progress: { _ in })
 
-        XCTAssertTrue(FileManager.default.fileExists(atPath: volA.appendingPathComponent("dup.bin").path),
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dirA.appendingPathComponent("dup.bin").path),
                       "source must NOT be trashed without a backup-role verified copy")
         let after = try await catalog.execution.history()
         XCTAssertEqual(after.first?.status, .skipped)
@@ -230,18 +234,16 @@ Append to `DiskGalleryCoreTests/ExecutionTests.swift`:
 
     func testDeleteIsIdempotentWhenSourceAlreadyGone() async throws {
         let catalog = try Fixture.makeCatalog()
-        let volA = try volTree("idela")
-        _ = try await Fixture.scan(catalog, volA)
-        let vols = try await catalog.library.volumes()
-        let keyA = AnnotationStore.volumeKey(uuid: vols[0].uuid, name: vols[0].name)
-        try FileManager.default.removeItem(at: volA.appendingPathComponent("dup.bin"))   // already gone
+        try await seedVolume(catalog, uuid: "UUID-IA", name: "idela", files: [("dup.bin", 2048)])
+        let dirA = try tempDir()   // no dup.bin written → source already gone on disk
+        let mounts = ["UUID-IA": dirA]
 
-        let op = FileOperation(type: .delete, sourceVolumeKey: keyA, sourceRelPath: "dup.bin",
+        let op = FileOperation(type: .delete, sourceVolumeKey: "UUID-IA", sourceRelPath: "dup.bin",
                                destVolumeKey: nil, destRelPath: nil, bytes: 2048,
                                status: .pending, createdAt: Date())
         let enqueued = try await catalog.execution.enqueue([op])
         await catalog.execution.run(enqueued, resolve: { key, rel in
-            key == keyA ? volA.appendingPathComponent(rel) : nil
+            mounts[key]?.appendingPathComponent(rel)
         }, progress: { _ in })
 
         let after = try await catalog.execution.history()
