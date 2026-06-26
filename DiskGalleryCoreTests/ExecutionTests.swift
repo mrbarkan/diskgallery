@@ -200,4 +200,54 @@ final class ExecutionTests: XCTestCase {
         let after = try await catalog.execution.history()
         XCTAssertEqual(after.first?.status, .done, "already-moved source + present dest = done")
     }
+
+    // MARK: - backupCandidates
+
+    /// Seeds a synthetic volume+snapshot+entry directly (avoids real-FS scan collapsing
+    /// multiple temp dirs to the same host-volume UUID).
+    private func seedVolume(_ catalog: Catalog, uuid: String, name: String,
+                            files: [(name: String, size: Int64)]) async throws {
+        try await catalog.database.writer.write { db in
+            var volume = Volume(uuid: uuid, name: name, createdAt: Date())
+            try volume.insert(db)
+            var snapshot = Snapshot(volumeId: volume.id!, scannedAt: Date(),
+                                    totalCapacity: 1_000_000, freeCapacity: 500_000, isComplete: true)
+            try snapshot.insert(db)
+            var nextId = (try Int64.fetchOne(db, sql: "SELECT IFNULL(MAX(id), 0) FROM entry") ?? 0) + 1
+            for file in files {
+                try Entry(id: nextId, snapshotId: snapshot.id!, parentId: nil, name: file.name,
+                          relPath: file.name, isDir: false, logicalSize: file.size, allocSize: file.size).insert(db)
+                nextId += 1
+            }
+        }
+    }
+
+    func testBackupCandidatesOnlyMatchesBackupRoleDrives() async throws {
+        let catalog = try Fixture.makeCatalog()
+        try await seedVolume(catalog, uuid: "UUID-VOLA", name: "vola",
+                             files: [("dup.bin", 2048)])
+        try await seedVolume(catalog, uuid: "UUID-VOLB", name: "volb",
+                             files: [("dup.bin", 2048)])
+        let vols = try await catalog.library.volumes()
+        XCTAssertEqual(vols.count, 2, "two folder scans should produce two volumes")
+        let keyA = AnnotationStore.volumeKey(uuid: vols[0].uuid, name: vols[0].name)
+        let keyB = AnnotationStore.volumeKey(uuid: vols[1].uuid, name: vols[1].name)
+
+        // No roles assigned → no backup candidates.
+        let none = try await catalog.execution.backupCandidates(name: "dup.bin", size: 2048,
+                                                                excludingVolumeKey: keyA)
+        XCTAssertTrue(none.isEmpty)
+
+        // Mark B as a backup → B's copy is now a valid surviving copy when deleting from A.
+        try await catalog.driveRoles.setRole(.mainBackup, forKey: keyB)
+        let found = try await catalog.execution.backupCandidates(name: "dup.bin", size: 2048,
+                                                                 excludingVolumeKey: keyA)
+        XCTAssertEqual(found.map(\.volumeKey), [keyB])
+        XCTAssertEqual(found.first?.relPath, "dup.bin")
+
+        // Excluding B (the only backup) → empty (never matches the excluded volume).
+        let excludingB = try await catalog.execution.backupCandidates(name: "dup.bin", size: 2048,
+                                                                      excludingVolumeKey: keyB)
+        XCTAssertTrue(excludingB.isEmpty)
+    }
 }

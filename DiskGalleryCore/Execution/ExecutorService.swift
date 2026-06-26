@@ -1,6 +1,13 @@
 import Foundation
 import GRDB
 
+/// A copy of a file located on a backup-role drive — used to verify that deleting
+/// the source is safe (an identical copy survives elsewhere).
+public struct BackupCandidate: Codable, Sendable, FetchableRecord {
+    public var volumeKey: String
+    public var relPath: String
+}
+
 /// The execution engine facade (`catalog.execution`). Materializes copy operations
 /// from the Organize plan, persists them, and runs them with checksum verification.
 /// This is the app's deliberate file-mutation surface (via `FileCopier`); cataloging
@@ -63,6 +70,37 @@ public final class ExecutorService: Sendable {
     public func history() async throws -> [FileOperation] {
         try await db.writer.read { db in
             try FileOperation.order(Column("id").desc).fetchAll(db)
+        }
+    }
+
+    /// Copies of `(name, size)` on backup-role drives OTHER than `excludingVolumeKey`,
+    /// from each volume's latest snapshot. The volume key matches the catalog's
+    /// `uuid ?? name` convention. Used by Delete to confirm a surviving copy exists
+    /// on a backup before trashing the source.
+    public func backupCandidates(name: String, size: Int64,
+                                 excludingVolumeKey: String) async throws -> [BackupCandidate] {
+        try await db.writer.read { db in
+            try BackupCandidate.fetchAll(db, sql: """
+                WITH latest AS (
+                    SELECT s.id FROM snapshot s
+                    WHERE s.id = (
+                        SELECT id FROM snapshot s2 WHERE s2.volumeId = s.volumeId
+                        ORDER BY s2.scannedAt DESC, s2.id DESC LIMIT 1
+                    )
+                )
+                SELECT (CASE WHEN v.uuid IS NOT NULL THEN v.uuid ELSE v.name END) AS volumeKey,
+                       e.relPath AS relPath
+                FROM entry e
+                JOIN snapshot s ON s.id = e.snapshotId
+                JOIN volume v ON v.id = s.volumeId
+                JOIN driveRole r ON (r.volumeKey = v.uuid OR (v.uuid IS NULL AND r.volumeKey = v.name))
+                WHERE e.isDir = 0 AND e.name = ? AND e.logicalSize = ?
+                      AND e.snapshotId IN (SELECT id FROM latest)
+                      AND r.role IN (?, ?)
+                      AND (CASE WHEN v.uuid IS NOT NULL THEN v.uuid ELSE v.name END) <> ?
+                ORDER BY v.name COLLATE NOCASE, e.relPath
+                """, arguments: [name, size, DriveRole.mainBackup.rawValue,
+                                 DriveRole.fallbackBackup.rawValue, excludingVolumeKey])
         }
     }
 
