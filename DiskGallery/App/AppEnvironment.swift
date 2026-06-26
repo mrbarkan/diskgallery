@@ -175,13 +175,21 @@ final class AppEnvironment {
     /// Runs the tagging shortcut bound to `characters` on the current selection.
     /// Returns true if the key was consumed.
     private func handleShortcut(characters: String) -> Bool {
-        guard case .volume = selection else { return false }                    // only while browsing
         if let responder = NSApp.keyWindow?.firstResponder, responder is NSText { return false }  // not while typing
         guard let action = shortcuts.action(forKey: characters) else { return false }
-        let targets = selectedEntries
-        guard !targets.isEmpty else { return false }
-        Task { await perform(action, on: targets) }
-        return true
+        switch selection {
+        case .volume:
+            let targets = selectedEntries
+            guard !targets.isEmpty else { return false }
+            Task { await perform(action, on: targets) }
+            return true
+        case .gallery:
+            guard !selectedGalleryItems.isEmpty else { return false }
+            Task { await performGallery(action) }
+            return true
+        default:
+            return false
+        }
     }
 
     func requestUpgrade(_ feature: Feature) { upgradeFeature = feature }
@@ -669,6 +677,58 @@ final class AppEnvironment {
             if let annotation = map[entry.relPath] { return predicate(annotation) }
             return false
         }
+    }
+
+    /// Tagging entry point for the Gallery: applies the shortcut's decision/color to the
+    /// gallery selection, grouped by each item's own drive key (the Gallery spans drives).
+    /// Toggle semantics match the .volume browser: clear the tag if every selected item
+    /// already has it, otherwise set it.
+    func performGallery(_ action: ShortcutAction) async {
+        let byKey = Dictionary(grouping: selectedGalleryItems, by: \.volumeKey)
+        guard !byKey.isEmpty else { return }
+        if let tag = action.decision {
+            let allHave = await galleryAllSatisfy(byKey) { $0.tag == tag }
+            await applyKeyed(byKey) { store, key, relPath in
+                try await store.setDecision(allHave ? .none : tag, volumeKey: key, relPath: relPath)
+            }
+        } else if let color = action.color {
+            let allHave = await galleryAllSatisfy(byKey) { $0.color == color }
+            await applyKeyed(byKey) { store, key, relPath in
+                try await store.setColor(allHave ? .none : color, volumeKey: key, relPath: relPath)
+            }
+        }
+    }
+
+    private func galleryAllSatisfy(_ byKey: [String: [GalleryItemRef]],
+                                   _ predicate: (Annotation) -> Bool) async -> Bool {
+        for (key, items) in byKey {
+            let map = (try? await catalog.annotations.annotations(
+                volumeKey: key, relPaths: items.map(\.relPath))) ?? [:]
+            for item in items {
+                guard let a = map[item.relPath], predicate(a) else { return false }
+            }
+        }
+        return true
+    }
+
+    /// Per-drive variant of `apply(to:_:)`: mutates each item's annotation under its own
+    /// volume key, then writes Finder tags for any connected drive. Reuses `writeFinderTags`.
+    private func applyKeyed(_ byKey: [String: [GalleryItemRef]],
+                            _ mutate: (AnnotationStore, String, String) async throws -> Annotation?) async {
+        var writes: [(url: URL, decision: Tag, color: FinderColor)] = []
+        for (key, items) in byKey {
+            let mount = volumes.mountURL(forKey: key)
+            for item in items {
+                let annotation = (try? await mutate(catalog.annotations, key, item.relPath)) ?? nil
+                if let mount {
+                    writes.append((mount.appendingPathComponent(item.relPath),
+                                   annotation?.tag ?? .none, annotation?.color ?? .none))
+                }
+            }
+        }
+        await writeFinderTags(writes)
+        dataVersion += 1
+        await refresh()
     }
 
     func applyDecision(_ tag: Tag, to entries: [Entry]) async {
