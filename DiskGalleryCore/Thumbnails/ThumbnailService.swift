@@ -99,6 +99,19 @@ public struct ThumbnailService: Sendable {
         return data as Data
     }
 
+    /// Which of `relPaths` (under `volumeKey`) already have a cached thumbnail row.
+    /// Used for the Gallery's "N of M cached" indicator.
+    public func cachedRelPaths(volumeKey: String, relPaths: [String]) async throws -> Set<String> {
+        guard !relPaths.isEmpty else { return [] }
+        let placeholders = Array(repeating: "?", count: relPaths.count).joined(separator: ",")
+        let sqlArgs = StatementArguments([volumeKey as DatabaseValueConvertible] + relPaths.map { $0 as DatabaseValueConvertible })!
+        return try await db.writer.read { [sqlArgs] db in
+            Set(try String.fetchAll(db, sql:
+                "SELECT relPath FROM thumbnail WHERE volumeKey = ? AND relPath IN (\(placeholders))",
+                arguments: sqlArgs))
+        }
+    }
+
     public func clear() async throws {
         try? FileManager.default.removeItem(at: cacheDirectory)
         try await db.writer.write { db in try db.execute(sql: "DELETE FROM thumbnail") }

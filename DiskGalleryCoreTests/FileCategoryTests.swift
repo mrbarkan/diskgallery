@@ -26,6 +26,6 @@ final class FileCategoryTests: XCTestCase {
 
     func testLabels() {
         XCTAssertEqual(FileCategory.allCases.map(\.label),
-                       ["All", "Photos", "Video", "RAW", "Documents"])
+                       ["All", "Photos", "Video", "RAW", "Documents", "Audio"])
     }
 }

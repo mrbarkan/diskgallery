@@ -4,7 +4,7 @@ import Foundation
 /// Search "Photos · RAW" saved search. `.all` is the catch-all: it matches every file,
 /// and any unmatched/extensionless file maps to `.all`.
 public enum FileCategory: String, CaseIterable, Sendable {
-    case all, photos, video, raw, documents
+    case all, photos, video, raw, documents, audio
 
     public var label: String {
         switch self {
@@ -13,6 +13,7 @@ public enum FileCategory: String, CaseIterable, Sendable {
         case .video:     return "Video"
         case .raw:       return "RAW"
         case .documents: return "Documents"
+        case .audio:     return "Audio"
         }
     }
 
@@ -23,6 +24,7 @@ public enum FileCategory: String, CaseIterable, Sendable {
         .photos:    ["jpg", "jpeg", "png", "heic", "heif", "tiff", "tif", "gif", "webp"],
         .video:     ["mov", "mp4", "m4v", "avi", "mkv", "mts", "m2ts", "prores"],
         .documents: ["pdf", "doc", "docx", "txt", "md", "rtf", "pages", "key", "numbers", "xlsx", "csv"],
+        .audio:     ["mp3", "wav", "aac", "flac", "m4a", "aiff", "aif", "alac", "ogg"],
     ]
 
     /// The category a bare extension belongs to (`.all` when unmatched or empty).

@@ -27,6 +27,21 @@ final class ThumbnailTests: XCTestCase {
         return d
     }
 
+    func testCachedRelPathsReturnsStoredSet() async throws {
+        let dbURL = try tempDir().appendingPathComponent("catalog.sqlite")
+        let catalog = try Catalog(databaseURL: dbURL)
+        try await catalog.thumbnails.store(Data([0x1]), volumeKey: "A", relPath: "x.jpg", srcModifiedAt: nil, srcSize: 1)
+        try await catalog.thumbnails.store(Data([0x2]), volumeKey: "A", relPath: "y.jpg", srcModifiedAt: nil, srcSize: 1)
+
+        let cached = try await catalog.thumbnails.cachedRelPaths(volumeKey: "A", relPaths: ["x.jpg", "y.jpg", "z.jpg"])
+        XCTAssertEqual(cached, ["x.jpg", "y.jpg"])
+
+        let other = try await catalog.thumbnails.cachedRelPaths(volumeKey: "B", relPaths: ["x.jpg"])
+        XCTAssertTrue(other.isEmpty)
+        let empty = try await catalog.thumbnails.cachedRelPaths(volumeKey: "A", relPaths: [])
+        XCTAssertTrue(empty.isEmpty)
+    }
+
     func testCacheStoreRetrieveAndFreshness() async throws {
         // Catalog whose sidecar thumbnails dir is a temp dir (Catalog derives it from the db path).
         let dbURL = try tempDir().appendingPathComponent("catalog.sqlite")

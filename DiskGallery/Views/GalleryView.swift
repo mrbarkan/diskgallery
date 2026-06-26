@@ -145,6 +145,7 @@ private struct GalleryTile: View {
         case .raw:       return "camera.aperture"
         case .video:     return "film"
         case .documents: return "doc.text"
+        case .audio:     return "music.note"
         case .all:       return "doc"
         }
     }

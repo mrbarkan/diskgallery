@@ -23,6 +23,32 @@ final class GalleryTests: XCTestCase {
         }
     }
 
+    func testAudioCategoryAndPerDriveFilter() async throws {
+        let catalog = try Fixture.makeCatalog()
+        try await seedVolume(catalog, uuid: "UUID-A", name: "Alpha", files: [
+            ("a.jpg", "jpg", 100, false),
+            ("song.mp3", "mp3", 400, false),
+        ])
+        try await seedVolume(catalog, uuid: "UUID-B", name: "Bravo", files: [
+            ("b.jpg", "jpg", 100, false),
+        ])
+
+        // Audio category classifies mp3.
+        XCTAssertEqual(FileCategory.category(forExtension: "mp3"), .audio)
+        let audio = try await catalog.gallery.items(categories: [.audio])
+        XCTAssertEqual(audio.map(\.relPath), ["song.mp3"])
+
+        // Per-drive filter: only Alpha's photos.
+        let alphaId = audio.first?.volumeId ?? -1
+        let alphaPhotos = try await catalog.gallery.items(categories: [.photos], volumeId: alphaId)
+        XCTAssertEqual(alphaPhotos.map(\.relPath), ["a.jpg"])
+        XCTAssertTrue(alphaPhotos.allSatisfy { $0.volumeName == "Alpha" })
+
+        // No filter → both drives' photos.
+        let allPhotos = try await catalog.gallery.items(categories: [.photos])
+        XCTAssertEqual(Set(allPhotos.map(\.volumeName)), ["Alpha", "Bravo"])
+    }
+
     func testGalleryItemsFlattenMediaAcrossDrivesWithProvenance() async throws {
         let catalog = try Fixture.makeCatalog()
         try await seedVolume(catalog, uuid: "UUID-A", name: "Alpha", files: [

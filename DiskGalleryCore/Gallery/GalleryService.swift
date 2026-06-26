@@ -24,12 +24,29 @@ public struct GalleryEntry: Codable, Sendable, Identifiable, FetchableRecord {
 public struct GalleryService: Sendable {
     let db: AppDatabase
 
-    /// Media files across all drives' latest complete snapshots, ordered drive-name then path.
-    /// `categories` selects which file types to include; an empty extension set yields no rows.
-    public func items(categories: [FileCategory], limit: Int = 2000) async throws -> [GalleryEntry] {
+    /// Media files across drives' latest complete snapshots, ordered drive-name then path.
+    /// `categories` selects file types (empty extension set → no rows). `volumeId` (when set)
+    /// restricts to one drive.
+    public func items(categories: [FileCategory], volumeId: Int64? = nil, limit: Int = 2000) async throws -> [GalleryEntry] {
         let exts = FileCategory.extensions(for: categories)
         guard !exts.isEmpty else { return [] }
         let placeholders = Array(repeating: "?", count: exts.count).joined(separator: ",")
+        let volumeClause: String
+        let volumeArg: Int64?
+        if let volumeId {
+            volumeClause = "AND v.id = ?"
+            volumeArg = volumeId
+        } else {
+            volumeClause = ""
+            volumeArg = nil
+        }
+        let extArgs = exts.map { $0 as DatabaseValueConvertible }
+        let sqlArgs: StatementArguments = {
+            var a: [DatabaseValueConvertible] = extArgs
+            if let v = volumeArg { a.append(v) }
+            a.append(limit)
+            return StatementArguments(a)
+        }()
         return try await db.writer.read { db in
             try GalleryEntry.fetchAll(db, sql: """
                 SELECT e.id AS id, e.name AS name, e.relPath AS relPath, e.ext AS ext,
@@ -43,9 +60,10 @@ public struct GalleryService: Sendable {
                               ORDER BY s2.scannedAt DESC, s2.id DESC LIMIT 1)
                   AND e.isDir = 0
                   AND LOWER(e.ext) IN (\(placeholders))
+                  \(volumeClause)
                 ORDER BY v.name COLLATE NOCASE, e.relPath
                 LIMIT ?
-                """, arguments: StatementArguments(exts.map { $0 as DatabaseValueConvertible } + [limit as DatabaseValueConvertible]))
+                """, arguments: sqlArgs)
         }
     }
 }
