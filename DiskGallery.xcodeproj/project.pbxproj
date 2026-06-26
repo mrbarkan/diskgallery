@@ -90,6 +90,7 @@
 		AC9701D75226543C584AA598 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = EDAD081A4FE6D77943D6D89D /* GRDB */; };
 		AF4B6A53D3887455342582AF /* Migrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 419C2FE432E8213D40143239 /* Migrations.swift */; };
 		AF654013EAEE5BC737A5585F /* ChangesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAB8199993101F11F86332D /* ChangesView.swift */; };
+		AF97B71B2859EE9672615B19 /* ThumbnailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80E004DD7BC792F254239BA /* ThumbnailService.swift */; };
 		B26BDDFC9870C5EAB71E0587 /* SearchResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146D1C1E98B588853D9D5BB8 /* SearchResultsView.swift */; };
 		B4DBC5A1263F638B10DDD6C6 /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79E7150F9FAC9E3145394AE1 /* AppDatabase.swift */; };
 		B93FF80C8F6B70C808A42529 /* UpgradeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC621BD96C2E755F0715EB35 /* UpgradeSheet.swift */; };
@@ -260,6 +261,7 @@
 		A9E8F92833EFD609815E1633 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		AE29FBDED974E93FA9BFC427 /* SearchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchTests.swift; sourceTree = "<group>"; };
 		B474506196335AB972ACF0B4 /* LibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryService.swift; sourceTree = "<group>"; };
+		B80E004DD7BC792F254239BA /* ThumbnailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailService.swift; sourceTree = "<group>"; };
 		B82987EC891FA8B2F0A51F0F /* BackupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupTests.swift; sourceTree = "<group>"; };
 		B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DiskGalleryCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC0F324047574353BA4FF76D /* DriveHardwareProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveHardwareProbe.swift; sourceTree = "<group>"; };
@@ -612,6 +614,7 @@
 			isa = PBXGroup;
 			children = (
 				6841323EDCA014BA601FB704 /* Thumbnail.swift */,
+				B80E004DD7BC792F254239BA /* ThumbnailService.swift */,
 			);
 			path = Thumbnails;
 			sourceTree = "<group>";
@@ -937,6 +940,7 @@
 				2D0E118FD878620BF21C52E1 /* SearchService.swift in Sources */,
 				181E3433E8EF0D7AFA7419B4 /* ThemeModel.swift in Sources */,
 				94C3F339C20236CC228474B6 /* Thumbnail.swift in Sources */,
+				AF97B71B2859EE9672615B19 /* ThumbnailService.swift in Sources */,
 				DA577BE0C44375F1E7B5D94F /* UnifiedBrowserService.swift in Sources */,
 				E57BDBCEEFC78BF423863EB9 /* UnifiedMerge.swift in Sources */,
 				F05F2EF75F006EC08ECC182E /* UnifiedModels.swift in Sources */,

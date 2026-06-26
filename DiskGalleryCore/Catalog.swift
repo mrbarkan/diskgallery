@@ -20,6 +20,7 @@ public final class Catalog: Sendable {
     public let driveRoles: DriveRolesService
     public let unified: UnifiedBrowserService
     public let execution: ExecutorService
+    public let thumbnails: ThumbnailService
 
     public init(databaseURL: URL) throws {
         let pool = try AppDatabase.makePool(at: databaseURL)
@@ -38,6 +39,8 @@ public final class Catalog: Sendable {
         self.driveRoles = DriveRolesService(db: db)
         self.unified = UnifiedBrowserService(db: db)
         self.execution = ExecutorService(db: db, hasher: self.hasher)
+        let thumbsDir = databaseURL.deletingLastPathComponent().appendingPathComponent("thumbnails", isDirectory: true)
+        self.thumbnails = ThumbnailService(db: db, cacheDirectory: thumbsDir)
     }
 
     /// Opens (creating if needed) the catalog at the default Application Support path.

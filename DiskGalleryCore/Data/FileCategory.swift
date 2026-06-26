@@ -18,7 +18,7 @@ public enum FileCategory: String, CaseIterable, Sendable {
 
     /// Extensions owned by each specific category (lowercased, no dot). `.all` owns none —
     /// it is the universal matcher.
-    private static let extensions: [FileCategory: Set<String>] = [
+    private static let extensionsByCategory: [FileCategory: Set<String>] = [
         .raw:       ["cr2", "cr3", "nef", "arw", "dng", "raf", "orf", "rw2", "srw"],
         .photos:    ["jpg", "jpeg", "png", "heic", "heif", "tiff", "tif", "gif", "webp"],
         .video:     ["mov", "mp4", "m4v", "avi", "mkv", "mts", "m2ts", "prores"],
@@ -29,8 +29,15 @@ public enum FileCategory: String, CaseIterable, Sendable {
     public static func category(forExtension ext: String) -> FileCategory {
         let key = ext.lowercased()
         guard !key.isEmpty else { return .all }
-        for (category, set) in extensions where set.contains(key) { return category }
+        for (category, set) in extensionsByCategory where set.contains(key) { return category }
         return .all
+    }
+
+    /// The union of file extensions covered by `categories` (lowercased, no dot).
+    public static func extensions(for categories: [FileCategory]) -> [String] {
+        var out = Set<String>()
+        for c in categories { out.formUnion(extensionsByCategory[c] ?? []) }
+        return Array(out)
     }
 
     /// Whether a filename belongs to this category. `.all` matches everything.
