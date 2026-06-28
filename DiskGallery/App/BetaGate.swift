@@ -8,7 +8,13 @@ import DiskGalleryCore
 @MainActor
 @Observable
 final class BetaGate {
-    private let firstLaunchKey = "beta.firstLaunch"
+    /// Per-build so each beta (a new `CURRENT_PROJECT_VERSION`) starts its own 14-day
+    /// window — bumping the beta number gives testers a fresh clock instead of inheriting
+    /// an earlier beta's first-launch date.
+    private var firstLaunchKey: String {
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+        return "beta.firstLaunch.\(build)"
+    }
     private let durationDays = 14
     private let defaults: UserDefaults
 
