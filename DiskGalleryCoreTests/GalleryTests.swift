@@ -81,6 +81,22 @@ final class GalleryTests: XCTestCase {
         let none = try await catalog.gallery.items(categories: [.all])
         XCTAssertTrue(none.isEmpty)
     }
+
+    func testGalleryItemsScopeToFolderSubtree() async throws {
+        let catalog = try Fixture.makeCatalog()
+        try await seedVolume(catalog, uuid: "UUID-F", name: "Fdrive", files: [
+            ("Trips/2024_trip/a.jpg", "jpg", 100, false),
+            ("Trips/2024_trip/sub/b.jpg", "jpg", 100, false),
+            ("Trips/2024Xtrip/c.jpg", "jpg", 100, false),   // sibling — "_" must not wildcard-match
+            ("Other/d.jpg", "jpg", 100, false),
+        ])
+
+        let scoped = try await catalog.gallery.items(categories: [.photos], underRelPath: "Trips/2024_trip")
+        XCTAssertEqual(Set(scoped.map(\.relPath)), ["Trips/2024_trip/a.jpg", "Trips/2024_trip/sub/b.jpg"])
+
+        let all = try await catalog.gallery.items(categories: [.photos])
+        XCTAssertEqual(all.count, 4)
+    }
 }
 
 private extension GalleryEntry {

@@ -67,6 +67,56 @@ struct DriveStatusDot: View {
     }
 }
 
+/// A floating banner shown while previews are being generated (drive-level cache
+/// generation or a folder Detail Scan), with live count and a Cancel button.
+struct PreviewProgressBanner: View {
+    let progress: AppEnvironment.ThumbnailProgress
+    let onCancel: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ProgressView().controlSize(.small)
+            Text(progress.total == 0
+                 ? "Preparing previews…"
+                 : "Generating previews… \(progress.completed) of \(progress.total)")
+                .font(.callout)
+            if progress.total > 0 {
+                ProgressView(value: Double(progress.completed), total: Double(max(progress.total, 1)))
+                    .frame(width: 120)
+            }
+            Button("Cancel", action: onCancel).controlSize(.small)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .background(.regularMaterial, in: Capsule())
+        .shadow(radius: 6, y: 2)
+        .padding(.top, 10)
+    }
+}
+
+/// A single keyboard-shortcut hint drawn like a physical keycap (à la macOS's
+/// Keyboard Shortcuts UI): rounded cap, hairline border, faint drop shadow.
+struct Keycap: View {
+    let label: String
+    init(_ label: String) { self.label = label }
+
+    var body: some View {
+        Text(label.uppercased())
+            .font(.system(size: 10, weight: .medium, design: .rounded))
+            .foregroundStyle(.secondary)
+            .frame(minWidth: 17, minHeight: 17)
+            .padding(.horizontal, 3)
+            .background(
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(Color(nsColor: .controlBackgroundColor))
+                    .shadow(color: .black.opacity(0.16), radius: 0.5, y: 0.5)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .strokeBorder(Color.secondary.opacity(0.28), lineWidth: 0.75)
+            )
+    }
+}
+
 /// A small labeled count/size chip used in plan headers.
 struct StatPill: View {
     let title: String

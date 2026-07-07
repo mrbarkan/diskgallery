@@ -172,6 +172,16 @@ struct FolderView: View {
     @ViewBuilder
     private func tagMenu(for targets: [Entry]) -> some View {
         if !targets.isEmpty {
+            if targets.count == 1, let folder = targets.first, folder.isDir,
+               annotations[folder.relPath]?.tag == .review {
+                Button {
+                    env.detailScan(folder: folder)
+                } label: {
+                    Label("Detail Scan", systemImage: "photo.on.rectangle.angled")
+                }
+                .disabled(!env.isSelectedVolumeConnected || env.thumbnailProgress != nil)
+                Divider()
+            }
             ForEach(Tag.actionTags) { tag in
                 Button(tag.label) { Task { await env.applyDecision(tag, to: targets) } }
             }

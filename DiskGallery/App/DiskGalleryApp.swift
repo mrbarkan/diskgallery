@@ -154,6 +154,11 @@ struct ContentView: View {
                 .navigationSplitViewColumnWidth(min: 280, ideal: 320)
         }
         .toolbar(id: "dg.main") { MainToolbar(env: env) }
+        .overlay(alignment: .top) {
+            if let progress = env.thumbnailProgress {
+                PreviewProgressBanner(progress: progress) { env.cancelThumbnails() }
+            }
+        }
         .sheet(item: Binding(get: { env.changesVolume },
                              set: { env.changesVolume = $0 })) { summary in
             ChangesView(summary: summary).environment(env)

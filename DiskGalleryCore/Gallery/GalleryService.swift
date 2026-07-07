@@ -28,7 +28,8 @@ public struct GalleryService: Sendable {
     /// `categories` selects file types (empty extension set → no rows). `volumeId` (when set)
     /// restricts to one drive.
     public func items(categories: [FileCategory], volumeId: Int64? = nil,
-                      limit: Int = 2000, hideHidden: Bool = false) async throws -> [GalleryEntry] {
+                      limit: Int = 2000, hideHidden: Bool = false,
+                      underRelPath: String? = nil) async throws -> [GalleryEntry] {
         let exts = FileCategory.extensions(for: categories)
         guard !exts.isEmpty else { return [] }
         let placeholders = Array(repeating: "?", count: exts.count).joined(separator: ",")
@@ -42,10 +43,13 @@ public struct GalleryService: Sendable {
             volumeArg = nil
         }
         let hiddenClause = hideHidden ? "AND e.relPath NOT LIKE '.%' AND e.relPath NOT LIKE '%/.%'" : ""
+        let folder = underRelPath.flatMap { $0.isEmpty ? nil : $0 }   // Detail Scan folder scope
+        let folderClause = folder != nil ? "AND e.relPath LIKE ? ESCAPE '\\'" : ""
         let extArgs = exts.map { $0 as DatabaseValueConvertible }
         let sqlArgs: StatementArguments = {
             var a: [DatabaseValueConvertible] = extArgs
             if let v = volumeArg { a.append(v) }
+            if let folder { a.append(SQLPattern.childrenPrefix(of: folder)) }
             a.append(limit)
             return StatementArguments(a)
         }()
@@ -64,6 +68,7 @@ public struct GalleryService: Sendable {
                   AND LOWER(e.ext) IN (\(placeholders))
                   \(volumeClause)
                   \(hiddenClause)
+                  \(folderClause)
                 ORDER BY v.name COLLATE NOCASE, e.relPath
                 LIMIT ?
                 """, arguments: sqlArgs)

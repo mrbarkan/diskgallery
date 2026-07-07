@@ -48,6 +48,17 @@ struct EntryInspector: View {
             Section("Tags") {
                 TagControls(targets: [entry], current: annotation)
                 FinderSyncNote()
+                if entry.isDir, annotation?.tag == .review {
+                    Button {
+                        env.detailScan(folder: entry)
+                    } label: {
+                        Label("Detail Scan", systemImage: "photo.on.rectangle.angled")
+                    }
+                    .disabled(!env.isSelectedVolumeConnected || env.thumbnailProgress != nil)
+                    .help(env.isSelectedVolumeConnected
+                          ? "Generate previews for everything in this folder, then view it in the Gallery"
+                          : "Connect the drive to run a Detail Scan")
+                }
             }
             Section("Note") {
                 TextField("Note", text: $note, axis: .vertical)
@@ -76,8 +87,12 @@ struct MultiSelectInspector: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent("Selected", value: "\(entries.count) items")
-                LabeledContent("Total size", value: Format.bytes(entries.reduce(0) { $0 + $1.displaySize }))
+                HStack(spacing: 10) {
+                    StatPill(title: "Selected", value: "\(entries.count) items")
+                    StatPill(title: "Total size",
+                             value: Format.bytes(entries.reduce(0) { $0 + $1.displaySize }))
+                }
+                .padding(.vertical, 2)
             }
             Section("Tag all selected") {
                 TagControls(targets: entries, current: nil)
@@ -154,7 +169,7 @@ struct DecisionButton: View {
     @ViewBuilder private var content: some View {
         VStack(spacing: 2) {
             Label(tag.label, systemImage: tag.symbol).labelStyle(.titleAndIcon).font(.callout)
-            Text((key ?? " ").uppercased()).font(.caption2).foregroundStyle(.secondary)
+            Keycap(key ?? " ").opacity(key == nil ? 0 : 1)   // invisible placeholder keeps rows aligned
         }
     }
 }
@@ -178,7 +193,7 @@ struct ColorSwatch: View {
                 }
                 .frame(width: 22, height: 22)
                 .overlay(Circle().strokeBorder(active ? activeRing : .clear, lineWidth: 2))
-                Text(key ?? " ").font(.caption2).foregroundStyle(.secondary)
+                Keycap(key ?? " ").opacity(key == nil ? 0 : 1)   // invisible placeholder keeps swatches aligned
             }
         }
         .buttonStyle(.plain)
