@@ -162,6 +162,7 @@ struct FolderView: View {
         }
         .task(id: folder.id) { await load() }
         .onChange(of: env.dataVersion) { _, _ in Task { await load() } }
+        .onChange(of: env.viewPrefs.hideHidden) { _, _ in Task { await load() } }
         .onChange(of: selection) { _, _ in updateSelection() }
         .onAppear { if selection.isEmpty { env.selectedEntries = [folder] } }
     }
@@ -205,7 +206,9 @@ struct FolderView: View {
     }
 
     private func load() async {
-        children = (try? await env.catalog.library.children(parentId: folder.id, snapshotId: snapshotId)) ?? []
+        children = (try? await env.catalog.library.children(
+            parentId: folder.id, snapshotId: snapshotId,
+            hideHidden: env.viewPrefs.hideHidden)) ?? []
         if let key = env.selectedVolumeKey {
             annotations = (try? await env.catalog.annotations.annotations(
                 volumeKey: key, relPaths: children.map(\.relPath))) ?? [:]

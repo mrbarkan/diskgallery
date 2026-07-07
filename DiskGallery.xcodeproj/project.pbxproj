@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		034984A8B83894F6B435CBA1 /* HiddenFilesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC0E3023FC4DCBEC7CD10333 /* HiddenFilesTests.swift */; };
 		04EE7BB7F97B50A3F09BE417 /* CrossDriveDuplicateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DAF550E4C8CE67CFE830AD /* CrossDriveDuplicateTests.swift */; };
 		04FD7DD0404A7ED926DCD970 /* ChangeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF8B6014428D118FD2C366E /* ChangeTests.swift */; };
 		0574CA08E81E2428FF8892AC /* ScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5062F5EE1D34820031723CE7 /* ScannerTests.swift */; };
@@ -287,6 +288,7 @@
 		D4F9F870260EEDCD0B3AC49E /* DriveRoleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveRoleTests.swift; sourceTree = "<group>"; };
 		D8A5C5983831D1A837A4B865 /* Support.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Support.swift; sourceTree = "<group>"; };
 		D9BFF7A87C30AE1041B12C4E /* VolumeFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeFilter.swift; sourceTree = "<group>"; };
+		DC0E3023FC4DCBEC7CD10333 /* HiddenFilesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenFilesTests.swift; sourceTree = "<group>"; };
 		DDDB8CF07C09E98A6414D28D /* DiskGallery.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DiskGallery.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDDE0C869FC4D5E82CC433DA /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		DDE05C6B85A503E26D748DF5 /* UnifiedBrowserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedBrowserService.swift; sourceTree = "<group>"; };
@@ -491,6 +493,7 @@
 				4105C0CC1F9C0469C2052248 /* FinderTagTests.swift */,
 				62881B657D719F595100AE56 /* GalleryTests.swift */,
 				286934E837CA4025B46E82A5 /* GroupingTests.swift */,
+				DC0E3023FC4DCBEC7CD10333 /* HiddenFilesTests.swift */,
 				E4927DF6E42CF4C7CC971510 /* KeepRuleTests.swift */,
 				A29447DD438A0EDA49CD6D07 /* LicenseTests.swift */,
 				411D66DC8AAED302B83CB44B /* MutationGuardTests.swift */,
@@ -847,6 +850,7 @@
 				54F7E036F94C146237106B8D /* FinderTagTests.swift in Sources */,
 				AA10EE288CFA713CB0E5688F /* GalleryTests.swift in Sources */,
 				F6C371633BD9F87A479F3BA7 /* GroupingTests.swift in Sources */,
+				034984A8B83894F6B435CBA1 /* HiddenFilesTests.swift in Sources */,
 				5E5155418A444E809457726B /* KeepRuleTests.swift in Sources */,
 				907624D036768D1FF01C7D85 /* LicenseTests.swift in Sources */,
 				32F55E13BEB72EA7D463AADC /* MutationGuardTests.swift in Sources */,
