@@ -6,7 +6,6 @@ struct VolumeBrowserView: View {
     let summary: VolumeSummary
     @State private var rootEntry: Entry?
     @State private var nav = BrowserNav()
-    @State private var showChanges = false
 
     @ViewBuilder private var browser: some View {
         Group {
@@ -34,7 +33,7 @@ struct VolumeBrowserView: View {
     var body: some View {
         VStack(spacing: 0) {
             if summary.latestSnapshotId != nil {
-                DriveHeaderBar(summary: summary) { showChanges = true }
+                DriveHeaderBar(summary: summary)
                 Divider()
             }
             if summary.latestSnapshotComplete == false {
@@ -43,7 +42,6 @@ struct VolumeBrowserView: View {
             browser
         }
         .onAppear { env.selectedVolumeKey = summary.uuid ?? summary.name }
-        .sheet(isPresented: $showChanges) { ChangesView(summary: summary) }
     }
 }
 
@@ -51,7 +49,6 @@ struct VolumeBrowserView: View {
 struct DriveHeaderBar: View {
     @Environment(AppEnvironment.self) private var env
     let summary: VolumeSummary
-    let onShowChanges: () -> Void
 
     var body: some View {
         let connected = env.volumes.isConnected(key: summary.uuid ?? summary.name)
@@ -77,16 +74,6 @@ struct DriveHeaderBar: View {
             if summary.totalCapacity != nil {
                 CapacityBar(total: summary.totalCapacity, free: summary.freeCapacity)
                     .frame(width: 200)
-            }
-            Button(action: onShowChanges) {
-                Label("Changes…", systemImage: "clock.arrow.2.circlepath")
-            }
-            .help("Compare this drive’s scans to see what changed")
-            if connected {
-                Button { env.rescan(volume: summary) } label: {
-                    Label("Re-scan", systemImage: "arrow.clockwise")
-                }
-                .help("Scan again to update the catalog and detect changes")
             }
         }
         .padding(.horizontal, 12).padding(.vertical, 8)

@@ -149,29 +149,10 @@ struct GalleryView: View {
     }
 
     @ViewBuilder private var controlBar: some View {
-        @Bindable var prefs = env.viewPrefs
         HStack(spacing: 12) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(GalleryFilter.allCases) { f in
-                        Button { env.viewPrefs.galleryFilter = f } label: {
-                            Text(f.label).font(.caption.weight(.medium))
-                                .padding(.horizontal, 10).padding(.vertical, 4)
-                                .background(filter == f ? env.theme.accent.palette.accent : Color(.controlBackgroundColor),
-                                            in: Capsule())
-                                .foregroundStyle(filter == f ? .white : .primary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
             Spacer(minLength: 8)
             Text("\(cachedCount) of \(entries.count) cached")
                 .font(.caption).foregroundStyle(.secondary).fixedSize()
-            Picker("Group", selection: $prefs.galleryGrouping) {
-                ForEach(GalleryGrouping.allCases) { g in Text(g.label).tag(g) }
-            }
-            .pickerStyle(.menu).fixedSize()
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
     }
