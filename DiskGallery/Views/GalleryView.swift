@@ -44,12 +44,16 @@ struct GalleryView: View {
     @State private var annotations: [String: Annotation] = [:]   // "volumeKey\u{1}relPath" -> annotation
     @State private var selectedIds: Set<Int64> = []
     @State private var loaded = false
-    @State private var filter: GalleryFilter = .all
-    @State private var grouping: GalleryGrouping = .none
     @State private var cachedCount = 0
     @State private var driveFilter: Int64?    // selected volume id, nil = all drives
 
-    private let columns = [GridItem(.adaptive(minimum: 150, maximum: 220), spacing: 12)]
+    private var filter: GalleryFilter { env.viewPrefs.galleryFilter }
+    private var grouping: GalleryGrouping { env.viewPrefs.galleryGrouping }
+
+    private var columns: [GridItem] {
+        let size = env.viewPrefs.galleryTileSize
+        return [GridItem(.adaptive(minimum: size.gridMin, maximum: size.gridMax), spacing: 12)]
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -145,11 +149,12 @@ struct GalleryView: View {
     }
 
     @ViewBuilder private var controlBar: some View {
+        @Bindable var prefs = env.viewPrefs
         HStack(spacing: 12) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(GalleryFilter.allCases) { f in
-                        Button { filter = f } label: {
+                        Button { env.viewPrefs.galleryFilter = f } label: {
                             Text(f.label).font(.caption.weight(.medium))
                                 .padding(.horizontal, 10).padding(.vertical, 4)
                                 .background(filter == f ? env.theme.accent.palette.accent : Color(.controlBackgroundColor),
@@ -163,7 +168,7 @@ struct GalleryView: View {
             Spacer(minLength: 8)
             Text("\(cachedCount) of \(entries.count) cached")
                 .font(.caption).foregroundStyle(.secondary).fixedSize()
-            Picker("Group", selection: $grouping) {
+            Picker("Group", selection: $prefs.galleryGrouping) {
                 ForEach(GalleryGrouping.allCases) { g in Text(g.label).tag(g) }
             }
             .pickerStyle(.menu).fixedSize()
@@ -278,12 +283,14 @@ private struct GalleryTile: View {
             .overlay(RoundedRectangle(cornerRadius: 8)
                 .strokeBorder(isSelected ? env.theme.accent.palette.accent : .clear, lineWidth: 3))
 
-            Text(entry.name).font(.caption).lineLimit(1).truncationMode(.middle)
-            HStack(spacing: 4) {
-                Image(systemName: "externaldrive").font(.system(size: 9))
-                Text(entry.volumeName).font(.system(size: 9)).lineLimit(1)
+            if env.viewPrefs.galleryShowLabels {
+                Text(entry.name).font(.caption).lineLimit(1).truncationMode(.middle)
+                HStack(spacing: 4) {
+                    Image(systemName: "externaldrive").font(.system(size: 9))
+                    Text(entry.volumeName).font(.system(size: 9)).lineLimit(1)
+                }
+                .foregroundStyle(.secondary)
             }
-            .foregroundStyle(.secondary)
         }
         .task(id: entry.id) { await loadThumbnail() }
     }
