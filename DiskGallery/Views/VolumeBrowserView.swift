@@ -172,6 +172,13 @@ struct FolderView: View {
     @ViewBuilder
     private func tagMenu(for targets: [Entry]) -> some View {
         if !targets.isEmpty {
+            if targets.count == 1, let target = targets.first,
+               env.canReveal(volumeKey: env.selectedVolumeKey) {
+                Button("Open in Finder") {
+                    env.revealInFinder(volumeKey: env.selectedVolumeKey, relPath: target.relPath)
+                }
+                Divider()
+            }
             if targets.count == 1, let folder = targets.first, folder.isDir,
                annotations[folder.relPath]?.tag == .review {
                 Button {
