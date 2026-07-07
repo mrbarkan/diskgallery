@@ -18,7 +18,7 @@ struct DuplicatesView: View {
         .task(id: reloadKey) { await loadSets() }
     }
 
-    private var reloadKey: String { "\(env.dataVersion)-\(crossDriveOnly)" }
+    private var reloadKey: String { "\(env.dataVersion)-\(crossDriveOnly)-\(env.viewPrefs.hideHidden)" }
 
     private var setsList: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -136,7 +136,8 @@ struct DuplicatesView: View {
     }
 
     private func loadSets() async {
-        sets = (try? await env.catalog.duplicates.duplicateSets(crossDriveOnly: crossDriveOnly)) ?? []
+        sets = (try? await env.catalog.duplicates.duplicateSets(
+            crossDriveOnly: crossDriveOnly, hideHidden: env.viewPrefs.hideHidden)) ?? []
         if !sets.contains(where: { $0.id == selectedSetID }) { selectedSetID = sets.first?.id }
         await loadMembers()
     }

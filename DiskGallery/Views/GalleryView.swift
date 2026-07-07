@@ -93,7 +93,7 @@ struct GalleryView: View {
             }
         }
         .navigationTitle("Gallery")
-        .task(id: "\(env.dataVersion)-\(filter.rawValue)-\(driveFilter ?? -1)") { await load() }
+        .task(id: "\(env.dataVersion)-\(filter.rawValue)-\(driveFilter ?? -1)-\(env.viewPrefs.hideHidden)") { await load() }
     }
 
     @ViewBuilder private var driveShelf: some View {
@@ -172,7 +172,9 @@ struct GalleryView: View {
     }
 
     private func load() async {
-        let items = (try? await env.catalog.gallery.items(categories: filter.categories, volumeId: driveFilter)) ?? []
+        let items = (try? await env.catalog.gallery.items(
+            categories: filter.categories, volumeId: driveFilter,
+            hideHidden: env.viewPrefs.hideHidden)) ?? []
 
         // Duplicate counts (one bulk query), keyed like DuplicateSet.id.
         let sets = (try? await env.catalog.duplicates.duplicateSets(minCopies: 2, limit: 2000)) ?? []

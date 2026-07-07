@@ -27,7 +27,8 @@ public struct GalleryService: Sendable {
     /// Media files across drives' latest complete snapshots, ordered drive-name then path.
     /// `categories` selects file types (empty extension set → no rows). `volumeId` (when set)
     /// restricts to one drive.
-    public func items(categories: [FileCategory], volumeId: Int64? = nil, limit: Int = 2000) async throws -> [GalleryEntry] {
+    public func items(categories: [FileCategory], volumeId: Int64? = nil,
+                      limit: Int = 2000, hideHidden: Bool = false) async throws -> [GalleryEntry] {
         let exts = FileCategory.extensions(for: categories)
         guard !exts.isEmpty else { return [] }
         let placeholders = Array(repeating: "?", count: exts.count).joined(separator: ",")
@@ -40,6 +41,7 @@ public struct GalleryService: Sendable {
             volumeClause = ""
             volumeArg = nil
         }
+        let hiddenClause = hideHidden ? "AND e.relPath NOT LIKE '.%' AND e.relPath NOT LIKE '%/.%'" : ""
         let extArgs = exts.map { $0 as DatabaseValueConvertible }
         let sqlArgs: StatementArguments = {
             var a: [DatabaseValueConvertible] = extArgs
@@ -61,6 +63,7 @@ public struct GalleryService: Sendable {
                   AND e.isDir = 0
                   AND LOWER(e.ext) IN (\(placeholders))
                   \(volumeClause)
+                  \(hiddenClause)
                 ORDER BY v.name COLLATE NOCASE, e.relPath
                 LIMIT ?
                 """, arguments: sqlArgs)

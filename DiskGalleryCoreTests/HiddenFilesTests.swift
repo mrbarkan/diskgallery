@@ -44,4 +44,45 @@ final class HiddenFilesTests: XCTestCase {
         let all = try await catalog.library.children(parentId: rootId, snapshotId: snapshotId, hideHidden: false)
         XCTAssertEqual(all.count, 3)   // default false → nothing filtered
     }
+
+    func testGalleryItemsHideHiddenAcrossDepth() async throws {
+        let catalog = try Fixture.makeCatalog()
+        try await seed(catalog, children: [
+            ("a.jpg", "a.jpg", "jpg", false),
+            ("t.jpg", ".Trashes/t.jpg", "jpg", false),   // inside a hidden folder
+            ("b.jpg", ".b.jpg", "jpg", false),           // dot-prefixed file
+        ])
+        let shown = try await catalog.gallery.items(categories: [.photos], hideHidden: true)
+        XCTAssertEqual(shown.map(\.relPath), ["a.jpg"])
+        let all = try await catalog.gallery.items(categories: [.photos], hideHidden: false)
+        XCTAssertEqual(Set(all.map(\.relPath)), [".Trashes/t.jpg", ".b.jpg", "a.jpg"])
+    }
+
+    func testSearchHidesHidden() async throws {
+        let catalog = try Fixture.makeCatalog()
+        try await seed(catalog, children: [
+            ("report.jpg", "report.jpg", "jpg", false),
+            ("report.jpg", ".Trashes/report.jpg", "jpg", false),
+        ])
+        let hidden = try await catalog.search.search("report", hideHidden: true)
+        XCTAssertEqual(hidden.map(\.relPath), ["report.jpg"])
+        let all = try await catalog.search.search("report", hideHidden: false)
+        XCTAssertEqual(all.count, 2)
+    }
+
+    func testDuplicateSetsHideHidden() async throws {
+        let catalog = try Fixture.makeCatalog()
+        // Two visible copies + one hidden copy of the same (name,size).
+        try await seed(catalog, uuid: "UUID-D1", name: "D1", children: [
+            ("dup.jpg", "dup.jpg", "jpg", false),
+        ])
+        try await seed(catalog, uuid: "UUID-D2", name: "D2", children: [
+            ("dup.jpg", "dup.jpg", "jpg", false),
+            ("dup.jpg", ".Trashes/dup.jpg", "jpg", false),
+        ])
+        let hidden = try await catalog.duplicates.duplicateSets(hideHidden: true)
+        XCTAssertEqual(hidden.first(where: { $0.name == "dup.jpg" })?.copies, 2)
+        let all = try await catalog.duplicates.duplicateSets(hideHidden: false)
+        XCTAssertEqual(all.first(where: { $0.name == "dup.jpg" })?.copies, 3)
+    }
 }

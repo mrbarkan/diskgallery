@@ -44,7 +44,8 @@ public struct SearchService: Sendable {
     }
 
     public func search(_ query: String, scope: SearchScope = .all,
-                       filter: SearchFilter = .none, limit: Int = 1000) async throws -> [SearchResult] {
+                       filter: SearchFilter = .none, limit: Int = 1000,
+                       hideHidden: Bool = false) async throws -> [SearchResult] {
         let match = Self.ftsQuery(query)
         if match == nil && filter == .none { return [] }
 
@@ -127,6 +128,9 @@ public struct SearchService: Sendable {
                 """
         }
 
+        if hideHidden {
+            sql += " AND e.relPath NOT LIKE '.%' AND e.relPath NOT LIKE '%/.%'"
+        }
         sql += " ORDER BY e.isDir DESC, e.name COLLATE NOCASE LIMIT ?"
         arguments.append(limit)
 

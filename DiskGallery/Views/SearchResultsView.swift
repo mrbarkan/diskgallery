@@ -32,12 +32,12 @@ struct SearchResultsView: View {
                                                          : "Nothing matches “\(query)”."))
             }
         }
-        .task(id: query) { await run() }
+        .task(id: "\(query)-\(env.viewPrefs.hideHidden)") { await run() }
     }
 
     private func run() async {
         let trimmed = query.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { results = []; return }
-        results = (try? await env.catalog.search.search(trimmed)) ?? []
+        results = (try? await env.catalog.search.search(trimmed, hideHidden: env.viewPrefs.hideHidden)) ?? []
     }
 }
