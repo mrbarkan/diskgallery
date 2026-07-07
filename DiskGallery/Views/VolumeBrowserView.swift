@@ -45,7 +45,7 @@ struct VolumeBrowserView: View {
     }
 }
 
-/// Per-drive header: last-scanned glance, capacity gauge, and quick re-scan / compare.
+/// Per-drive header: last-scanned glance and capacity gauge.
 struct DriveHeaderBar: View {
     @Environment(AppEnvironment.self) private var env
     let summary: VolumeSummary

@@ -51,11 +51,12 @@ final class HiddenFilesTests: XCTestCase {
             ("a.jpg", "a.jpg", "jpg", false),
             ("t.jpg", ".Trashes/t.jpg", "jpg", false),   // inside a hidden folder
             ("b.jpg", ".b.jpg", "jpg", false),           // dot-prefixed file
+            ("c.jpg", "Photos/.thumbs/c.jpg", "jpg", false), // hidden component below root
         ])
         let shown = try await catalog.gallery.items(categories: [.photos], hideHidden: true)
         XCTAssertEqual(shown.map(\.relPath), ["a.jpg"])
         let all = try await catalog.gallery.items(categories: [.photos], hideHidden: false)
-        XCTAssertEqual(Set(all.map(\.relPath)), [".Trashes/t.jpg", ".b.jpg", "a.jpg"])
+        XCTAssertEqual(Set(all.map(\.relPath)), [".Trashes/t.jpg", ".b.jpg", "a.jpg", "Photos/.thumbs/c.jpg"])
     }
 
     func testSearchHidesHidden() async throws {

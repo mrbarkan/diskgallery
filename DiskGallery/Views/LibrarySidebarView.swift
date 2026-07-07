@@ -1,5 +1,4 @@
 import SwiftUI
-import AppKit
 import DiskGalleryCore
 
 struct LibrarySidebarView: View {
