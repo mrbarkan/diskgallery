@@ -153,6 +153,11 @@ struct ContentView: View {
             detailColumn
                 .navigationSplitViewColumnWidth(min: 280, ideal: 320)
         }
+        .toolbar(id: "dg.main") { MainToolbar(env: env) }
+        .sheet(item: Binding(get: { env.changesVolume },
+                             set: { env.changesVolume = $0 })) { summary in
+            ChangesView(summary: summary).environment(env)
+        }
         .sheet(isPresented: Binding(get: { env.activeScan != nil }, set: { _ in })) {
             ScanProgressView()
         }

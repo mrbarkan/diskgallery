@@ -130,6 +130,15 @@ final class AppEnvironment {
     var selectedVolumeKey: String?
     var selectedGalleryItems: [GalleryItemRef] = []
 
+    /// Non-nil drives the global Changes… sheet (set by the toolbar item).
+    var changesVolume: VolumeSummary?
+
+    /// The drive summary for the current sidebar selection, or nil off a drive view.
+    var currentVolumeSummary: VolumeSummary? {
+        if case .volume(let id) = selection { return volumeSummaries.first { $0.id == id } }
+        return nil
+    }
+
     var activeScan: ScanState?
     var stopRequested = false        // Stop pressed; scan halted; showing the prompt
     var dataVersion = 0          // bumped on any mutation, so views reload
@@ -464,6 +473,19 @@ final class AppEnvironment {
 
     func startScan(url: URL) {
         beginScan(url: url, resumeSnapshotId: nil, isResume: false)
+    }
+
+    /// Presents the read-only folder/drive picker and scans the choice.
+    /// Shared by the sidebar's Scan button and the toolbar's New Scan item.
+    func chooseAndScan() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Scan"
+        panel.message = "Choose a drive or folder to catalog. DiskGallery only reads — it never changes anything."
+        panel.directoryURL = URL(fileURLWithPath: "/Volumes")
+        if panel.runModal() == .OK, let url = panel.url { startScan(url: url) }
     }
 
     /// Continues a drive's paused (incomplete) scan. The drive must be connected.

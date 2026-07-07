@@ -89,6 +89,7 @@
 		9C5E0BBD9E34E1611BED70ED /* LibrarySidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5844EC9B6BCF8A8733084C2E /* LibrarySidebarView.swift */; };
 		9FAA111FB1D47D4A250CFF75 /* Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AFFB1E76AE447035048FF76 /* Catalog.swift */; };
 		A0A2F31AD20D55D4DB22DD6D /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B984BBEB0792642053779B9 /* GalleryView.swift */; };
+		A34C2F45543942327DF1A4CE /* MainToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C44ECF808527E68F4CA67786 /* MainToolbar.swift */; };
 		A6F8081BD8E0E7CE48D5F3ED /* TaggedListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D3048FEAC718F9F9AF6C11 /* TaggedListView.swift */; };
 		A7D03DFF5B452E8DAB8EDF76 /* FileOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE0290245E00880A68D2336F /* FileOperation.swift */; };
 		AA10EE288CFA713CB0E5688F /* GalleryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62881B657D719F595100AE56 /* GalleryTests.swift */; };
@@ -279,6 +280,7 @@
 		BF9D07CA34FE8810CF5FF634 /* FileCopier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCopier.swift; sourceTree = "<group>"; };
 		C0886F22F3BD10A946192FCA /* Scanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scanner.swift; sourceTree = "<group>"; };
 		C1827D6C9D202B74DE91FDA3 /* BetaGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaGate.swift; sourceTree = "<group>"; };
+		C44ECF808527E68F4CA67786 /* MainToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainToolbar.swift; sourceTree = "<group>"; };
 		C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicatesView.swift; sourceTree = "<group>"; };
 		C913A9C2F1DEA3A2577ADB71 /* ViewPrefsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPrefsStore.swift; sourceTree = "<group>"; };
 		CCF22A1C2A8F1DF0BB410211 /* BetaWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaWindow.swift; sourceTree = "<group>"; };
@@ -386,6 +388,7 @@
 				4296D75D18CD7E48D8D775B7 /* ExecutionConfirmView.swift */,
 				1B984BBEB0792642053779B9 /* GalleryView.swift */,
 				5844EC9B6BCF8A8733084C2E /* LibrarySidebarView.swift */,
+				C44ECF808527E68F4CA67786 /* MainToolbar.swift */,
 				2C6A636B23F4AF7231425323 /* OrganizeView.swift */,
 				BF065A612665A90D5CF0162F /* ScanCacheView.swift */,
 				4758EFE5A2559FC7E68D053C /* ScanProgressView.swift */,
@@ -907,6 +910,7 @@
 				A0A2F31AD20D55D4DB22DD6D /* GalleryView.swift in Sources */,
 				9C5E0BBD9E34E1611BED70ED /* LibrarySidebarView.swift in Sources */,
 				1C9272BC8B0BC1C338147B3E /* LicenseStore.swift in Sources */,
+				A34C2F45543942327DF1A4CE /* MainToolbar.swift in Sources */,
 				BF54B03A4E72C8AC63331AB3 /* OrganizeView.swift in Sources */,
 				C8C2BAD9C2BDE90D71E027AC /* ProBadge.swift in Sources */,
 				E823F0BAD1DD0D47E048EE92 /* RecentSearchStore.swift in Sources */,

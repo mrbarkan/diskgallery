@@ -106,18 +106,7 @@ struct LibrarySidebarView: View {
         Text(title)
     }
 
-    private func scan() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
-        panel.prompt = "Scan"
-        panel.message = "Choose a drive or folder to catalog. DiskGallery only reads — it never changes anything."
-        panel.directoryURL = URL(fileURLWithPath: "/Volumes")
-        if panel.runModal() == .OK, let url = panel.url {
-            env.startScan(url: url)
-        }
-    }
+    private func scan() { env.chooseAndScan() }
 
     // MARK: Drives — grouping, drag & drop
 
