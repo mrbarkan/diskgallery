@@ -17,6 +17,9 @@ packages:
   GRDB:
     url: https://github.com/groue/GRDB.swift
     from: "7.0.0"
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.9.6"
 targets:
   # Pure-logic framework: storage, scanning, duplicate detection, annotations,
   # search. No AppKit/SwiftUI so it stays unit-testable in isolation. Fully
@@ -44,6 +47,19 @@ targets:
     sources: [DiskGallery]
     dependencies:
       - target: DiskGalleryCore
+      - package: Sparkle
+        product: Sparkle
+    info:
+      path: DiskGallery/Info.plist
+      properties:
+        # Sparkle: appcast lives as a release asset on this repo so the
+        # "latest" URL never changes. Public key comes from `generate_keys`; the private
+        # half stays in the login keychain (see Tools/build-beta-dmg.sh).
+        SUFeedURL: https://github.com/mrbarkan/diskgallery/releases/latest/download/appcast.xml
+        SUPublicEDKey: Y95K8qPB+GjLM3ssC6l1jOFZqpETG3aVC3D1btrbmd8=
+        SUEnableAutomaticChecks: true
+        LSApplicationCategoryType: public.app-category.utilities
+        NSHumanReadableCopyright: "© 2026 dbarkan"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dbarkan.DiskGallery
@@ -51,15 +67,8 @@ targets:
         CURRENT_PROJECT_VERSION: "7"
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.utilities"
-        INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 dbarkan"
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
-        # Beta hard-stop flag, scoped to THIS target only. The beta build passes
-        # DG_BETA=BETA on the xcodebuild command line; GRDB and other targets keep
-        # their own compilation conditions (passing BETA globally wipes GRDB's
-        # SQLITE_ENABLE_FTS5 and breaks the FTS5 search migration).
-        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) $(DG_BETA)"
 
   # Unit tests for the Core framework. No TEST_HOST needed (tests a framework).
   DiskGalleryCoreTests:

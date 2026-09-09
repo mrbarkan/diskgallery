@@ -44,12 +44,16 @@ struct GalleryView: View {
     @State private var annotations: [String: Annotation] = [:]   // "volumeKey\u{1}relPath" -> annotation
     @State private var selectedIds: Set<Int64> = []
     @State private var loaded = false
-    @State private var filter: GalleryFilter = .all
-    @State private var grouping: GalleryGrouping = .none
     @State private var cachedCount = 0
     @State private var driveFilter: Int64?    // selected volume id, nil = all drives
 
-    private let columns = [GridItem(.adaptive(minimum: 150, maximum: 220), spacing: 12)]
+    private var filter: GalleryFilter { env.viewPrefs.galleryFilter }
+    private var grouping: GalleryGrouping { env.viewPrefs.galleryGrouping }
+
+    private var columns: [GridItem] {
+        let size = env.viewPrefs.galleryTileSize
+        return [GridItem(.adaptive(minimum: size.gridMin, maximum: size.gridMax), spacing: 12)]
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -93,7 +97,7 @@ struct GalleryView: View {
             }
         }
         .navigationTitle("Gallery")
-        .task(id: "\(env.dataVersion)-\(filter.rawValue)-\(driveFilter ?? -1)") { await load() }
+        .task(id: "\(env.dataVersion)-\(filter.rawValue)-\(driveFilter ?? -1)-\(env.viewPrefs.hideHidden)-\(env.galleryFolderScope?.volumeId ?? -1)-\(env.galleryFolderScope?.relPath ?? "")") { await load() }
     }
 
     @ViewBuilder private var driveShelf: some View {
@@ -101,8 +105,9 @@ struct GalleryView: View {
             HStack(spacing: 10) {
                 driveCard(title: "All Drives", systemImage: "square.grid.2x2",
                           subtitle: "\(env.volumeSummaries.count) drives",
-                          fraction: nil, connected: true, selected: driveFilter == nil) {
+                          fraction: nil, connected: true, selected: driveFilter == nil && env.galleryFolderScope == nil) {
                     driveFilter = nil
+                    env.galleryFolderScope = nil
                 }
                 ForEach(env.volumeSummaries) { summary in
                     let used = (summary.totalCapacity ?? 0) - (summary.freeCapacity ?? 0)
@@ -111,8 +116,9 @@ struct GalleryView: View {
                               subtitle: Format.count(summary.fileCount),
                               fraction: frac,
                               connected: env.volumes.isConnected(key: summary.uuid ?? summary.name),
-                              selected: driveFilter == summary.id) {
+                              selected: driveFilter == summary.id && env.galleryFolderScope == nil) {
                         driveFilter = (driveFilter == summary.id) ? nil : summary.id
+                        env.galleryFolderScope = nil
                     }
                 }
             }
@@ -146,33 +152,32 @@ struct GalleryView: View {
 
     @ViewBuilder private var controlBar: some View {
         HStack(spacing: 12) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(GalleryFilter.allCases) { f in
-                        Button { filter = f } label: {
-                            Text(f.label).font(.caption.weight(.medium))
-                                .padding(.horizontal, 10).padding(.vertical, 4)
-                                .background(filter == f ? env.theme.accent.palette.accent : Color(.controlBackgroundColor),
-                                            in: Capsule())
-                                .foregroundStyle(filter == f ? .white : .primary)
-                        }
-                        .buttonStyle(.plain)
+            if let scope = env.galleryFolderScope {
+                HStack(spacing: 5) {
+                    Image(systemName: "folder.fill").font(.system(size: 10))
+                    Text(scope.name).font(.caption.weight(.medium)).lineLimit(1)
+                    Button { env.galleryFolderScope = nil } label: {
+                        Image(systemName: "xmark.circle.fill").font(.system(size: 11))
                     }
+                    .buttonStyle(.plain).foregroundStyle(.secondary)
                 }
+                .padding(.horizontal, 8).padding(.vertical, 4)
+                .background(env.theme.accent.palette.accent.opacity(0.15), in: Capsule())
+                .help("Showing only “\(scope.name)” — click ✕ to see every drive")
             }
             Spacer(minLength: 8)
             Text("\(cachedCount) of \(entries.count) cached")
                 .font(.caption).foregroundStyle(.secondary).fixedSize()
-            Picker("Group", selection: $grouping) {
-                ForEach(GalleryGrouping.allCases) { g in Text(g.label).tag(g) }
-            }
-            .pickerStyle(.menu).fixedSize()
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
     }
 
     private func load() async {
-        let items = (try? await env.catalog.gallery.items(categories: filter.categories, volumeId: driveFilter)) ?? []
+        let items = (try? await env.catalog.gallery.items(
+            categories: filter.categories,
+            volumeId: env.galleryFolderScope?.volumeId ?? driveFilter,
+            hideHidden: env.viewPrefs.hideHidden,
+            underRelPath: env.galleryFolderScope?.relPath)) ?? []
 
         // Duplicate counts (one bulk query), keyed like DuplicateSet.id.
         let sets = (try? await env.catalog.duplicates.duplicateSets(minCopies: 2, limit: 2000)) ?? []
@@ -276,12 +281,14 @@ private struct GalleryTile: View {
             .overlay(RoundedRectangle(cornerRadius: 8)
                 .strokeBorder(isSelected ? env.theme.accent.palette.accent : .clear, lineWidth: 3))
 
-            Text(entry.name).font(.caption).lineLimit(1).truncationMode(.middle)
-            HStack(spacing: 4) {
-                Image(systemName: "externaldrive").font(.system(size: 9))
-                Text(entry.volumeName).font(.system(size: 9)).lineLimit(1)
+            if env.viewPrefs.galleryShowLabels {
+                Text(entry.name).font(.caption).lineLimit(1).truncationMode(.middle)
+                HStack(spacing: 4) {
+                    Image(systemName: "externaldrive").font(.system(size: 9))
+                    Text(entry.volumeName).font(.system(size: 9)).lineLimit(1)
+                }
+                .foregroundStyle(.secondary)
             }
-            .foregroundStyle(.secondary)
         }
         .task(id: entry.id) { await loadThumbnail() }
     }
@@ -318,7 +325,7 @@ private struct GalleryTile: View {
         triedLoad = true
         guard let url = (try? await env.catalog.thumbnails.thumbnailURL(
             volumeKey: entry.volumeKey, relPath: entry.relPath)) ?? nil else { return }
-        if let loaded = await Task.detached(priority: .utility) { NSImage(contentsOf: url) }.value {
+        if let loaded = await Task.detached(priority: .utility, operation: { NSImage(contentsOf: url) }).value {
             image = loaded
         }
     }

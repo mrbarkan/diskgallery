@@ -160,12 +160,15 @@ public struct LibraryService: Sendable {
         }
     }
 
-    /// Direct children of a folder, folders first then alphabetical.
-    public func children(parentId: Int64, snapshotId: Int64) async throws -> [Entry] {
-        try await db.writer.read { db in
+    /// Direct children of a folder, folders first then alphabetical. When `hideHidden`,
+    /// dotfiles (names beginning with ".") are excluded — see `PathVisibility`.
+    public func children(parentId: Int64, snapshotId: Int64, hideHidden: Bool = false) async throws -> [Entry] {
+        let hiddenClause = hideHidden ? "AND name NOT LIKE '.%'" : ""
+        return try await db.writer.read { db in
             try Entry.fetchAll(db, sql: """
                 SELECT * FROM entry
                 WHERE snapshotId = ? AND parentId = ?
+                \(hiddenClause)
                 ORDER BY isDir DESC, name COLLATE NOCASE
                 """, arguments: [snapshotId, parentId])
         }

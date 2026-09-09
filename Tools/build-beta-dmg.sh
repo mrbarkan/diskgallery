@@ -27,7 +27,12 @@ BUILD_DIR="build"
 ARCHIVE="$BUILD_DIR/$APP_NAME.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 APP="$EXPORT_DIR/$APP_NAME.app"
-DMG="$BUILD_DIR/$APP_NAME-beta.dmg"
+BUILD_NUMBER="$(sed -n 's/.*CURRENT_PROJECT_VERSION: "\([0-9]*\)".*/\1/p' project.yml | tail -1)"
+DMG_DIR="$BUILD_DIR/release"
+DMG="$DMG_DIR/$APP_NAME-$BUILD_NUMBER.dmg"
+# Sparkle: the "latest" GitHub release hosts appcast.xml + the DMG.
+RELEASES_REPO="mrbarkan/diskgallery"
+SPARKLE_BIN="${SPARKLE_BIN:-$(ls -d ~/Library/Developer/Xcode/DerivedData/*/SourcePackages/artifacts/sparkle/Sparkle/bin 2>/dev/null | head -1)}"
 
 echo "==> Regenerating project from project.yml"
 xcodegen generate >/dev/null
@@ -44,7 +49,6 @@ xcodebuild archive \
   CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY="Developer ID Application" \
   OTHER_CODE_SIGN_FLAGS="--timestamp" \
-  DG_BETA="BETA" \
   | tail -20
 
 echo "==> Exporting Developer ID app"
@@ -67,7 +71,7 @@ if [[ "${SKIP_NOTARIZE:-0}" != "1" ]]; then
 fi
 
 echo "==> Building DMG"
-rm -f "$DMG"
+rm -rf "$DMG_DIR"; mkdir -p "$DMG_DIR"
 STAGE="$BUILD_DIR/dmg-stage"
 rm -rf "$STAGE"; mkdir -p "$STAGE"
 cp -R "$APP" "$STAGE/"
@@ -78,6 +82,14 @@ rm -rf "$STAGE"
 echo "==> Verifying Gatekeeper acceptance"
 spctl -a -vvv -t install "$APP" || true
 
+echo "==> Signing DMG + writing appcast.xml (Sparkle)"
+# generate_appcast signs with the EdDSA private key in the login keychain (generate_keys)
+# and writes $DMG_DIR/appcast.xml pointing at the GitHub release asset below.
+"$SPARKLE_BIN/generate_appcast" \
+  --download-url-prefix "https://github.com/$RELEASES_REPO/releases/download/build-$BUILD_NUMBER/" \
+  "$DMG_DIR"
+
 echo ""
 echo "Done: $DMG"
-echo "Share this DMG with your testers. They open it, drag the app to Applications, done."
+echo "Publish (creates the release, uploads DMG + appcast; existing installs auto-update):"
+echo "  gh release create build-$BUILD_NUMBER --repo $RELEASES_REPO --title \"DiskGallery beta $BUILD_NUMBER\" \"$DMG\" \"$DMG_DIR/appcast.xml\""

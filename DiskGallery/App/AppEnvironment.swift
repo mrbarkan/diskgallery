@@ -71,6 +71,14 @@ struct GalleryItemRef: Identifiable, Hashable {
     let volumeKey: String    // uuid ?? name
 }
 
+/// The Gallery restricted to a single folder's subtree — set by Detail Scan on a
+/// Review-tagged folder, shown as a clearable chip.
+struct GalleryFolderScope: Equatable {
+    let volumeId: Int64
+    let relPath: String
+    let name: String
+}
+
 /// One sidebar section of drives: a named group (or the ungrouped catch-all when `group == nil`)
 /// with its drives in manual order. Computed from `volumeSummaries` + the loaded `driveGroups`.
 struct DriveGroupSection: Identifiable {
@@ -129,6 +137,18 @@ final class AppEnvironment {
     var selectedEntries: [Entry] = []
     var selectedVolumeKey: String?
     var selectedGalleryItems: [GalleryItemRef] = []
+
+    /// Non-nil drives the global Changes… sheet (set by the toolbar item).
+    var changesVolume: VolumeSummary?
+
+    /// When set, the Gallery is scoped to one folder's subtree (Detail Scan).
+    var galleryFolderScope: GalleryFolderScope?
+
+    /// The drive summary for the current sidebar selection, or nil off a drive view.
+    var currentVolumeSummary: VolumeSummary? {
+        if case .volume(let id) = selection { return volumeSummaries.first { $0.id == id } }
+        return nil
+    }
 
     var activeScan: ScanState?
     var stopRequested = false        // Stop pressed; scan halted; showing the prompt
@@ -262,7 +282,7 @@ final class AppEnvironment {
     /// Refreshes so the sidebar Tagged/Reclaimable counts and Organize plan stay in sync.
     func tagCopy(_ tag: Tag, copy: UnifiedCopy) {
         Task {
-            try? await catalog.annotations.setDecision(tag, volumeKey: copy.volumeKey, relPath: copy.relPath)
+            _ = try? await catalog.annotations.setDecision(tag, volumeKey: copy.volumeKey, relPath: copy.relPath)
             dataVersion += 1
             await refresh()
         }
@@ -464,6 +484,19 @@ final class AppEnvironment {
 
     func startScan(url: URL) {
         beginScan(url: url, resumeSnapshotId: nil, isResume: false)
+    }
+
+    /// Presents the read-only folder/drive picker and scans the choice.
+    /// Shared by the sidebar's Scan button and the toolbar's New Scan item.
+    func chooseAndScan() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Scan"
+        panel.message = "Choose a drive or folder to catalog. DiskGallery only reads — it never changes anything."
+        panel.directoryURL = URL(fileURLWithPath: "/Volumes")
+        if panel.runModal() == .OK, let url = panel.url { startScan(url: url) }
     }
 
     /// Continues a drive's paused (incomplete) scan. The drive must be connected.
@@ -901,8 +934,8 @@ final class AppEnvironment {
             let finished = (try? await self.catalog.execution.history()) ?? []
             for op in finished where op.id.map(ids.contains) == true
                 && (op.type == .move || op.type == .delete) && op.status == .done {
-                try? await self.catalog.annotations.setDecision(.none, volumeKey: op.sourceVolumeKey,
-                                                                relPath: op.sourceRelPath)
+                _ = try? await self.catalog.annotations.setDecision(.none, volumeKey: op.sourceVolumeKey,
+                                                                    relPath: op.sourceRelPath)
             }
             self.executionProgress = nil
             self.dataVersion += 1
@@ -974,14 +1007,37 @@ final class AppEnvironment {
 
     /// Generate + cache thumbnails for a connected drive's selected preview types.
     func generateThumbnails(for summary: VolumeSummary) {
+        generatePreviews(for: summary, categories: previewTypes(for: summary), underRelPath: nil, onComplete: nil)
+    }
+
+    /// Detail Scan: generate previews for a Review-tagged folder's whole subtree
+    /// (forcing the visual media set, regardless of the drive's preview-type config),
+    /// then open the Gallery scoped to that folder. Requires the drive connected.
+    func detailScan(folder: Entry) {
+        guard let summary = currentVolumeSummary else { return }
+        let scope = GalleryFolderScope(volumeId: summary.id, relPath: folder.relPath, name: folder.name)
+        generatePreviews(for: summary, categories: [.photos, .raw, .video],
+                         underRelPath: folder.relPath) { [weak self] in
+            self?.galleryFolderScope = scope
+            self?.selection = .gallery
+        }
+    }
+
+    /// Shared preview-generation pass: reads each media file under the (optional) folder
+    /// scope, generates a thumbnail, caches it, and drives the progress HUD. `onComplete`
+    /// runs on the main actor after the pass finishes.
+    private func generatePreviews(for summary: VolumeSummary, categories: [FileCategory],
+                                  underRelPath: String?, onComplete: (() -> Void)?) {
         let key = summary.uuid ?? summary.name
-        guard let mount = volumes.mountURL(forKey: key) else { return }   // must be connected
-        let categories = previewTypes(for: summary)
+        guard let mount = volumes.mountURL(forKey: key) else {
+            errorMessage = "Connect “\(summary.name)” to generate previews."
+            return
+        }
         thumbnailProgress = ThumbnailProgress(completed: 0, total: 0)
         thumbnailTask = Task { [weak self] in
             guard let self else { return }
             let entries = (try? await self.catalog.thumbnails.entriesNeedingPreview(
-                volumeId: summary.id, categories: categories)) ?? []
+                volumeId: summary.id, categories: categories, underRelPath: underRelPath)) ?? []
             self.thumbnailProgress = ThumbnailProgress(completed: 0, total: entries.count)
             var done = 0
             for entry in entries {
@@ -999,6 +1055,7 @@ final class AppEnvironment {
             }
             self.thumbnailProgress = nil
             self.dataVersion += 1
+            if !Task.isCancelled { onComplete?() }   // cancel means "don't jump to the Gallery"
         }
     }
 

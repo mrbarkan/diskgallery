@@ -52,7 +52,7 @@ public struct DuplicateEngine: Sendable {
         """
 
     public func duplicateSets(minCopies: Int = 2, limit: Int = 500,
-                              crossDriveOnly: Bool = false) async throws -> [DuplicateSet] {
+                              crossDriveOnly: Bool = false, hideHidden: Bool = false) async throws -> [DuplicateSet] {
         try await db.writer.read { db in
             try DuplicateSet.fetchAll(db, sql: """
                 \(Self.latestCTE)
@@ -64,6 +64,7 @@ public struct DuplicateEngine: Sendable {
                 JOIN snapshot s ON s.id = e.snapshotId
                 JOIN volume v ON v.id = s.volumeId
                 WHERE e.isDir = 0 AND e.logicalSize > 0 AND e.snapshotId IN (SELECT id FROM latest)
+                  \(hideHidden ? "AND e.relPath NOT LIKE '.%' AND e.relPath NOT LIKE '%/.%'" : "")
                 GROUP BY e.name, e.logicalSize
                 HAVING COUNT(*) >= ? \(crossDriveOnly ? "AND COUNT(DISTINCT s.volumeId) >= 2" : "")
                 ORDER BY reclaimable DESC, e.name COLLATE NOCASE

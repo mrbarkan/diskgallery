@@ -6,7 +6,6 @@ struct VolumeBrowserView: View {
     let summary: VolumeSummary
     @State private var rootEntry: Entry?
     @State private var nav = BrowserNav()
-    @State private var showChanges = false
 
     @ViewBuilder private var browser: some View {
         Group {
@@ -34,7 +33,7 @@ struct VolumeBrowserView: View {
     var body: some View {
         VStack(spacing: 0) {
             if summary.latestSnapshotId != nil {
-                DriveHeaderBar(summary: summary) { showChanges = true }
+                DriveHeaderBar(summary: summary)
                 Divider()
             }
             if summary.latestSnapshotComplete == false {
@@ -43,15 +42,13 @@ struct VolumeBrowserView: View {
             browser
         }
         .onAppear { env.selectedVolumeKey = summary.uuid ?? summary.name }
-        .sheet(isPresented: $showChanges) { ChangesView(summary: summary) }
     }
 }
 
-/// Per-drive header: last-scanned glance, capacity gauge, and quick re-scan / compare.
+/// Per-drive header: last-scanned glance and capacity gauge.
 struct DriveHeaderBar: View {
     @Environment(AppEnvironment.self) private var env
     let summary: VolumeSummary
-    let onShowChanges: () -> Void
 
     var body: some View {
         let connected = env.volumes.isConnected(key: summary.uuid ?? summary.name)
@@ -77,16 +74,6 @@ struct DriveHeaderBar: View {
             if summary.totalCapacity != nil {
                 CapacityBar(total: summary.totalCapacity, free: summary.freeCapacity)
                     .frame(width: 200)
-            }
-            Button(action: onShowChanges) {
-                Label("Changes…", systemImage: "clock.arrow.2.circlepath")
-            }
-            .help("Compare this drive’s scans to see what changed")
-            if connected {
-                Button { env.rescan(volume: summary) } label: {
-                    Label("Re-scan", systemImage: "arrow.clockwise")
-                }
-                .help("Scan again to update the catalog and detect changes")
             }
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
@@ -162,6 +149,7 @@ struct FolderView: View {
         }
         .task(id: folder.id) { await load() }
         .onChange(of: env.dataVersion) { _, _ in Task { await load() } }
+        .onChange(of: env.viewPrefs.hideHidden) { _, _ in Task { await load() } }
         .onChange(of: selection) { _, _ in updateSelection() }
         .onAppear { if selection.isEmpty { env.selectedEntries = [folder] } }
     }
@@ -184,6 +172,23 @@ struct FolderView: View {
     @ViewBuilder
     private func tagMenu(for targets: [Entry]) -> some View {
         if !targets.isEmpty {
+            if targets.count == 1, let target = targets.first,
+               env.canReveal(volumeKey: env.selectedVolumeKey) {
+                Button("Open in Finder") {
+                    env.revealInFinder(volumeKey: env.selectedVolumeKey, relPath: target.relPath)
+                }
+                Divider()
+            }
+            if targets.count == 1, let folder = targets.first, folder.isDir,
+               annotations[folder.relPath]?.tag == .review {
+                Button {
+                    env.detailScan(folder: folder)
+                } label: {
+                    Label("Detail Scan", systemImage: "photo.on.rectangle.angled")
+                }
+                .disabled(!env.isSelectedVolumeConnected || env.thumbnailProgress != nil)
+                Divider()
+            }
             ForEach(Tag.actionTags) { tag in
                 Button(tag.label) { Task { await env.applyDecision(tag, to: targets) } }
             }
@@ -205,7 +210,9 @@ struct FolderView: View {
     }
 
     private func load() async {
-        children = (try? await env.catalog.library.children(parentId: folder.id, snapshotId: snapshotId)) ?? []
+        children = (try? await env.catalog.library.children(
+            parentId: folder.id, snapshotId: snapshotId,
+            hideHidden: env.viewPrefs.hideHidden)) ?? []
         if let key = env.selectedVolumeKey {
             annotations = (try? await env.catalog.annotations.annotations(
                 volumeKey: key, relPaths: children.map(\.relPath))) ?? [:]

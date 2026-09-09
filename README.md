@@ -27,12 +27,15 @@ local catalog database.
   in Finder too.
 - **Keyboard tagging** — Q/W/E for Keep/Delete/Review, 1–7 for colors, all
   rebindable in Settings. Acts on the whole multi-selection at once.
-- **Themes** — a **Classic** or **Modern** look. Modern restyles the whole interface as a
-  bento/glass workspace: a spatial backdrop with accent glows, frosted-glass sidebar,
-  inspector, and cards, the CrateDigger-style **OLED drive display** (Telemetry / Gauge /
-  Minimal), and Reclaimable / Action-Plan stat tiles. Plus six accent colors and
-  light / dark / system mode — all in Settings.
+- **Themes** — six accent colors and light / dark / system mode, all in Settings.
 - **Full-text name search** across every cataloged drive.
+
+## Install
+
+Grab the latest signed `.dmg` from the
+[Releases](https://github.com/mrbarkan/diskgallery/releases) page and drag
+DiskGallery to Applications. The app checks for updates itself (Sparkle); you can
+also pick **DiskGallery → Check for Updates…** at any time.
 
 ## Requirements
 
@@ -85,3 +88,7 @@ Duplicate "verify by content" resolves a file as `volumeMount + relativePath`, w
 is correct when a drive was scanned from its volume root (the normal case). Scanning
 a sub-folder instead of the whole drive can make hash verification unable to locate
 files; browsing, duplicate detection, and tagging are unaffected.
+
+## License
+
+Released under the [MIT License](LICENSE). © 2026 Mr. Barkan.

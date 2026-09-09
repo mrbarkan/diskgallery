@@ -72,4 +72,34 @@ final class ThumbnailTests: XCTestCase {
         let afterClear = try await catalog.thumbnails.thumbnailURL(volumeKey: "A", relPath: "x.jpg")
         XCTAssertNil(afterClear)
     }
+
+    func testEntriesNeedingPreviewScopesToSubtree() async throws {
+        let catalog = try Fixture.makeCatalog()
+        try await catalog.database.writer.write { db in
+            var vol = Volume(uuid: "UUID-S", name: "S", createdAt: Date())
+            try vol.insert(db)
+            var snap = Snapshot(volumeId: vol.id!, scannedAt: Date(),
+                                totalCapacity: 1000, freeCapacity: 500, isComplete: true)
+            try snap.insert(db)
+            var nextId = (try Int64.fetchOne(db, sql: "SELECT IFNULL(MAX(id),0) FROM entry") ?? 0) + 1
+            for rel in ["Trips/2024_trip/a.jpg", "Trips/2024_trip/sub/b.jpg",
+                        "Trips/2024Xtrip/c.jpg", "Other/d.jpg"] {
+                try Entry(id: nextId, snapshotId: snap.id!, parentId: nil,
+                          name: (rel as NSString).lastPathComponent, relPath: rel,
+                          isDir: false, logicalSize: 10, allocSize: 10, ext: "jpg").insert(db)
+                nextId += 1
+            }
+        }
+        let volId = try await catalog.database.writer.read { try Int64.fetchOne($0, sql: "SELECT id FROM volume")! }
+
+        let scoped = try await catalog.thumbnails.entriesNeedingPreview(
+            volumeId: volId, categories: [.photos], underRelPath: "Trips/2024_trip")
+        XCTAssertEqual(Set(scoped.map(\.relPath)), ["Trips/2024_trip/a.jpg", "Trips/2024_trip/sub/b.jpg"])
+        // The "_" in the folder name must be treated literally, not as a LIKE wildcard,
+        // so the sibling "2024Xtrip" is NOT matched.
+        XCTAssertFalse(scoped.contains { $0.relPath.contains("2024Xtrip") })
+
+        let all = try await catalog.thumbnails.entriesNeedingPreview(volumeId: volId, categories: [.photos])
+        XCTAssertEqual(all.count, 4)
+    }
 }

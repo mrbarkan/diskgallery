@@ -65,10 +65,18 @@ public struct ThumbnailService: Sendable {
     }
 
     /// Files in the volume's latest snapshot whose extension is in `categories`.
-    public func entriesNeedingPreview(volumeId: Int64, categories: [FileCategory]) async throws -> [PreviewEntry] {
+    /// When `underRelPath` is set (non-empty), restricts to that folder's subtree
+    /// — the "Detail Scan" scope.
+    public func entriesNeedingPreview(volumeId: Int64, categories: [FileCategory],
+                                      underRelPath: String? = nil) async throws -> [PreviewEntry] {
         let exts = FileCategory.extensions(for: categories)
         guard !exts.isEmpty else { return [] }
         let placeholders = Array(repeating: "?", count: exts.count).joined(separator: ",")
+        let folder = underRelPath.flatMap { $0.isEmpty ? nil : $0 }
+        let folderClause = folder != nil ? "AND e.relPath LIKE ? ESCAPE '\\'" : ""
+        var argValues: [DatabaseValueConvertible] = [volumeId] + exts.map { $0 as DatabaseValueConvertible }
+        if let folder { argValues.append(SQLPattern.childrenPrefix(of: folder)) }
+        let args: StatementArguments = StatementArguments(argValues)
         return try await db.writer.read { db in
             try PreviewEntry.fetchAll(db, sql: """
                 SELECT e.relPath AS relPath, e.modifiedAt AS modifiedAt, e.logicalSize AS size
@@ -78,7 +86,8 @@ public struct ThumbnailService: Sendable {
                     ORDER BY scannedAt DESC, id DESC LIMIT 1
                 )
                 AND e.isDir = 0 AND LOWER(e.ext) IN (\(placeholders))
-                """, arguments: StatementArguments([volumeId] + exts.map { $0 as DatabaseValueConvertible }))
+                \(folderClause)
+                """, arguments: args)
         }
     }
 
