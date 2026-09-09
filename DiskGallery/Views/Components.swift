@@ -75,21 +75,39 @@ struct PreviewProgressBanner: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            ProgressView().controlSize(.small)
-            Text(progress.total == 0
-                 ? "Preparing previews…"
-                 : "Generating previews… \(progress.completed) of \(progress.total)")
-                .font(.callout)
-            if progress.total > 0 {
-                ProgressView(value: Double(progress.completed), total: Double(max(progress.total, 1)))
-                    .frame(width: 120)
+            if progress.finished {
+                Image(systemName: progress.cancelled ? "xmark.circle.fill" : "checkmark.circle.fill")
+                    .foregroundStyle(progress.cancelled ? Color.secondary : Color.green)
+                Text(summary).font(.callout)
+                Button("OK", action: onCancel).controlSize(.small)
+            } else {
+                ProgressView().controlSize(.small)
+                Text(progress.total == 0
+                     ? "Preparing previews…"
+                     : "Generating previews… \(progress.completed) of \(progress.total)")
+                    .font(.callout)
+                if progress.total > 0 {
+                    ProgressView(value: Double(progress.completed), total: Double(max(progress.total, 1)))
+                        .frame(width: 120)
+                }
+                Button("Cancel", action: onCancel).controlSize(.small)
             }
-            Button("Cancel", action: onCancel).controlSize(.small)
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
         .background(.regularMaterial, in: Capsule())
         .shadow(radius: 6, y: 2)
         .padding(.top, 10)
+    }
+
+    private var summary: String {
+        if progress.cancelled {
+            return "Previews stopped — \(progress.completed) of \(progress.total) checked"
+        }
+        if progress.total == 0 { return "No files need previews" }
+        let skipped = progress.total - progress.generated
+        return skipped == 0
+            ? "Previews ready — \(progress.generated) generated"
+            : "Previews ready — \(progress.generated) generated, \(skipped) already up to date"
     }
 }
 

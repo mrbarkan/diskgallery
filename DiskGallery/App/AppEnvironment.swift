@@ -160,7 +160,12 @@ final class AppEnvironment {
     var executionProgress: ExecutionProgress?   // non-nil shows the progress HUD
     @ObservationIgnored private var executionTask: Task<Void, Never>?
 
-    struct ThumbnailProgress { var completed: Int; var total: Int }
+    struct ThumbnailProgress {
+        var completed: Int; var total: Int
+        var generated = 0            // freshly rendered (rest were already up to date)
+        var finished = false         // pass ended (done or cancelled): banner shows the result
+        var cancelled = false
+    }
     var thumbnailProgress: ThumbnailProgress?
     @ObservationIgnored private var thumbnailTask: Task<Void, Never>?
 
@@ -1039,7 +1044,7 @@ final class AppEnvironment {
             let entries = (try? await self.catalog.thumbnails.entriesNeedingPreview(
                 volumeId: summary.id, categories: categories, underRelPath: underRelPath)) ?? []
             self.thumbnailProgress = ThumbnailProgress(completed: 0, total: entries.count)
-            var done = 0
+            var done = 0, generated = 0
             for entry in entries {
                 if Task.isCancelled { break }
                 let fileURL = mount.appendingPathComponent(entry.relPath)
@@ -1049,17 +1054,27 @@ final class AppEnvironment {
                 if !fresh, let data = await self.catalog.thumbnails.generate(fileURL: fileURL, maxPixel: 512) {
                     try? await self.catalog.thumbnails.store(data, volumeKey: key, relPath: entry.relPath,
                                                              srcModifiedAt: entry.modifiedAt, srcSize: entry.size)
+                    generated += 1
                 }
                 done += 1
                 self.thumbnailProgress = ThumbnailProgress(completed: done, total: entries.count)
             }
-            self.thumbnailProgress = nil
+            // Leave the banner up in its finished state so the user gets a conclusion;
+            // it auto-dismisses after a few seconds or on "OK".
+            self.thumbnailProgress = ThumbnailProgress(completed: done, total: entries.count,
+                                                       generated: generated, finished: true,
+                                                       cancelled: Task.isCancelled)
             self.dataVersion += 1
             if !Task.isCancelled { onComplete?() }   // cancel means "don't jump to the Gallery"
+            try? await Task.sleep(for: .seconds(6))
+            if self.thumbnailProgress?.finished == true { self.thumbnailProgress = nil }
         }
     }
 
-    func cancelThumbnails() { thumbnailTask?.cancel() }
+    /// Cancel a running pass, or dismiss the finished banner.
+    func cancelThumbnails() {
+        if thumbnailProgress?.finished == true { thumbnailProgress = nil } else { thumbnailTask?.cancel() }
+    }
 
     // MARK: Catalog management
 
