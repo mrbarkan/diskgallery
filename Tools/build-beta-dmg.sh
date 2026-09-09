@@ -28,6 +28,8 @@ ARCHIVE="$BUILD_DIR/$APP_NAME.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 APP="$EXPORT_DIR/$APP_NAME.app"
 BUILD_NUMBER="$(sed -n 's/.*CURRENT_PROJECT_VERSION: "\([0-9]*\)".*/\1/p' project.yml | tail -1)"
+VERSION="$(sed -n 's/.*MARKETING_VERSION: "\([0-9.]*\)".*/\1/p' project.yml | tail -1)"
+RELEASE_TAG="v$VERSION"
 DMG_DIR="$BUILD_DIR/release"
 DMG="$DMG_DIR/$APP_NAME-$BUILD_NUMBER.dmg"
 # Sparkle: the "latest" GitHub release hosts appcast.xml + the DMG.
@@ -86,10 +88,10 @@ echo "==> Signing DMG + writing appcast.xml (Sparkle)"
 # generate_appcast signs with the EdDSA private key in the login keychain (generate_keys)
 # and writes $DMG_DIR/appcast.xml pointing at the GitHub release asset below.
 "$SPARKLE_BIN/generate_appcast" \
-  --download-url-prefix "https://github.com/$RELEASES_REPO/releases/download/build-$BUILD_NUMBER/" \
+  --download-url-prefix "https://github.com/$RELEASES_REPO/releases/download/$RELEASE_TAG/" \
   "$DMG_DIR"
 
 echo ""
 echo "Done: $DMG"
 echo "Publish (creates the release, uploads DMG + appcast; existing installs auto-update):"
-echo "  gh release create build-$BUILD_NUMBER --repo $RELEASES_REPO --title \"DiskGallery beta $BUILD_NUMBER\" \"$DMG\" \"$DMG_DIR/appcast.xml\""
+echo "  gh release create $RELEASE_TAG --repo $RELEASES_REPO --title \"DiskGallery $VERSION\" \"$DMG\" \"$DMG_DIR/appcast.xml\""
