@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import DiskGalleryCore
+import Sparkle
 
 @main
 enum Launcher {
@@ -37,16 +38,13 @@ enum HeadlessScan {
 
 struct DiskGalleryApp: App {
     @State private var env: AppEnvironment? = try? AppEnvironment()
-    @State private var betaGate = BetaGate()
     @State private var systemAppearance = SystemAppearance()
     @State private var launching = true
 
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if betaGate.isExpired {
-                    BetaExpiredView()
-                } else if let env {
+                if let env {
                     ContentView().environment(env)
                 } else {
                     ContentUnavailableView("Couldn't open the catalog",
@@ -78,6 +76,7 @@ struct DiskGalleryApp: App {
         .commands {
             CommandGroup(replacing: .appInfo) {
                 AboutMenuItem()
+                Button("Check for Updates…") { Updater.shared.updater.checkForUpdates() }
             }
             CommandGroup(after: .newItem) {
                 Divider()

@@ -12,12 +12,12 @@ final class LicenseTests: XCTestCase {
 
     func testValidKeyRoundTrips() throws {
         let (signer, verifier) = makePair()
-        let payload = LicensePayload(product: product, email: "dbarkan@gmail.com",
+        let payload = LicensePayload(product: product, email: "tester@example.com",
                                      issuedAt: Date(timeIntervalSince1970: 1_700_000_000))
         let key = try signer.makeKey(for: payload)
 
         let verified = try verifier.verify(key)
-        XCTAssertEqual(verified.email, "dbarkan@gmail.com")
+        XCTAssertEqual(verified.email, "tester@example.com")
         XCTAssertEqual(verified.product, product)
     }
 
