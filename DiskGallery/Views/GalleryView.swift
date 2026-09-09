@@ -40,12 +40,12 @@ struct GalleryView: View {
     @Environment(AppEnvironment.self) private var env
 
     @State private var entries: [GalleryEntry] = []
+    @State private var folders: [GalleryFolder] = []            // subfolders of the current scope
     @State private var dupCounts: [String: Int] = [:]            // "name\u{1}size" -> copies
     @State private var annotations: [String: Annotation] = [:]   // "volumeKey\u{1}relPath" -> annotation
     @State private var selectedIds: Set<Int64> = []
     @State private var loaded = false
     @State private var cachedCount = 0
-    @State private var driveFilter: Int64?    // selected volume id, nil = all drives
 
     private var filter: GalleryFilter { env.viewPrefs.galleryFilter }
     private var grouping: GalleryGrouping { env.viewPrefs.galleryGrouping }
@@ -62,12 +62,24 @@ struct GalleryView: View {
             controlBar
             Divider()
             ScrollView {
-                if loaded && entries.isEmpty {
+                if loaded && entries.isEmpty && folders.isEmpty {
                     ContentUnavailableView("No media yet", systemImage: "photo.on.rectangle.angled",
                         description: Text("Scan a drive and generate previews to see your photos here."))
                         .padding(.top, 80)
                 } else {
                     LazyVGrid(columns: columns, spacing: 12, pinnedViews: [.sectionHeaders]) {
+                        if !folders.isEmpty {
+                            Section {
+                                ForEach(folders) { folder in
+                                    GalleryFolderTile(folder: folder)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture(count: 2) { enter(folder) }
+                                        .help("Double-click to open “\(folder.name)”")
+                                }
+                            } header: {
+                                sectionHeader("Folders", count: folders.count)
+                            }
+                        }
                         ForEach(sections, id: \.title) { section in
                             Section {
                                 ForEach(section.items) { entry in
@@ -80,14 +92,9 @@ struct GalleryView: View {
                                 }
                             } header: {
                                 if !section.title.isEmpty {
-                                    HStack {
-                                        Text(section.title).font(.headline)
-                                        Spacer()
-                                        Text("\(section.items.count)").foregroundStyle(.secondary)
-                                    }
-                                    .padding(.vertical, 4).padding(.horizontal, 4)
-                                    .frame(maxWidth: .infinity)
-                                    .background(.regularMaterial)
+                                    sectionHeader(section.title, count: section.items.count)
+                                } else if !folders.isEmpty {
+                                    sectionHeader("Files", count: section.items.count)
                                 }
                             }
                         }
@@ -97,7 +104,36 @@ struct GalleryView: View {
             }
         }
         .navigationTitle("Gallery")
-        .task(id: "\(env.dataVersion)-\(filter.rawValue)-\(driveFilter ?? -1)-\(env.viewPrefs.hideHidden)-\(env.galleryFolderScope?.volumeId ?? -1)-\(env.galleryFolderScope?.relPath ?? "")") { await load() }
+        .task(id: "\(env.dataVersion)-\(filter.rawValue)-\(env.viewPrefs.hideHidden)-\(env.galleryFolderScope?.volumeId ?? -1)-\(env.galleryFolderScope?.relPath ?? "")") { await load() }
+    }
+
+    private func sectionHeader(_ title: String, count: Int) -> some View {
+        HStack {
+            Text(title).font(.headline)
+            Spacer()
+            Text("\(count)").foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4).padding(.horizontal, 4)
+        .frame(maxWidth: .infinity)
+        .background(.regularMaterial)
+    }
+
+    /// Drill into a subfolder of the current scope.
+    private func enter(_ folder: GalleryFolder) {
+        guard let scope = env.galleryFolderScope else { return }
+        env.galleryFolderScope = GalleryFolderScope(volumeId: scope.volumeId, relPath: folder.relPath, name: folder.name)
+    }
+
+    /// Breadcrumb: drive root then each path component of the scope, as (label, relPath).
+    private func crumbs(for scope: GalleryFolderScope) -> [(label: String, relPath: String)] {
+        let drive = env.volumeSummaries.first { $0.id == scope.volumeId }?.name ?? "Drive"
+        var out = [(label: drive, relPath: "")]
+        var path = ""
+        for part in scope.relPath.split(separator: "/") {
+            path = path.isEmpty ? String(part) : path + "/" + part
+            out.append((label: String(part), relPath: path))
+        }
+        return out
     }
 
     @ViewBuilder private var driveShelf: some View {
@@ -105,8 +141,7 @@ struct GalleryView: View {
             HStack(spacing: 10) {
                 driveCard(title: "All Drives", systemImage: "square.grid.2x2",
                           subtitle: "\(env.volumeSummaries.count) drives",
-                          fraction: nil, connected: true, selected: driveFilter == nil && env.galleryFolderScope == nil) {
-                    driveFilter = nil
+                          fraction: nil, connected: true, selected: env.galleryFolderScope == nil) {
                     env.galleryFolderScope = nil
                 }
                 ForEach(env.volumeSummaries) { summary in
@@ -116,9 +151,9 @@ struct GalleryView: View {
                               subtitle: Format.count(summary.fileCount),
                               fraction: frac,
                               connected: env.volumes.isConnected(key: summary.uuid ?? summary.name),
-                              selected: driveFilter == summary.id && env.galleryFolderScope == nil) {
-                        driveFilter = (driveFilter == summary.id) ? nil : summary.id
-                        env.galleryFolderScope = nil
+                              selected: env.galleryFolderScope?.volumeId == summary.id) {
+                        // Selecting a drive opens its root; the grid then browses folders like a DAM.
+                        env.galleryFolderScope = GalleryFolderScope(volumeId: summary.id, relPath: "", name: summary.name)
                     }
                 }
             }
@@ -153,17 +188,26 @@ struct GalleryView: View {
     @ViewBuilder private var controlBar: some View {
         HStack(spacing: 12) {
             if let scope = env.galleryFolderScope {
-                HStack(spacing: 5) {
-                    Image(systemName: "folder.fill").font(.system(size: 10))
-                    Text(scope.name).font(.caption.weight(.medium)).lineLimit(1)
-                    Button { env.galleryFolderScope = nil } label: {
-                        Image(systemName: "xmark.circle.fill").font(.system(size: 11))
+                let path = crumbs(for: scope)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "externaldrive").font(.system(size: 10)).foregroundStyle(.secondary)
+                        ForEach(Array(path.enumerated()), id: \.offset) { i, crumb in
+                            if i > 0 { Image(systemName: "chevron.right").font(.system(size: 8)).foregroundStyle(.tertiary) }
+                            let isLast = i == path.count - 1
+                            Button(crumb.label) {
+                                env.galleryFolderScope = GalleryFolderScope(volumeId: scope.volumeId, relPath: crumb.relPath,
+                                                                            name: crumb.label)
+                            }
+                            .buttonStyle(.plain)
+                            .font(.caption.weight(isLast ? .semibold : .regular))
+                            .foregroundStyle(isLast ? .primary : .secondary)
+                            .disabled(isLast)
+                        }
                     }
-                    .buttonStyle(.plain).foregroundStyle(.secondary)
                 }
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(env.theme.accent.palette.accent.opacity(0.15), in: Capsule())
-                .help("Showing only “\(scope.name)” — click ✕ to see every drive")
+            } else {
+                Text("All drives").font(.caption).foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
             Text("\(cachedCount) of \(entries.count) cached")
@@ -173,11 +217,18 @@ struct GalleryView: View {
     }
 
     private func load() async {
+        let scope = env.galleryFolderScope
         let items = (try? await env.catalog.gallery.items(
             categories: filter.categories,
-            volumeId: env.galleryFolderScope?.volumeId ?? driveFilter,
+            volumeId: scope?.volumeId,
             hideHidden: env.viewPrefs.hideHidden,
-            underRelPath: env.galleryFolderScope?.relPath)) ?? []
+            underRelPath: scope?.relPath,
+            directOnly: scope != nil)) ?? []
+        let subfolders: [GalleryFolder] = if let scope {
+            (try? await env.catalog.gallery.folders(volumeId: scope.volumeId, underRelPath: scope.relPath,
+                                                    categories: filter.categories,
+                                                    hideHidden: env.viewPrefs.hideHidden)) ?? []
+        } else { [] }
 
         // Duplicate counts (one bulk query), keyed like DuplicateSet.id.
         let sets = (try? await env.catalog.duplicates.duplicateSets(minCopies: 2, limit: 2000)) ?? []
@@ -196,6 +247,7 @@ struct GalleryView: View {
         }
 
         entries = items
+        folders = subfolders
         dupCounts = dups
         annotations = annos
         cachedCount = cached
@@ -249,6 +301,22 @@ struct GalleryView: View {
         env.selectedGalleryItems = entries.filter { selectedIds.contains($0.id) }.map {
             GalleryItemRef(id: $0.id, relPath: $0.relPath, name: $0.name,
                            logicalSize: $0.logicalSize, volumeKey: $0.volumeKey)
+        }
+    }
+}
+
+/// A subfolder tile in the drill-down: folder glyph, name, media count beneath.
+private struct GalleryFolderTile: View {
+    let folder: GalleryFolder
+
+    var body: some View {
+        VStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 8).fill(.quaternary)
+                .overlay(Image(systemName: "folder.fill").font(.system(size: 34)).foregroundStyle(.secondary))
+                .aspectRatio(1, contentMode: .fit)
+            Text(folder.name).font(.caption).lineLimit(1).truncationMode(.middle)
+            Text(folder.mediaCount == 0 ? "empty" : "\(Format.count(folder.mediaCount)) items")
+                .font(.system(size: 9)).foregroundStyle(.secondary)
         }
     }
 }

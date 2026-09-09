@@ -15,7 +15,7 @@ final class GalleryTests: XCTestCase {
             try snapshot.insert(db)
             var nextId = (try Int64.fetchOne(db, sql: "SELECT IFNULL(MAX(id), 0) FROM entry") ?? 0) + 1
             for f in files {
-                try Entry(id: nextId, snapshotId: snapshot.id!, parentId: nil, name: f.name,
+                try Entry(id: nextId, snapshotId: snapshot.id!, parentId: nil, name: (f.name as NSString).lastPathComponent,
                           relPath: f.name, isDir: f.isDir, logicalSize: f.size, allocSize: f.size,
                           ext: f.ext).insert(db)
                 nextId += 1
@@ -96,6 +96,44 @@ final class GalleryTests: XCTestCase {
 
         let all = try await catalog.gallery.items(categories: [.photos])
         XCTAssertEqual(all.count, 4)
+    }
+
+    func testFolderDrillDownListsDirectChildrenAndSubfolderCounts() async throws {
+        let catalog = try Fixture.makeCatalog()
+        try await seedVolume(catalog, uuid: "UUID-A", name: "Alpha", files: [
+            ("root.jpg", "jpg", 1, false),
+            ("2024", nil, 0, true),
+            ("2024/a.jpg", "jpg", 1, false),
+            ("2024/trip", nil, 0, true),
+            ("2024/trip/b.jpg", "jpg", 1, false),
+            ("2024/trip/c.raf", "raf", 1, false),
+            ("2024/notes.txt", "txt", 1, false),
+            ("empty", nil, 0, true),
+            (".hidden", nil, 0, true),
+            (".hidden/h.jpg", "jpg", 1, false),
+        ])
+        let vid = try await catalog.gallery.items(categories: [.photos]).first!.volumeId
+
+        // Root: only root.jpg directly; subfolders carry subtree media counts.
+        let rootItems = try await catalog.gallery.items(categories: [.photos], volumeId: vid,
+                                                        underRelPath: nil, directOnly: true)
+        XCTAssertEqual(rootItems.map(\.relPath), ["root.jpg"])
+        let rootFolders = try await catalog.gallery.folders(volumeId: vid, underRelPath: nil,
+                                                            categories: [.photos, .raw], hideHidden: true)
+        XCTAssertEqual(rootFolders.map(\.name), ["2024", "empty"])
+        XCTAssertEqual(rootFolders.map(\.mediaCount), [3, 0])
+
+        // Inside 2024: a.jpg only (b/c are one level deeper); "trip" counts 2.
+        let inside = try await catalog.gallery.items(categories: [.photos, .raw], volumeId: vid,
+                                                     underRelPath: "2024", directOnly: true)
+        XCTAssertEqual(inside.map(\.relPath), ["2024/a.jpg"])
+        let sub = try await catalog.gallery.folders(volumeId: vid, underRelPath: "2024", categories: [.photos, .raw])
+        XCTAssertEqual(sub.map(\.relPath), ["2024/trip"])
+        XCTAssertEqual(sub.first?.mediaCount, 2)
+
+        // Subtree mode (Detail Scan) still returns everything beneath.
+        let subtree = try await catalog.gallery.items(categories: [.photos, .raw], volumeId: vid, underRelPath: "2024")
+        XCTAssertEqual(subtree.count, 3)
     }
 }
 
