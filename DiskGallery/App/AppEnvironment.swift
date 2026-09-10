@@ -178,6 +178,31 @@ final class AppEnvironment {
     init() throws {
         catalog = try Catalog.makeDefault()
         volumes = VolumeService()
+        startExternalChangePoll()
+    }
+
+    // MARK: External catalog changes (the MCP server writing annotations)
+
+    @ObservationIgnored private var externalPollTask: Task<Void, Never>?
+    @ObservationIgnored private var lastChangeCounter: Int?
+
+    /// The MCP server (`DiskGallery --mcp`) runs in its own process against the same
+    /// catalog, so its annotation writes never bump `dataVersion` here. Poll the counter
+    /// it bumps and reload when it moves.
+    /// ponytail: a 1-row read every 2s is cheaper than file-watching the WAL; swap to
+    /// DispatchSource only if it ever shows up in a profile.
+    private func startExternalChangePoll() {
+        externalPollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                guard let self else { return }
+                guard let counter = try? await self.catalog.annotations.changeCounter() else { continue }
+                if let last = self.lastChangeCounter, last != counter {
+                    self.dataVersion += 1
+                }
+                self.lastChangeCounter = counter
+            }
+        }
     }
 
     // MARK: Keyboard shortcuts (window-level, decoupled from List focus)

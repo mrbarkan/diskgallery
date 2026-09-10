@@ -13,10 +13,67 @@ struct SettingsView: View {
                 .tabItem { Label("Drives", systemImage: "externaldrive.badge.checkmark") }
             FilesSettings()
                 .tabItem { Label("Files", systemImage: "doc") }
+            AgentSettings()
+                .tabItem { Label("Agents", systemImage: "sparkles") }
             LicenseSettings()
                 .tabItem { Label("License", systemImage: "checkmark.seal") }
         }
         .frame(width: 480, height: 520)
+    }
+}
+
+/// Connect an AI agent (Claude Desktop, Claude Code, any MCP client) to the catalog.
+/// The app itself serves Model Context Protocol over stdio in `--mcp` mode.
+struct AgentSettings: View {
+    @State private var copied = false
+
+    private var executablePath: String {
+        Bundle.main.executableURL?.path ?? "/Applications/DiskGallery.app/Contents/MacOS/DiskGallery"
+    }
+
+    private var config: String {
+        """
+        {
+          "mcpServers": {
+            "diskgallery": {
+              "command": "\(executablePath)",
+              "args": ["--mcp"]
+            }
+          }
+        }
+        """
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                Text("An AI agent can read your catalog — drives, folders, file names, cached thumbnails and duplicates — and propose an organization by tagging files with Keep, Delete, Review, Move or Backup and a note explaining why.")
+                    .font(.callout)
+                Text("Proposals show up in your Tagged lists like your own decisions. An agent can never move, copy or delete anything on a drive.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section("Client configuration") {
+                Text("Add this to your MCP client's config, then restart it.")
+                    .font(.caption).foregroundStyle(.secondary)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    Text(config).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
+                }
+                .frame(height: 110)
+                .padding(8)
+                .background(Color(.textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
+                HStack {
+                    Button(copied ? "Copied" : "Copy") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(config, forType: .string)
+                        copied = true
+                        Task { try? await Task.sleep(for: .seconds(2)); copied = false }
+                    }
+                    Text("For Claude Code: `claude mcp add diskgallery -- \(executablePath) --mcp`")
+                        .font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                }
+            }
+        }
+        .formStyle(.grouped)
     }
 }
 

@@ -180,6 +180,14 @@ public struct LibraryService: Sendable {
         }
     }
 
+    /// One entry addressed the way the outside world knows it: snapshot + path.
+    public func entry(snapshotId: Int64, relPath: String) async throws -> Entry? {
+        try await db.writer.read { db in
+            try Entry.fetchOne(db, sql: "SELECT * FROM entry WHERE snapshotId = ? AND relPath = ?",
+                               arguments: [snapshotId, relPath])
+        }
+    }
+
     public func rootEntry(snapshotId: Int64) async throws -> Entry? {
         try await db.writer.read { db in
             try Entry.fetchOne(db, sql: "SELECT * FROM entry WHERE snapshotId = ? AND parentId IS NULL", arguments: [snapshotId])

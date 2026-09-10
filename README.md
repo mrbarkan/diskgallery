@@ -29,6 +29,9 @@ local catalog database.
   rebindable in Settings. Acts on the whole multi-selection at once.
 - **Themes** — six accent colors and light / dark / system mode, all in Settings.
 - **Full-text name search** across every cataloged drive.
+- **AI agent access (MCP)** — connect Claude or any Model Context Protocol client
+  to the catalog so it can look through your drives and propose an organization.
+  See [AI agents](#ai-agents).
 
 ## Install
 
@@ -67,6 +70,51 @@ DiskGallery.app/Contents/MacOS/DiskGallery --scan /Volumes/YourDrive
 ```
 
 Scans into the default catalog and exits — handy for scripting.
+
+## AI agents
+
+DiskGallery speaks [Model Context Protocol](https://modelcontextprotocol.io) over
+stdio, so an AI agent can read your catalog — drives, folders, file names, sizes,
+dates, cached thumbnails and duplicate sets — and **propose an organization** by
+tagging files.
+
+Add this to your MCP client's config (Settings → Agents has a Copy button with the
+right path filled in), then restart the client:
+
+```json
+{
+  "mcpServers": {
+    "diskgallery": {
+      "command": "/Applications/DiskGallery.app/Contents/MacOS/DiskGallery",
+      "args": ["--mcp"]
+    }
+  }
+}
+```
+
+For Claude Code:
+
+```sh
+claude mcp add diskgallery -- /Applications/DiskGallery.app/Contents/MacOS/DiskGallery --mcp
+```
+
+**Tools:** `list_drives`, `browse_folder`, `search`, `get_file`, `list_duplicates`,
+`get_thumbnail`, `list_annotations`, `set_annotations`.
+
+**How proposing works.** There is no separate plan object: an agent proposes by
+writing the same annotations you write yourself — Keep / Delete / Review / Move /
+Backup, a Finder color, and a note explaining why. Those land in your Tagged lists,
+you change what you disagree with, and Organize turns what survives into a plan.
+
+**What an agent cannot do.** Move, copy, rename or delete anything on a drive. The
+server only ever reads the filesystem and writes annotations to the app's own
+catalog database; `MutationGuardTests` enforces that statically. Execution stays
+behind the app's existing copy → verify → delete gates, which need your approval.
+
+The server reads the same catalog as the running app, so tags an agent writes show
+up in the UI within a couple of seconds. Thumbnails are served from the local cache,
+which means an agent can look at your photos with the drive unplugged — but only for
+files whose previews you generated in the app.
 
 ## Architecture
 

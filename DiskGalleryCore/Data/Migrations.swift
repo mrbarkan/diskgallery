@@ -179,6 +179,16 @@ enum Migrations {
             }
         }
 
+        // Small key/value side table. Currently holds `annotationChangeCounter`, bumped on
+        // every annotation write so a second process (the MCP server) and the app can each
+        // notice the other's edits.
+        migrator.registerMigration("v9") { db in
+            try db.create(table: "meta") { t in
+                t.column("key", .text).primaryKey()
+                t.column("value", .text).notNull()
+            }
+        }
+
         return migrator
     }
 }

@@ -99,10 +99,34 @@ public struct AnnotationStore: Sendable {
             let isEmpty = annotation.tag == .none && annotation.color == .none && (annotation.note?.isEmpty ?? true)
             if isEmpty {
                 if let id = annotation.id { _ = try Annotation.deleteOne(db, key: id) }
+                try Self.bumpChangeCounter(db)
                 return nil
             }
             try annotation.save(db)
+            try Self.bumpChangeCounter(db)
             return annotation
+        }
+    }
+
+    // MARK: Change counter
+
+    static let counterKey = "annotationChangeCounter"
+
+    /// Bumped inside the write transaction, so any observer (the app polling while the
+    /// MCP server writes, or vice-versa) sees a strictly increasing value.
+    static func bumpChangeCounter(_ db: Database) throws {
+        try db.execute(sql: """
+            INSERT INTO meta(key, value) VALUES (?, '1')
+            ON CONFLICT(key) DO UPDATE SET value = CAST(CAST(value AS INTEGER) + 1 AS TEXT)
+            """, arguments: [Self.counterKey])
+    }
+
+    /// Monotonic count of annotation writes. 0 before the first one.
+    public func changeCounter() async throws -> Int {
+        try await db.writer.read { db in
+            let raw = try String.fetchOne(db, sql: "SELECT value FROM meta WHERE key = ?",
+                                          arguments: [Self.counterKey])
+            return Int(raw ?? "0") ?? 0
         }
     }
 

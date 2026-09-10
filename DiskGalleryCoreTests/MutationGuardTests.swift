@@ -17,6 +17,11 @@ final class MutationGuardTests: XCTestCase {
             "DiskGalleryCore/Scanning/DriveHardwareProbe.swift",
             "DiskGalleryCore/Scanning/ScanProgress.swift",
             "DiskGalleryCore/Duplicates/HashVerifier.swift",
+            // The MCP server serves external AI agents: it may write annotations to the
+            // catalog DB, but must never touch a drive.
+            "DiskGalleryCore/MCP/MCPServer.swift",
+            "DiskGalleryCore/MCP/MCPTools.swift",
+            "DiskGalleryCore/MCP/JSONValue.swift",
         ]
 
         let forbidden = [

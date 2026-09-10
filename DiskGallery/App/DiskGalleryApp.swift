@@ -10,6 +10,9 @@ enum Launcher {
         if let index = args.firstIndex(of: "--scan"), index + 1 < args.count {
             HeadlessScan.run(path: args[index + 1])   // performs the scan and exits
         }
+        if args.contains("--mcp") {
+            HeadlessMCP.run()                          // serves MCP over stdio and exits
+        }
         DiskGalleryApp.main()
     }
 }
@@ -28,6 +31,26 @@ enum HeadlessScan {
                 }
             } catch {
                 FileHandle.standardError.write(Data("Scan failed: \(error)\n".utf8))
+            }
+            semaphore.signal()
+        }
+        semaphore.wait()
+        exit(0)
+    }
+}
+
+/// MCP server mode: `DiskGallery --mcp`. Speaks Model Context Protocol over stdio so an
+/// AI agent can read the catalog and propose an organization by writing annotations.
+/// stdout carries protocol frames only — anything else would break the client.
+enum HeadlessMCP {
+    static func run() -> Never {
+        let semaphore = DispatchSemaphore(value: 0)
+        Task {
+            do {
+                let catalog = try Catalog.makeDefault()
+                await MCPServer(catalog: catalog).runStdio()
+            } catch {
+                FileHandle.standardError.write(Data("MCP server failed to open the catalog: \(error)\n".utf8))
             }
             semaphore.signal()
         }
