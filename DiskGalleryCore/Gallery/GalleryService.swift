@@ -107,7 +107,7 @@ public struct GalleryService: Sendable {
             """
         let scopeClause = folder != nil
             ? "AND e.relPath LIKE ? ESCAPE '\\' AND e.relPath NOT LIKE ? ESCAPE '\\'"
-            : "AND e.relPath NOT LIKE '%/%'"
+            : "AND e.relPath NOT LIKE '%/%' AND e.relPath != ''"    // '' is the volume root itself
         var dirValues: [DatabaseValueConvertible] = [volumeId]
         if let folder { dirValues += [SQLPattern.childrenPrefix(of: folder), SQLPattern.childrenPrefix(of: folder) + "/%"] }
         let dirArgs: StatementArguments = StatementArguments(dirValues)

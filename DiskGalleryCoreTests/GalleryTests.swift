@@ -101,6 +101,7 @@ final class GalleryTests: XCTestCase {
     func testFolderDrillDownListsDirectChildrenAndSubfolderCounts() async throws {
         let catalog = try Fixture.makeCatalog()
         try await seedVolume(catalog, uuid: "UUID-A", name: "Alpha", files: [
+            ("", nil, 0, true),                  // the volume root itself, as the Scanner records it
             ("root.jpg", "jpg", 1, false),
             ("2024", nil, 0, true),
             ("2024/a.jpg", "jpg", 1, false),
