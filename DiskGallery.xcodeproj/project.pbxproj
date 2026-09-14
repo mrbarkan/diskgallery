@@ -112,6 +112,7 @@
 		C5A6E538914E1290442AEC7A /* ShortcutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */; };
 		C723B2681D13ADAD6B82B080 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E79766C18BB7460C63E09866 /* SettingsView.swift */; };
 		C7A6E53217D0526EBAE323DE /* FileCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05E28A1908D4D546A9F3285B /* FileCategory.swift */; };
+		C83B3DAD3CC800BFFA675E3B /* DriveMapExportOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40B5E59E4830EA854A44A9E6 /* DriveMapExportOptionsView.swift */; };
 		C8C2BAD9C2BDE90D71E027AC /* ProBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8822CADD3F623321528676A /* ProBadge.swift */; };
 		CA3D0AC01A3289939D14B419 /* RevealTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EA6F719324857802A79854A /* RevealTarget.swift */; };
 		CD7A451141240D8F3E76B330 /* VolumeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9BFF7A87C30AE1041B12C4E /* VolumeFilter.swift */; };
@@ -223,6 +224,7 @@
 		3C8DCECD169ABFB6FA93CFA2 /* PlanningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningTests.swift; sourceTree = "<group>"; };
 		3CA545E66F28EFEE10CF5566 /* ShortcutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutStore.swift; sourceTree = "<group>"; };
 		3FAE81ABC6EF977563DD7EA8 /* UnifiedMergeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedMergeTests.swift; sourceTree = "<group>"; };
+		40B5E59E4830EA854A44A9E6 /* DriveMapExportOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveMapExportOptionsView.swift; sourceTree = "<group>"; };
 		4105C0CC1F9C0469C2052248 /* FinderTagTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTagTests.swift; sourceTree = "<group>"; };
 		411D66DC8AAED302B83CB44B /* MutationGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MutationGuardTests.swift; sourceTree = "<group>"; };
 		413E51629AFD434627D3871C /* DiskGalleryCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiskGalleryCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -402,6 +404,7 @@
 				5F829DE6FBD919E122240C98 /* AllDrivesView.swift */,
 				7CAB8199993101F11F86332D /* ChangesView.swift */,
 				DDDE0C869FC4D5E82CC433DA /* Components.swift */,
+				40B5E59E4830EA854A44A9E6 /* DriveMapExportOptionsView.swift */,
 				E53EFC6DA62C46A213C123D0 /* DriveRolesUI.swift */,
 				C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */,
 				2C7B796F9140FFB75649FBEA /* EntryDetailView.swift */,
@@ -934,6 +937,7 @@
 				26E03B7CB351BBB67A92F649 /* DiskGalleryApp.swift in Sources */,
 				D85E8BB72E7E52D14364E9EE /* DriveDragItems.swift in Sources */,
 				535DB6EB2DA3353CCF07648F /* DriveHardwareDisplay.swift in Sources */,
+				C83B3DAD3CC800BFFA675E3B /* DriveMapExportOptionsView.swift in Sources */,
 				BE22D041B9CC618F208F09BF /* DriveRoleLabelsStore.swift in Sources */,
 				37D1FE9BF51F5C339990ED74 /* DriveRolesUI.swift in Sources */,
 				F4798D76A8EBE58BB98FC812 /* DuplicatesView.swift in Sources */,
