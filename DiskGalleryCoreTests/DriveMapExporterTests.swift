@@ -87,4 +87,41 @@ final class DriveMapExporterTests: XCTestCase {
             XCTFail("expected noCompleteSnapshot")
         } catch DriveMapError.noCompleteSnapshot {}
     }
+
+    func testRenderEmbedsDecodableEscapedJSON() throws {
+        let evil = "cut</script><!--.mov"
+        let epoch = Date(timeIntervalSince1970: 0)
+        let map = DriveMap(
+            generatedAt: epoch, appVersion: "9.9", includesFiles: true, filesPerFolder: 20,
+            drive: .init(name: "Evil <Drive>", uuid: nil, fsType: "apfs", totalCapacity: 1000,
+                         freeCapacity: 500, scannedAt: epoch, connection: nil, model: nil,
+                         fileCount: 1, folderCount: 0),
+            categories: [], extensionCategories: [:],
+            root: .init(name: "Evil", relPath: "", modifiedAt: nil, bytes: 5, fileCount: 1, folders: [],
+                        files: [.init(name: evil, bytes: 5, modifiedAt: nil, ext: "mov", hash: nil)],
+                        moreFiles: 0))
+
+        let html = try DriveMapExporter.render(map)
+
+        XCTAssertFalse(html.contains("__DRIVE_MAP_JSON__"))
+        XCTAssertFalse(html.contains(evil))
+        let open = #"<script id="map" type="application/json">"#
+        let start = try XCTUnwrap(html.range(of: open)).upperBound
+        let end = try XCTUnwrap(html.range(of: "</script>", range: start..<html.endIndex)).lowerBound
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decoded = try decoder.decode(DriveMap.self, from: Data(html[start..<end].utf8))
+        XCTAssertEqual(decoded.root.files.first?.name, evil)
+        XCTAssertEqual(decoded.drive.name, "Evil <Drive>")
+    }
+
+    func testExportWritesHTMLFile() async throws {
+        let (catalog, id) = try await scanned(try Fixture.makeTree())
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("DriveMap-\(UUID().uuidString).html")
+        try await catalog.driveMaps.export(volumeId: id, to: url)
+        let html = try String(contentsOf: url, encoding: .utf8)
+        XCTAssertTrue(html.hasPrefix("<!doctype html>"))
+        XCTAssertTrue(html.contains(#""relPath":"sub""#))
+    }
 }

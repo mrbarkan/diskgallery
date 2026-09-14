@@ -102,6 +102,24 @@ public struct DriveMapExporter: Sendable {
             return tree.map(volume: volume, snapshot: snapshot, generatedAt: Date())
         }
     }
+
+    /// Writes the map of `volumeId` to `url` as one self-contained HTML file.
+    public func export(volumeId: Int64, options: DriveMapOptions = DriveMapOptions(), to url: URL) async throws {
+        let map = try await build(volumeId: volumeId, options: options)
+        try Data(try Self.render(map).utf8).write(to: url, options: .atomic)
+    }
+
+    /// The full HTML document with `map` embedded as JSON.
+    public static func render(_ map: DriveMap) throws -> String {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.sortedKeys]
+        // `<` only ever appears inside JSON strings, so escaping it keeps a filename like
+        // "</script>" or "<!--" from ending the data block early.
+        let json = String(decoding: try encoder.encode(map), as: UTF8.self)
+            .replacingOccurrences(of: "<", with: "\\u003c")
+        return DriveMapTemplate.html.replacingOccurrences(of: "__DRIVE_MAP_JSON__", with: json)
+    }
 }
 
 /// One pass over a snapshot's entries, folded into the nested map.
