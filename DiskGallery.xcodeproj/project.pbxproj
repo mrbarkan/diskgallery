@@ -35,6 +35,7 @@
 		37D1FE9BF51F5C339990ED74 /* DriveRolesUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = E53EFC6DA62C46A213C123D0 /* DriveRolesUI.swift */; };
 		38354C1C6CEFBA22CA2529BC /* MCPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 213CE3705C616DC41A34DC32 /* MCPTests.swift */; };
 		3F89243663D3FAF7DEFED70A /* VolumeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B2DFD8332DA70FF37376FB /* VolumeService.swift */; };
+		40A1137D187AACC96D52ABCD /* DriveMapExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBF3640C8F29F375E4EE696B /* DriveMapExporterTests.swift */; };
 		412F1FED7D5647E1F85054CF /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CEE1A004B973AABD3E7B995 /* Models.swift */; };
 		4272814F660D27B90F7ED93C /* AppInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1FF94BF0A803EA9F9F85826 /* AppInfo.swift */; };
 		43D9CAB4E3241728E5BD42BF /* ScanCacheView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF065A612665A90D5CF0162F /* ScanCacheView.swift */; };
@@ -55,6 +56,7 @@
 		60595B0C3850E9835F789891 /* DuplicateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 052F1C86EE5C7C4897CBB317 /* DuplicateEngine.swift */; };
 		6205D1CDDC40C2DF2A953BE7 /* VolumeMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0860DD76D728A4E486E6CD1 /* VolumeMetadata.swift */; };
 		622D7AFD130991BA9BC8B80C /* LibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B474506196335AB972ACF0B4 /* LibraryService.swift */; };
+		642C1406AC854CFAE99C2D36 /* DriveMapExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 050D98E8996E9CA187289F73 /* DriveMapExporter.swift */; };
 		656C5629B8D927DFB5320AF1 /* ActionPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C72B112CB1A19D091849CB /* ActionPlanView.swift */; };
 		66E9ADC5BE56A17636BDE2AD /* ExecutorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94039570E648916C922F9B01 /* ExecutorService.swift */; };
 		675EA47A2AEBA04940BC35A8 /* AnnotationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8541EFC2B903B51A3A69F365 /* AnnotationStore.swift */; };
@@ -187,6 +189,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		050D98E8996E9CA187289F73 /* DriveMapExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveMapExporter.swift; sourceTree = "<group>"; };
 		052F1C86EE5C7C4897CBB317 /* DuplicateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateEngine.swift; sourceTree = "<group>"; };
 		05346B55515038236E4B4183 /* DriveRolesServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveRolesServiceTests.swift; sourceTree = "<group>"; };
 		05E28A1908D4D546A9F3285B /* FileCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCategory.swift; sourceTree = "<group>"; };
@@ -278,6 +281,7 @@
 		B80E004DD7BC792F254239BA /* ThumbnailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailService.swift; sourceTree = "<group>"; };
 		B82987EC891FA8B2F0A51F0F /* BackupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupTests.swift; sourceTree = "<group>"; };
 		B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DiskGalleryCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		BBF3640C8F29F375E4EE696B /* DriveMapExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveMapExporterTests.swift; sourceTree = "<group>"; };
 		BC0F324047574353BA4FF76D /* DriveHardwareProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveHardwareProbe.swift; sourceTree = "<group>"; };
 		BC3C0065500C24587932BC0A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BC621BD96C2E755F0715EB35 /* UpgradeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeSheet.swift; sourceTree = "<group>"; };
@@ -376,6 +380,14 @@
 				1B60F525D3DE6BD4E0A73D7F /* ThemeModel.swift */,
 			);
 			path = Theme;
+			sourceTree = "<group>";
+		};
+		2A2D422AC093D21D7A22DBDC /* Export */ = {
+			isa = PBXGroup;
+			children = (
+				050D98E8996E9CA187289F73 /* DriveMapExporter.swift */,
+			);
+			path = Export;
 			sourceTree = "<group>";
 		};
 		348DD25B395404EA8B8BCA50 /* Views */ = {
@@ -491,6 +503,7 @@
 				73DE55DAEC232BB0BE14679A /* CapacityTests.swift */,
 				2DF8B6014428D118FD2C366E /* ChangeTests.swift */,
 				D4DAF550E4C8CE67CFE830AD /* CrossDriveDuplicateTests.swift */,
+				BBF3640C8F29F375E4EE696B /* DriveMapExporterTests.swift */,
 				05346B55515038236E4B4183 /* DriveRolesServiceTests.swift */,
 				D4F9F870260EEDCD0B3AC49E /* DriveRoleTests.swift */,
 				F7564DDC8279F5702EE38072 /* DuplicateTests.swift */,
@@ -678,6 +691,7 @@
 				4EF4D1B03A8BCFCD227596A9 /* Data */,
 				D22E82DBE1245BFAA3EEB9D1 /* Duplicates */,
 				625AE92E80BA82D6DD89D856 /* Execution */,
+				2A2D422AC093D21D7A22DBDC /* Export */,
 				4842FEE73EED492C3DE2E141 /* FinderTags */,
 				04ED67E12B42B0321F8BF98D /* Gallery */,
 				3974AC806D5C0A872093BC8B /* Library */,
@@ -860,6 +874,7 @@
 				D717C2F20D3C102722251C7F /* CapacityTests.swift in Sources */,
 				04FD7DD0404A7ED926DCD970 /* ChangeTests.swift in Sources */,
 				04EE7BB7F97B50A3F09BE417 /* CrossDriveDuplicateTests.swift in Sources */,
+				40A1137D187AACC96D52ABCD /* DriveMapExporterTests.swift in Sources */,
 				FA1BBD41BF53E2137F2680BC /* DriveRoleTests.swift in Sources */,
 				861F453436951062EC0BAC0C /* DriveRolesServiceTests.swift in Sources */,
 				5767A44CEC56229399FB8C08 /* DuplicateTests.swift in Sources */,
@@ -960,6 +975,7 @@
 				9FAA111FB1D47D4A250CFF75 /* Catalog.swift in Sources */,
 				5AA0B13893DCA8DC49879706 /* ChangeService.swift in Sources */,
 				2D53B82F6AF627B3BD8940CE /* DriveHardwareProbe.swift in Sources */,
+				642C1406AC854CFAE99C2D36 /* DriveMapExporter.swift in Sources */,
 				91F7B57248C5A2E1E756FD12 /* DriveRole.swift in Sources */,
 				835BDBC39549142FEA668CEA /* DriveRolesService.swift in Sources */,
 				60595B0C3850E9835F789891 /* DuplicateEngine.swift in Sources */,

@@ -22,6 +22,7 @@ public final class Catalog: Sendable {
     public let execution: ExecutorService
     public let thumbnails: ThumbnailService
     public let gallery: GalleryService
+    public let driveMaps: DriveMapExporter
 
     public init(databaseURL: URL) throws {
         let pool = try AppDatabase.makePool(at: databaseURL)
@@ -43,6 +44,7 @@ public final class Catalog: Sendable {
         let thumbsDir = databaseURL.deletingLastPathComponent().appendingPathComponent("thumbnails", isDirectory: true)
         self.thumbnails = ThumbnailService(db: db, cacheDirectory: thumbsDir)
         self.gallery = GalleryService(db: db)
+        self.driveMaps = DriveMapExporter(db: db)
     }
 
     /// Opens (creating if needed) the catalog at the default Application Support path.
