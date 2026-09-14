@@ -150,6 +150,8 @@ struct LibrarySidebarView: View {
             Divider()
         }
         Button("Scan Cache / Previews…") { previewsVolume = summary }
+        Button("Export Drive Map…") { env.exportDriveMap(volume: summary) }
+            .disabled(summary.latestSnapshotId == nil)
         Divider()
         DriveRoleMenu(key: summary.uuid ?? summary.name)
         Menu("Move to") {

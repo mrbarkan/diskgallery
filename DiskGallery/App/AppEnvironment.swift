@@ -657,6 +657,32 @@ final class AppEnvironment {
         }
     }
 
+    /// Saves one drive as a self-contained HTML map anyone can open in a browser.
+    func exportDriveMap(volume: VolumeSummary) {
+        let choices = DriveMapExportChoices()
+        let panel = NSSavePanel()
+        panel.title = "Export Drive Map"
+        panel.message = "Save a map of “\(volume.name)” that anyone can open in a web browser."
+        panel.nameFieldStringValue = "\(volume.name.replacingOccurrences(of: "/", with: "-")) map.html"
+        panel.canCreateDirectories = true
+        panel.allowedContentTypes = [.html]
+        panel.accessoryView = DriveMapExportOptionsView.accessory(for: choices)
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let exporter = catalog.driveMaps
+        let options = choices.options(appVersion: AppInfo.shortVersion)
+        let volumeId = volume.id
+        Task {
+            do {
+                try await Task.detached(priority: .userInitiated) {
+                    try await exporter.export(volumeId: volumeId, options: options, to: url)
+                }.value
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            } catch {
+                errorMessage = "Couldn’t export the drive map: \(error.localizedDescription)"
+            }
+        }
+    }
+
     func importLibrary() {
         guard activeScan == nil else {
             errorMessage = "Finish or pause the current scan before importing a library."
