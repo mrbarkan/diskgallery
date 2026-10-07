@@ -103,6 +103,20 @@ struct TagSyncResult {
     var failures = 0        // write errors
 }
 
+/// The folder whose copies on other drives the "Find Copies" sheet is showing.
+struct FolderCopiesTarget: Identifiable {
+    let volumeKey: String
+    let volumeName: String
+    let folder: Entry
+    var id: Int64 { folder.id }
+}
+
+/// Result of hashing a folder match: files newly hashed, and files that couldn't be read.
+struct FolderVerifyOutcome {
+    var hashed: Int
+    var unreadable: Int
+}
+
 /// Holds the catalog + live UI state. The single source of truth injected into the
 /// view tree. GRDB never appears here — everything goes through `Catalog`.
 @MainActor
@@ -140,6 +154,9 @@ final class AppEnvironment {
 
     /// Non-nil drives the global Changes… sheet (set by the toolbar item).
     var changesVolume: VolumeSummary?
+
+    /// Non-nil drives the "Find Copies on Other Drives" sheet.
+    var folderCopiesTarget: FolderCopiesTarget?
 
     /// When set, the Gallery is scoped to one folder's subtree (Detail Scan).
     var galleryFolderScope: GalleryFolderScope?
@@ -1166,6 +1183,75 @@ final class AppEnvironment {
             dataVersion += 1
         } catch {
             report(error)
+        }
+    }
+
+    // MARK: Folder copies on other drives
+
+    /// Opens the "Find Copies on Other Drives" sheet for a folder on the selected drive.
+    func showFolderCopies(_ folder: Entry) {
+        guard let key = selectedVolumeKey else { return }
+        folderCopiesTarget = FolderCopiesTarget(volumeKey: key,
+                                                volumeName: currentVolumeSummary?.name ?? key,
+                                                folder: folder)
+    }
+
+    /// Catalog-only search — works with every drive offline. Nil on a catalog error.
+    func findFolderCopies(_ target: FolderCopiesTarget) async -> FolderMatchResult? {
+        do {
+            return try await catalog.folderMatches.findMatches(snapshotId: target.folder.snapshotId,
+                                                               folderRelPath: target.folder.relPath)
+        } catch {
+            report(error)
+            return nil
+        }
+    }
+
+    /// SHA-256-hashes every file of a match on both drives that lacks a cached hash,
+    /// recording each as it finishes so a cancel keeps the progress made. Files that
+    /// can't be read stay unhashed (the match stays unverified) and are counted
+    /// separately — never treated as a mismatch. Nil when a drive is offline or on a
+    /// catalog error.
+    func verifyFolderMatch(_ match: FolderMatch, target: FolderCopiesTarget,
+                           progress: @escaping @MainActor @Sendable (Int, Int) -> Void) async -> FolderVerifyOutcome? {
+        guard let sourceMount = volumes.mountURL(forKey: target.volumeKey),
+              let targetMount = volumes.mountURL(forKey: match.volumeKey) else { return nil }
+        do {
+            let pairs = try await catalog.folderMatches.pairs(
+                sourceSnapshotId: target.folder.snapshotId, sourceFolder: target.folder.relPath,
+                targetSnapshotId: match.snapshotId, targetFolder: match.relPath)
+            var jobs: [(entryId: Int64, url: URL)] = []
+            for pair in pairs {
+                if pair.sourceHash == nil {
+                    jobs.append((pair.sourceEntryId, sourceMount.appendingPathComponent(pair.sourceRelPath)))
+                }
+                if pair.targetHash == nil {
+                    jobs.append((pair.targetEntryId, targetMount.appendingPathComponent(pair.targetRelPath)))
+                }
+            }
+            let hasher = catalog.hasher
+            let duplicates = catalog.duplicates
+            let worker = Task.detached { () -> FolderVerifyOutcome in
+                var outcome = FolderVerifyOutcome(hashed: 0, unreadable: 0)
+                for (index, job) in jobs.enumerated() {
+                    if Task.isCancelled { break }
+                    await progress(index, jobs.count)
+                    if let hash = try? hasher.sha256(fileURL: job.url) {
+                        try? await duplicates.recordHash(entryId: job.entryId, hash: hash)
+                        outcome.hashed += 1
+                    } else if !Task.isCancelled {
+                        outcome.unreadable += 1
+                    }
+                }
+                await progress(jobs.count, jobs.count)
+                return outcome
+            }
+            let outcome = await withTaskCancellationHandler { await worker.value } onCancel: { worker.cancel() }
+            dataVersion += 1
+            return outcome
+        } catch {
+            report(error)
+            return nil
         }
     }
 }

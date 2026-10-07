@@ -185,6 +185,10 @@ struct ContentView: View {
                              set: { env.changesVolume = $0 })) { summary in
             ChangesView(summary: summary).environment(env)
         }
+        .sheet(item: Binding(get: { env.folderCopiesTarget },
+                             set: { env.folderCopiesTarget = $0 })) { target in
+            FolderCopiesSheet(target: target).environment(env)
+        }
         .sheet(isPresented: Binding(get: { env.activeScan != nil }, set: { _ in })) {
             ScanProgressView()
         }

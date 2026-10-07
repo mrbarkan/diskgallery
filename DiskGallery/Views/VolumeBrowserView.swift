@@ -179,6 +179,14 @@ struct FolderView: View {
                 }
                 Divider()
             }
+            if targets.count == 1, let folder = targets.first, folder.isDir {
+                Button {
+                    env.showFolderCopies(folder)
+                } label: {
+                    Label("Find Copies on Other Drives…", systemImage: "square.on.square")
+                }
+                Divider()
+            }
             if targets.count == 1, let folder = targets.first, folder.isDir,
                annotations[folder.relPath]?.tag == .review {
                 Button {
