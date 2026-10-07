@@ -10,6 +10,7 @@ public final class Catalog: Sendable {
     public let library: LibraryService
     public let scanner: Scanner
     public let duplicates: DuplicateEngine
+    public let folderMatches: FolderMatchService
     public let annotations: AnnotationStore
     public let search: SearchService
     public let hasher: HashVerifier
@@ -31,6 +32,7 @@ public final class Catalog: Sendable {
         self.library = LibraryService(db: db)
         self.scanner = Scanner(db: db)
         self.duplicates = DuplicateEngine(db: db)
+        self.folderMatches = FolderMatchService(db: db)
         self.annotations = AnnotationStore(db: db)
         self.search = SearchService(db: db)
         self.hasher = HashVerifier()

@@ -21,3 +21,19 @@ public enum SQLPattern {
         return escaped + "/%"
     }
 }
+
+/// Filesystem housekeeping that Finder, Spotlight and Windows scatter across drives.
+/// Two copies of the same folder routinely differ only in these, so folder comparison
+/// ignores them. Ordinary dotfiles (`.git`, `.gitignore`) are *not* junk.
+public enum JunkFiles {
+    static let names: Set<String> = [
+        ".DS_Store", ".Spotlight-V100", ".Trashes", ".fseventsd", ".TemporaryItems",
+        ".DocumentRevisions-V100", "Thumbs.db", "desktop.ini",
+    ]
+
+    /// True when any path component is junk (so everything inside `.Spotlight-V100/` is
+    /// too), or is an AppleDouble `._` resource-fork file.
+    public static func isJunk(relPath: String) -> Bool {
+        relPath.split(separator: "/").contains { names.contains(String($0)) || $0.hasPrefix("._") }
+    }
+}

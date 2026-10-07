@@ -39,6 +39,7 @@
 		412F1FED7D5647E1F85054CF /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CEE1A004B973AABD3E7B995 /* Models.swift */; };
 		4272814F660D27B90F7ED93C /* AppInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1FF94BF0A803EA9F9F85826 /* AppInfo.swift */; };
 		43D9CAB4E3241728E5BD42BF /* ScanCacheView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF065A612665A90D5CF0162F /* ScanCacheView.swift */; };
+		43F5B1736DC4408F9EE3858D /* FolderMatchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08009792EE960262CDB1770E /* FolderMatchService.swift */; };
 		46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DEBF25065F6D177BAAD8EBF /* FinderTagWriter.swift */; };
 		48B9C217FDBC1191B3794535 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BC3C0065500C24587932BC0A /* Assets.xcassets */; };
 		4C39E65D70728750BBC0BC0D /* OrganizationPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 350D0E1C93E48609F8D0B030 /* OrganizationPlanner.swift */; };
@@ -135,6 +136,7 @@
 		EA6747A81E534619A05CA591 /* AllDrivesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F829DE6FBD919E122240C98 /* AllDrivesView.swift */; };
 		EC4C7FA3AD65474DAE88882D /* DiskGalleryCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B931D88A05CB350D5325E027 /* DiskGalleryCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F05F2EF75F006EC08ECC182E /* UnifiedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5441DBAD865C164F06C51077 /* UnifiedModels.swift */; };
+		F08BE5EAE3C367AD880837B2 /* FolderMatchServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7040EDEC794512DAEB577A8 /* FolderMatchServiceTests.swift */; };
 		F4798D76A8EBE58BB98FC812 /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */; };
 		F6C371633BD9F87A479F3BA7 /* GroupingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286934E837CA4025B46E82A5 /* GroupingTests.swift */; };
 		FA1BBD41BF53E2137F2680BC /* DriveRoleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F9F870260EEDCD0B3AC49E /* DriveRoleTests.swift */; };
@@ -195,6 +197,7 @@
 		052F1C86EE5C7C4897CBB317 /* DuplicateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateEngine.swift; sourceTree = "<group>"; };
 		05346B55515038236E4B4183 /* DriveRolesServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveRolesServiceTests.swift; sourceTree = "<group>"; };
 		05E28A1908D4D546A9F3285B /* FileCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCategory.swift; sourceTree = "<group>"; };
+		08009792EE960262CDB1770E /* FolderMatchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderMatchService.swift; sourceTree = "<group>"; };
 		0ABD4966F2629801B58174E0 /* Capacity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Capacity.swift; sourceTree = "<group>"; };
 		11C88EECC86340772F4E0659 /* MCPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServer.swift; sourceTree = "<group>"; };
 		12DEFB14204B9A103F85064D /* DriveRoleLabelsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveRoleLabelsStore.swift; sourceTree = "<group>"; };
@@ -293,6 +296,7 @@
 		BF9D07CA34FE8810CF5FF634 /* FileCopier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCopier.swift; sourceTree = "<group>"; };
 		C0886F22F3BD10A946192FCA /* Scanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scanner.swift; sourceTree = "<group>"; };
 		C44ECF808527E68F4CA67786 /* MainToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainToolbar.swift; sourceTree = "<group>"; };
+		C7040EDEC794512DAEB577A8 /* FolderMatchServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderMatchServiceTests.swift; sourceTree = "<group>"; };
 		C8F98835F424ADF8E3ABE16F /* DuplicatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicatesView.swift; sourceTree = "<group>"; };
 		C913A9C2F1DEA3A2577ADB71 /* ViewPrefsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewPrefsStore.swift; sourceTree = "<group>"; };
 		CAE60CE94E525BB06CAB88D0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -517,6 +521,7 @@
 				5320939B847686300165F08C /* FeatureTests.swift */,
 				63D12FD145E27077BFBDB7CF /* FileCategoryTests.swift */,
 				4105C0CC1F9C0469C2052248 /* FinderTagTests.swift */,
+				C7040EDEC794512DAEB577A8 /* FolderMatchServiceTests.swift */,
 				62881B657D719F595100AE56 /* GalleryTests.swift */,
 				286934E837CA4025B46E82A5 /* GroupingTests.swift */,
 				DC0E3023FC4DCBEC7CD10333 /* HiddenFilesTests.swift */,
@@ -649,6 +654,7 @@
 			isa = PBXGroup;
 			children = (
 				052F1C86EE5C7C4897CBB317 /* DuplicateEngine.swift */,
+				08009792EE960262CDB1770E /* FolderMatchService.swift */,
 				7BAFAE81B2BF46DB4F0846BB /* HashVerifier.swift */,
 				CED125E86EB977B732F55F62 /* KeepRule.swift */,
 			);
@@ -888,6 +894,7 @@
 				593A032647E01F0B4D8E25D5 /* FeatureTests.swift in Sources */,
 				791ECA6A41E764190290A12C /* FileCategoryTests.swift in Sources */,
 				54F7E036F94C146237106B8D /* FinderTagTests.swift in Sources */,
+				F08BE5EAE3C367AD880837B2 /* FolderMatchServiceTests.swift in Sources */,
 				AA10EE288CFA713CB0E5688F /* GalleryTests.swift in Sources */,
 				F6C371633BD9F87A479F3BA7 /* GroupingTests.swift in Sources */,
 				034984A8B83894F6B435CBA1 /* HiddenFilesTests.swift in Sources */,
@@ -994,6 +1001,7 @@
 				A7D03DFF5B452E8DAB8EDF76 /* FileOperation.swift in Sources */,
 				15EB8449EE1B76121F169032 /* FileTrasher.swift in Sources */,
 				46D8791930370364587B6949 /* FinderTagWriter.swift in Sources */,
+				43F5B1736DC4408F9EE3858D /* FolderMatchService.swift in Sources */,
 				7CBF4932474E2A7C0EED87D2 /* GalleryService.swift in Sources */,
 				163787F6E82DDAE41147E42E /* HashVerifier.swift in Sources */,
 				1AD8EAC42C8DBB081FED8B9C /* JSONValue.swift in Sources */,
