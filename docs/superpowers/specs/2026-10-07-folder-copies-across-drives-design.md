@@ -66,9 +66,11 @@ public struct FolderMatch: Sendable, Identifiable, Equatable {
     public var id: String { "\(volumeId)|\(relPath)" }
 }
 
-public enum FolderMatchResult: Sendable, Equatable {
-    case empty                          // source has no comparable files
-    case matches([FolderMatch])         // may be an empty array = no copies found
+public struct FolderMatchResult: Sendable, Equatable {
+    public var sourceFileCount: Int     // comparable (non-junk) files in the source
+    public var sourceBytes: Int64
+    public var matches: [FolderMatch]   // empty = no copies found
+    public var isEmpty: Bool { sourceFileCount == 0 }   // nothing to compare
 }
 
 public struct FolderMatchPair: Sendable, Equatable {
@@ -91,9 +93,9 @@ public func pairs(sourceSnapshotId: Int64, sourceFolder: String,
 1. **Source manifest.** All non-directory entries under `folderRelPath/` in the
    given snapshot (`relPath LIKE SQLPattern.childrenPrefix(of:) ESCAPE '\'`),
    keyed by path relative to the folder → (size, entryId, hash). Junk filtered
-   out. If empty → `.empty`.
+   out. If nothing is left → `isEmpty` (sourceFileCount 0).
 2. **Anchor.** Largest source file (tie-break: relative path ascending). Query
-   the *latest* snapshot of every volume except the source's volume for
+   the latest *complete* snapshot (`isComplete = 1`) of every volume except the source's volume for
    non-dir entries with the anchor's `name` and `logicalSize` (uses
    `idx_entry_dupe`), using the same latest-snapshot CTE as `DuplicateEngine`.
 3. **Candidate roots.** For each hit, if its `relPath` equals the anchor's
@@ -167,7 +169,7 @@ matching works offline.
 - copy on the same drive → excluded;
 - only the latest snapshot of a drive is considered;
 - anchor copy at drive root (candidate root `""`);
-- empty / junk-only source → `.empty`; no copies → `.matches([])`;
+- empty / junk-only source → `isEmpty`; no copies → empty `matches`;
 - folder names containing `_` / `%` don't over-match;
 - 50-candidate cap;
 - verification state: all hashes equal → `.verified`; one differs →
